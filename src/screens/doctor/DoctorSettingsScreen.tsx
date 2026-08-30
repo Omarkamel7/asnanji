@@ -27,6 +27,8 @@ import {
   Image as ImageIcon,
   ShieldCheck,
   Check,
+  Eye,
+  EyeOff,
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
@@ -44,7 +46,7 @@ const ALL_DAYS = [
 
 export const DoctorSettingsScreen = () => {
   const navigation = useNavigation<any>();
-  const { currentUser, language, isRTL, updateUserProfile } = useApp();
+  const { currentUser, language, isRTL, updateUserProfile, refreshClinicData } = useApp();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,8 +58,7 @@ export const DoctorSettingsScreen = () => {
   const [title, setTitle] = useState('');
   const [bio, setBio] = useState('');
   const [clinicAddress, setClinicAddress] = useState('');
-  const [consultationFee, setConsultationFee] = useState('300');
-  const [experienceYears, setExperienceYears] = useState('10');
+  const [consultationFee, setConsultationFee] = useState('350');
 
   // Schedule & Working Days
   const [workingDays, setWorkingDays] = useState<string[]>([
@@ -71,8 +72,8 @@ export const DoctorSettingsScreen = () => {
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('22:00');
 
-  // Feature Toggles
-  const [isAcceptingPatients, setIsAcceptingPatients] = useState(true);
+  // Feature & Visibility Toggles
+  const [isPubliclyVisible, setIsPubliclyVisible] = useState(true);
   const [enableInstantConsultation, setEnableInstantConsultation] = useState(true);
   const [enableBooking, setEnableBooking] = useState(true);
   const [enableChat, setEnableChat] = useState(true);
@@ -96,9 +97,9 @@ export const DoctorSettingsScreen = () => {
         setSpecialty(profileData.specialty || '');
         setTitle(profileData.title || '');
         setClinicAddress(profileData.clinic_address || '');
-        setConsultationFee(profileData.consultation_fee?.toString() || '300');
+        setConsultationFee(profileData.consultation_fee?.toString() || '350');
         if (profileData.is_accepting_patients !== undefined) {
-          setIsAcceptingPatients(profileData.is_accepting_patients);
+          setIsPubliclyVisible(profileData.is_accepting_patients);
         }
       }
 
@@ -154,11 +155,11 @@ export const DoctorSettingsScreen = () => {
         id: currentUser.id,
         slug: currentUser.id,
         bio: bio.trim(),
-        specialty: specialty.trim(),
-        title: title.trim(),
-        clinic_address: clinicAddress.trim(),
-        consultation_fee: Number(consultationFee) || 0,
-        is_accepting_patients: isAcceptingPatients,
+        specialty: specialty.trim() || 'استشاري جراحة وتجميل الأسنان',
+        title: title.trim() || 'استشاري طب وجراحة الأسنان',
+        clinic_address: clinicAddress.trim() || 'القاهرة، مصر',
+        consultation_fee: Number(consultationFee) || 350,
+        is_accepting_patients: isPubliclyVisible,
         updated_at: new Date().toISOString(),
       };
 
@@ -178,11 +179,15 @@ export const DoctorSettingsScreen = () => {
 
       await supabase.from('doctor_settings').upsert(settingsUpdates);
 
+      await refreshClinicData();
+
       Alert.alert(
-        language === 'ar' ? 'تم الحفظ بنجاح' : 'Saved Successfully',
+        language === 'ar' ? 'تم الحفظ بنجاح 🎉' : 'Saved Successfully 🎉',
         language === 'ar'
-          ? 'تم تحديث جميع بيانات عيادتك وإعداداتك بالكامل!'
-          : 'All clinic settings and profile information updated!'
+          ? isPubliclyVisible
+            ? 'تم حفظ التعديلات وإظهار حسابك في دليل الأطباء للمرضى!'
+            : 'تم حفظ التعديلات وإخفاء حسابك من دليل الأطباء للمرضى!'
+          : 'All clinic settings and visibility updated!'
       );
     } catch (err: any) {
       Alert.alert(
@@ -222,12 +227,12 @@ export const DoctorSettingsScreen = () => {
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>
-              {language === 'ar' ? 'لوحة تحكم وإعدادات الطبيب 🩺' : 'Doctor Control Hub 🩺'}
+              {language === 'ar' ? 'إعدادات وتوافر العيادة 🩺' : 'Clinic & Doctor Control 🩺'}
             </Text>
             <Text style={styles.headerSubtitle}>
               {language === 'ar'
                 ? 'تحكم شامل في كل ما يظهر للمرضى في حسابك وعيادتك'
-                : 'Full control over your clinic and patient-facing profile'}
+                : 'Full control over your clinic and public visibility'}
             </Text>
           </View>
         </View>
@@ -240,7 +245,7 @@ export const DoctorSettingsScreen = () => {
           >
             <Layers size={18} color={Colors.primaryDark} />
             <Text style={styles.hubBtnText}>
-              {language === 'ar' ? 'إدارة الخدمات والأسعار' : 'Manage Services'}
+              {language === 'ar' ? 'الخدمات والأسعار' : 'Manage Services'}
             </Text>
           </TouchableOpacity>
 
@@ -256,29 +261,43 @@ export const DoctorSettingsScreen = () => {
         </View>
       </View>
 
-      {/* Section 1: Availability & Vacation Toggles */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>
-          {language === 'ar' ? '1. التحكم في التوافر والميزات' : '1. Availability & Feature Toggles'}
-        </Text>
-
-        <View style={styles.toggleRow}>
+      {/* Main Public Visibility Box */}
+      <View style={[styles.sectionCard, styles.visibilityCard]}>
+        <View style={styles.visibilityHeader}>
+          {isPubliclyVisible ? (
+            <Eye size={24} color="#16a34a" />
+          ) : (
+            <EyeOff size={24} color="#dc2626" />
+          )}
           <View style={{ flex: 1 }}>
-            <Text style={styles.toggleLabel}>
-              {language === 'ar' ? 'استقبال المرضى (وضع العمل النشط)' : 'Accepting Patients'}
-            </Text>
-            <Text style={styles.toggleSub}>
+            <Text style={styles.visibilityTitle}>
               {language === 'ar'
-                ? 'عطله لتفعيل وضع الإجازة (Vacation Mode) وإيقاف الحجوزات مؤقتاً'
-                : 'Toggle off for Vacation Mode to pause incoming appointments'}
+                ? 'إظهار الحساب في دليل الأطباء للمرضى'
+                : 'Public Directory Visibility'}
+            </Text>
+            <Text style={styles.visibilitySub}>
+              {isPubliclyVisible
+                ? language === 'ar'
+                  ? '🟢 حسابك ظاهر للجميع في الصفحة الرئيسية ويستقبل المرضى'
+                  : '🟢 Your clinic is visible in patient search and receiving bookings'
+                : language === 'ar'
+                  ? '🔴 حسابك مخفي حالياً ولن يظهر للمرضى في البحث'
+                  : '🔴 Your clinic is hidden from patient search'}
             </Text>
           </View>
           <Switch
-            value={isAcceptingPatients}
-            onValueChange={setIsAcceptingPatients}
-            trackColor={{ false: Colors.border, true: Colors.primary }}
+            value={isPubliclyVisible}
+            onValueChange={setIsPubliclyVisible}
+            trackColor={{ false: Colors.border, true: '#16a34a' }}
           />
         </View>
+      </View>
+
+      {/* Section 1: Availability & Feature Toggles */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>
+          {language === 'ar' ? '1. التحكم في ميزات الحجز والاستشارة' : '1. Booking & Chat Features'}
+        </Text>
 
         <View style={styles.toggleRow}>
           <View style={{ flex: 1 }}>
@@ -287,7 +306,7 @@ export const DoctorSettingsScreen = () => {
             </Text>
             <Text style={styles.toggleSub}>
               {language === 'ar'
-                ? 'السماح للمرضى بطلب تشخيص وكشف أونلاين عبر التطبيق'
+                ? 'السماح للمرضى بطلب تشخيص أولي أونلاين عبر التطبيق'
                 : 'Allow patients to request online triage & consultation'}
             </Text>
           </View>
@@ -618,6 +637,27 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     ...Shadows.sm,
+  },
+  visibilityCard: {
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1.5,
+    borderColor: '#bbf7d0',
+  },
+  visibilityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  visibilityTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#166534',
+  },
+  visibilitySub: {
+    fontSize: 11,
+    color: '#15803d',
+    marginTop: 2,
+    lineHeight: 16,
   },
   sectionTitle: {
     fontSize: 15,

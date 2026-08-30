@@ -14,30 +14,28 @@ export interface AppVersionInfo {
 }
 
 export const APP_VERSION_DATA: AppVersionInfo = {
-  version: '1.4.0',
-  buildNumber: 140,
-  releaseDate: '2026-08-29',
+  version: '1.0.0',
+  buildNumber: 1,
+  releaseDate: '2026-08-30',
   channel: 'production',
-  latestVersion: '1.4.0',
+  latestVersion: '1.0.0',
   isUpdateAvailable: false,
   mandatoryUpdate: false,
   changelogAr: [
-    'استبدال القوائم الطويلة بـ FlashList الفائقة السرعة لتجربة محادثات فائقة السلاسة',
-    'إضافة ميزة Optimistic UI للشات مع مؤشرات إرسال فورية ⏳ و ✔️✔️',
-    'تحسين تحميل الصور مع expo-image ودعم الذاكرة المؤقتة التلقائية والتأثير الضبابي',
-    'إضافة الردود الطبية السريعة الجاهزة (Canned Responses) للأطباء',
-    'إضافة أزرار الاتصال الهاتفي ومحادثة الواتساب المباشرة من ملف المريض',
-    'إضافة شاشات التحميل التفاعلية الشفافة (Skeletons) وتأثيرات الاهتزاز الحركي (Haptics)',
-    'تحديث شامل لقواعد البيانات وتفعيل البث اللحظي للرسائل والاستشارات',
+    'الإصدار الرسمي الأول لمنصة اسنانجي الطبية v1.0.0',
+    'لوحة تحكم كاملة للطبيب مع ميزة إظهار وإخفاء الحساب من دليل المرضى',
+    'إدارة متكاملة للخدمات والأسعار ومعرض الحالات قبل وبعد (Before & After)',
+    'نظام الاستشارات الفورية والتشخيص المبدئي المباشر مع المرضى',
+    'نظام حجز الكشوفات ومواعيد العيادة وتحديد أوقات العمل',
+    'شات مباشر فائق الثبات مع دعم التسجيلات الصوتية والصور',
   ],
   changelogEn: [
-    'Supercharged chat performance with @shopify/flash-list integration',
-    'Optimistic UI for instant message sending feedback with ⏳ and ✔️✔️ badges',
-    'Advanced image caching and blurhash placeholders with expo-image',
-    'Quick doctor canned responses for one-tap patient triage answers',
-    'Direct Phone Call and WhatsApp action buttons in patient case detail',
-    'Animated Skeleton shimmers and tactile Haptic feedback across all actions',
-    'Full database constraints update and verified real-time messaging sync',
+    'Official Initial Release of Asnanji Dental Platform v1.0.0',
+    'Complete Doctor Control Hub with Public Directory Visibility toggle',
+    'Full management for clinic services, pricing, and Before & After portfolio',
+    'Instant online consultation and patient triage system',
+    'Integrated appointment booking and working hours scheduler',
+    'Rock-solid direct chat with voice notes and image attachments',
   ],
 };
 
@@ -69,7 +67,6 @@ function cleanMarkdownNotes(text: string): string {
     .replace(/###+/g, '')
     .replace(/\*\*/g, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/👉/g, '•')
     .trim();
 }
 
@@ -94,7 +91,7 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
   // 2. Check GitHub Releases for New APK
   try {
     const response = await fetch(
-      'https://api.github.com/repos/Omarkamel7/smart-dental-clinic/releases/latest',
+      'https://api.github.com/repos/Omarkamel7/asnanji/releases/latest',
       {
         headers: {
           Accept: 'application/vnd.github.v3+json',
@@ -106,21 +103,20 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
       const release = await response.json();
       const latestTag = (release.tag_name || '').replace('v', '').trim();
       
-      // Find APK download URL from assets or body if available
-      let apkUrl = 'https://expo.dev/accounts/omarsala7s-team/projects/smart-dental-clinic/builds/94cb967b-efc4-4325-aa74-3d675b39072c';
+      let apkUrl = 'https://github.com/Omarkamel7/asnanji/releases/latest';
       if (release.assets && Array.isArray(release.assets)) {
         const apkAsset = release.assets.find((a: any) => a.name?.endsWith('.apk'));
         if (apkAsset && apkAsset.browser_download_url) {
           apkUrl = apkAsset.browser_download_url;
         }
       }
-      const expoBuildMatch = release.body?.match(/https:\/\/expo\.dev\/accounts\/[^\s\)\<\"]+/);
+      const expoBuildMatch = release.body?.match(/https:\/\/expo\.dev\/accounts\/[^\s\)\<"]+/);
       if (expoBuildMatch) {
         apkUrl = expoBuildMatch[0];
       }
 
       if (latestTag && isNewerVersion(latestTag, APP_VERSION_DATA.version)) {
-        const cleanNotes = cleanMarkdownNotes(release.body) || 'تحسينات جديدة في الأداء والواجهات وإصلاحات للنظام.';
+        const cleanNotes = cleanMarkdownNotes(release.body) || 'تحديث جديد متاح لتحسين تجربتك.';
         return {
           hasUpdate: true,
           hasOtaUpdate: hasOta,
@@ -140,9 +136,9 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
     hasUpdate: hasOta,
     hasOtaUpdate: hasOta,
     version: APP_VERSION_DATA.version,
-    apkDownloadUrl: 'https://github.com/Omarkamel7/smart-dental-clinic/releases/latest',
-    releaseNotesAr: 'تحديث جديد متوفر لتحسين تجربة الاستخدام.',
-    releaseNotesEn: 'New update available to improve your experience.',
+    apkDownloadUrl: 'https://github.com/Omarkamel7/asnanji/releases/latest',
+    releaseNotesAr: 'تطبيق اسنانجي محدث لآخر إصدار v1.0.0',
+    releaseNotesEn: 'Asnanji app is up to date v1.0.0',
     isMandatory: false,
   };
 }
@@ -164,7 +160,7 @@ export async function applyOtaUpdate(): Promise<void> {
  * Opens the APK download link in the browser.
  */
 export async function openApkDownload(url?: string): Promise<void> {
-  const targetUrl = url || 'https://github.com/Omarkamel7/smart-dental-clinic/releases/latest';
+  const targetUrl = url || 'https://github.com/Omarkamel7/asnanji/releases/latest';
   const canOpen = await Linking.canOpenURL(targetUrl);
   if (canOpen) {
     await Linking.openURL(targetUrl);

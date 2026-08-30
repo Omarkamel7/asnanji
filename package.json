@@ -1,6 +1,6 @@
 {
-  "name": "smart-dental-clinic",
-  "version": "1.4.0",
+  "name": "asnanji",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "expo start",

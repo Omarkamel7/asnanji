@@ -261,13 +261,32 @@ const MainNavigation = () => {
 
         
 
+        
+        <Stack.Screen
+          name="DoctorSettings"
+          component={DoctorSettingsScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="ManagePortfolio"
+          component={ManagePortfolioScreen}
+          options={{ headerShown: false }}
+        />
+
         <Stack.Screen
           name="ManageServices"
           component={ManageServicesScreen}
-          options={{
-            headerShown: false,
-          }}
+          options={{ headerShown: false }}
         />
+
+        <Stack.Screen
+          name="DoctorProfile"
+          component={DoctorProfileScreen}
+          options={{ headerShown: false }}
+        />
+
+
 
         <Stack.Screen
           name="ManagePortfolio"
