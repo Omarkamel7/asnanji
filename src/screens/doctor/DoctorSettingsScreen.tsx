@@ -94,13 +94,28 @@ export const DoctorSettingsScreen = () => {
 
       if (profileData) {
         setBio(profileData.bio || '');
-        setSpecialty(profileData.specialty || '');
-        setTitle(profileData.title || '');
-        setClinicAddress(profileData.clinic_address || '');
-        setConsultationFee(profileData.consultation_fee?.toString() || '350');
+        setSpecialty(profileData.specialty || 'استشاري طب وجراحة الأسنان');
+        setTitle(profileData.title || 'استشاري طب وجراحة الأسنان');
+        setClinicAddress(profileData.clinic_address || 'القاهرة، مصر');
+        setConsultationFee(profileData.consultation_fee?.toString() || '400');
         if (profileData.is_accepting_patients !== undefined) {
           setIsPubliclyVisible(profileData.is_accepting_patients);
         }
+      } else {
+        // Auto-initialize for new doctor
+        await supabase.from('doctor_profiles').upsert({
+          id: currentUser.id,
+          slug: currentUser.id,
+          specialty: 'استشاري تقويم وتجميل الأسنان',
+          bio: 'طبيب أسنان معتمد على منصة اسنانجي لتقديم أرقى خدمات الرعاية وتجميل الأسنان.',
+          clinic_address: 'القاهرة، مصر',
+          consultation_fee: 400,
+          is_accepting_patients: true,
+          rating: 5.0,
+          updated_at: new Date().toISOString()
+        });
+        setSpecialty('استشاري تقويم وتجميل الأسنان');
+        setConsultationFee('400');
       }
 
       // 2. Fetch from doctor_settings
