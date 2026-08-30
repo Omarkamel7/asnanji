@@ -207,23 +207,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
 
-    // Setup Realtime Channels for Clinic Data, Messages & Consultations
+        // Setup Realtime Channels for Doctor Profiles, Services, Portfolio, Appointments & Messages
     const realtimeChannel = supabase
-      .channel('clinic_updates_and_messages')
+      .channel('asnanji_live_sync_all')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'clinic_settings' },
-        () => fetchClinicSettings()
+        { event: '*', schema: 'public', table: 'doctor_profiles' },
+        () => {
+          console.log('[Realtime] doctor_profiles updated, refreshing doctors');
+          fetchDoctors();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'doctor_settings' },
+        () => {
+          console.log('[Realtime] doctor_settings updated, refreshing');
+          fetchDoctors();
+          fetchClinicSettings();
+        }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'services' },
-        () => fetchServices()
+        () => {
+          console.log('[Realtime] services updated');
+          fetchServices();
+        }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'portfolio_cases' },
-        () => fetchPortfolio()
+        () => {
+          console.log('[Realtime] portfolio_cases updated');
+          fetchPortfolio();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'doctor_portfolio' },
+        () => {
+          console.log('[Realtime] doctor_portfolio updated');
+          fetchPortfolio();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'appointments' },
+        () => {
+          console.log('[Realtime] appointments updated on Supabase');
+          fetchRemoteUserData();
+        }
       )
       .on(
         'postgres_changes',
