@@ -288,14 +288,7 @@ const MainNavigation = () => {
 
 
 
-        <Stack.Screen
-          name="ManagePortfolio"
-          component={ManagePortfolioScreen}
-          options={{
-            headerShown: false,
-          }}
-        />
-      </Stack.Navigator>
+        </Stack.Navigator>
     </NavigationContainer>
   );
 };
@@ -315,7 +308,6 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
-
 
 
 

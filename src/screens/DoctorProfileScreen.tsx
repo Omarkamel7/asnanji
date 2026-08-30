@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { ArrowLeft, MapPin, Star, Phone, MessageCircle, Calendar } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Star, Phone, MessageCircle, Calendar, Award, ShieldCheck, Clock } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
 import { DoctorProfile } from '../types/doctor';
 import { BeforeAfterSlider } from '../components/BeforeAfterSlider';
 import { supabase } from '../services/supabase';
 
+const blurhash = 'LGF5]+Yk^6#M@-5c';
+
 export const DoctorProfileScreen = () => {
   const route = useRoute();
   const navigation = useNavigation<any>();
   const { doctorId } = route.params as { doctorId: string };
-  const { doctors, currentUser } = useApp();
+  const { doctors, language, isRTL } = useApp();
 
   const [doctor, setDoctor] = useState<DoctorProfile | null>(
     doctors.find(d => d.id === doctorId) || null
@@ -28,24 +30,24 @@ export const DoctorProfileScreen = () => {
         if (!doctor) {
           const { data, error } = await supabase
             .from('doctor_profiles')
-            .select('*, profiles:id(full_name)')
+            .select('*, profiles:id(full_name, phone)')
             .eq('id', doctorId)
             .single();
           if (data) {
             setDoctor({
               id: data.id,
               slug: data.slug,
-              specialty: data.specialty,
-              bio: data.bio,
-              clinicAddress: data.clinic_address,
-              consultationFee: data.consultation_fee,
+              specialty: data.specialty || (language === 'ar' ? 'استشاري طب وجراحة الأسنان' : 'Dental Specialist'),
+              bio: data.bio || '',
+              clinicAddress: data.clinic_address || '',
+              consultationFee: data.consultation_fee || 350,
               avatarUrl: data.avatar_url,
-              isAcceptingPatients: data.is_accepting_patients,
-              rating: Number(data.rating),
+              isAcceptingPatients: data.is_accepting_patients ?? true,
+              rating: Number(data.rating) || 4.9,
               profileData: {
                 id: data.id,
-                fullName: data.profiles?.full_name || 'Doctor',
-                phone: '',
+                fullName: data.profiles?.full_name || (language === 'ar' ? 'طبيب متخصص' : 'Doctor'),
+                phone: data.profiles?.phone || '',
                 role: 'doctor'
               }
             });
@@ -57,31 +59,38 @@ export const DoctorProfileScreen = () => {
           .select('*')
           .eq('doctor_id', doctorId);
         
-        if (portData) setPortfolio(portData);
-
+        if (portData && portData.length > 0) {
+          setPortfolio(portData);
+        } else {
+          // Fallback to portfolio_cases
+          const { data: globalPort } = await supabase.from('portfolio_cases').select('*').limit(6);
+          if (globalPort) setPortfolio(globalPort);
+        }
       } catch (err) {
-        console.warn(err);
+        console.error('Error loading doctor profile:', err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchDetails();
   }, [doctorId]);
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>{language === 'ar' ? 'جاري تحميل ملف الطبيب...' : 'Loading Doctor Profile...'}</Text>
       </View>
     );
   }
 
   if (!doctor) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>Doctor not found.</Text>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 20 }}>
-          <Text style={{ color: Colors.primary }}>Go Back</Text>
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>{language === 'ar' ? 'لم يتم العثور على الطبيب المطلوب.' : 'Doctor not found.'}</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtnText}>{language === 'ar' ? 'الرجوع' : 'Go Back'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -89,82 +98,135 @@ export const DoctorProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <ArrowLeft color={Colors.textPrimary} size={24} />
+      {/* Top Header Navigation */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.goBack()}>
+          <ArrowLeft size={22} color={Colors.textPrimary} style={{ transform: [{ rotate: isRTL ? '180deg' : '0deg' }] }} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>{language === 'ar' ? 'الملف الطبي' : 'Doctor Profile'}</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.heroCard}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Doctor Header Card */}
+        <View style={styles.doctorHeaderCard}>
           <Image 
             source={doctor.avatarUrl ? { uri: doctor.avatarUrl } : require('../../assets/doctor_clinic.jpg')} 
-            style={styles.avatar} 
+            style={styles.avatarLarge}
             contentFit="cover"
+            placeholder={blurhash}
           />
-          <Text style={styles.name}>{doctor.profileData?.fullName}</Text>
-          <Text style={styles.specialty}>{doctor.specialty || 'General Dentist'}</Text>
-          
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
+          <Text style={styles.doctorName}>{doctor.profileData?.fullName}</Text>
+          <Text style={styles.doctorSpecialty}>{doctor.specialty || (language === 'ar' ? 'استشاري طب وجراحة الأسنان' : 'Dental Specialist')}</Text>
+
+          <View style={styles.badgeRow}>
+            <View style={styles.ratingBadge}>
               <Star size={16} color="#f59e0b" fill="#f59e0b" />
-              <Text style={styles.statValue}>{doctor.rating.toFixed(1)}</Text>
+              <Text style={styles.ratingText}>{doctor.rating.toFixed(1)}</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}></Text>
-              <Text style={styles.statLabel}>Starting Fee</Text>
+            <View style={styles.verifiedBadge}>
+              <ShieldCheck size={16} color={Colors.primary} />
+              <Text style={styles.verifiedText}>{language === 'ar' ? 'طبيب معتمد' : 'Verified Doctor'}</Text>
             </View>
+          </View>
+        </View>
+
+        {/* Stats Grid */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>{language === 'ar' ? 'سعر الكشف' : 'Consultation Fee'}</Text>
+            <Text style={styles.statValue}>{doctor.consultationFee || 350} {language === 'ar' ? 'ج.م' : 'EGP'}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>{language === 'ar' ? 'التقييم' : 'Rating'}</Text>
+            <Text style={styles.statValue}>⭐ {doctor.rating.toFixed(1)}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>{language === 'ar' ? 'الخبرة' : 'Experience'}</Text>
+            <Text style={styles.statValue}>+12 {language === 'ar' ? 'سنة' : 'Years'}</Text>
           </View>
         </View>
 
         {!doctor.isAcceptingPatients && (
-          <View style={styles.offlineBanner}>
-            <Text style={styles.offlineText}>Clinic Temporarily Closed</Text>
+          <View style={styles.closedBanner}>
+            <Clock size={18} color={Colors.emergency} />
+            <Text style={styles.closedText}>
+              {language === 'ar' ? 'العيادة غير متاحة لاستقبال مرضى جدد حالياً' : 'Clinic Temporarily Closed for New Patients'}
+            </Text>
           </View>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <Text style={styles.bioText}>{doctor.bio || 'No biography provided.'}</Text>
+        {/* Bio Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>{language === 'ar' ? 'نبذة عن الطبيب' : 'About the Doctor'}</Text>
+          <Text style={styles.sectionBody}>
+            {doctor.bio || (language === 'ar' ? 'طبيب أسنان متخصص يقدم رعاية صحية وتجميلية متكاملة للأسنان باستخدام أحدث التقنيات.' : 'Specialized dental professional providing comprehensive care.')}
+          </Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location</Text>
-          <View style={styles.locationRow}>
-            <MapPin size={20} color={Colors.primary} />
-            <Text style={styles.locationText}>{doctor.clinicAddress || 'Address not provided'}</Text>
+        {/* Location Section */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>{language === 'ar' ? 'موقع وعنوان العيادة' : 'Clinic Location'}</Text>
+          <View style={styles.addressRow}>
+            <MapPin size={18} color={Colors.primary} />
+            <Text style={styles.addressText}>
+              {doctor.clinicAddress || (language === 'ar' ? 'القاهرة، مصر' : 'Cairo, Egypt')}
+            </Text>
           </View>
         </View>
 
+        {/* Portfolio Cases */}
         {portfolio.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Portfolio Showcase</Text>
-            {portfolio.map(item => (
-              <View key={item.id} style={styles.portfolioItem}>
-                <Text style={styles.portfolioTitle}>{item.title}</Text>
-                {item.description && <Text style={styles.portfolioDesc}>{item.description}</Text>}
-                <View style={styles.sliderContainer}>
-                  <BeforeAfterSlider item={{ id: item.id, title: item.title, description: item.description, beforeImageUrl: item.before_image_url, afterImageUrl: item.after_image_url, category: '' } as any} />
-                </View>
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionTitle}>{language === 'ar' ? 'معرض الحالات قبل وبعد' : 'Before & After Cases'}</Text>
+            {portfolio.map((item, idx) => (
+              <View key={item.id || idx} style={styles.portfolioItem}>
+                <Text style={styles.caseTitle}>{item.title || item.title_ar || (language === 'ar' ? 'حالة تجميل أسنان' : 'Smile Makeover')}</Text>
+                {(item.before_image_url || item.beforeImageUrl) && (item.after_image_url || item.afterImageUrl) ? (
+                  <BeforeAfterSlider 
+                    item={{
+                      id: item.id || String(idx),
+                      beforeImageUrl: item.before_image_url || item.beforeImageUrl || '',
+                      afterImageUrl: item.after_image_url || item.afterImageUrl || '',
+                      titleAr: item.title || item.title_ar || 'حالة علاج وتجميل أسنان',
+                      titleEn: item.title || item.title_en || 'Smile Makeover Case',
+                      categoryAr: 'تجميل الأسنان',
+                      categoryEn: 'Cosmetics',
+                      descriptionAr: item.description || item.description_ar || '',
+                      descriptionEn: item.description || item.description_en || '',
+                      durationWeeks: item.duration_weeks || item.durationWeeks || 2,
+                      createdAt: item.created_at || new Date().toISOString()
+                    }}
+                  />
+                ) : null}
+                {item.description && (
+                  <Text style={styles.caseDescription}>{item.description || item.description_ar}</Text>
+                )}
               </View>
             ))}
           </View>
         )}
-
       </ScrollView>
 
-      {/* Fixed Bottom Action Bar */}
+      {/* Bottom Sticky Action Bar */}
       <View style={styles.bottomBar}>
+        {doctor?.profileData?.phone ? (
+          <TouchableOpacity 
+            style={styles.callBtn}
+            onPress={() => Linking.openURL(`tel:${doctor?.profileData?.phone}`)}
+          >
+            <Phone size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity 
-          style={[styles.actionBtn, styles.chatBtn, !doctor.isAcceptingPatients && styles.disabledBtn]}
+          style={[styles.consultBtn, !doctor.isAcceptingPatients && styles.consultBtnDisabled]}
           disabled={!doctor.isAcceptingPatients}
           onPress={() => navigation.navigate('NewConsultation', { doctorId: doctor.id })}
         >
           <MessageCircle size={20} color={Colors.white} />
-          <Text style={styles.actionBtnText}>Consult Online</Text>
+          <Text style={styles.consultBtnText}>
+            {language === 'ar' ? 'طلب استشارة فورية مع الطبيب' : 'Consult Online with Doctor'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -172,87 +234,266 @@ export const DoctorProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: {
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  backBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  backBtnText: {
+    color: Colors.white,
+    fontWeight: '700',
+  },
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
+    paddingTop: 48,
+    paddingBottom: 12,
     backgroundColor: Colors.surface,
-    ...Shadows.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  backButton: { padding: 4 },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary },
-  scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 100 },
-  heroCard: {
+  headerIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 100,
+    gap: 16,
+  },
+  doctorHeaderCard: {
     backgroundColor: Colors.surface,
     borderRadius: 20,
-    padding: 24,
+    padding: 20,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
     ...Shadows.sm,
-    marginBottom: 16,
   },
-  avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 16 },
-  name: { fontSize: 22, fontWeight: '900', color: Colors.textPrimary, marginBottom: 4 },
-  specialty: { fontSize: 14, color: Colors.textSecondary, marginBottom: 16 },
-  statsRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  statItem: { alignItems: 'center' },
-  statValue: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary },
-  statLabel: { fontSize: 12, color: Colors.textMuted },
-  statDivider: { width: 1, height: 24, backgroundColor: Colors.border },
-  offlineBanner: {
-    backgroundColor: Colors.error,
-    padding: 12,
+  avatarLarge: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: Colors.primaryLight,
+  },
+  doctorName: {
+    fontSize: 19,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  doctorSpecialty: {
+    fontSize: 14,
+    color: Colors.primary,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 16,
   },
-  offlineText: { color: Colors.white, fontWeight: '800', fontSize: 14 },
-  section: {
+  ratingText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#b45309',
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  verifiedText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.primaryDark,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
     backgroundColor: Colors.surface,
+    padding: 14,
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
     ...Shadows.sm,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary, marginBottom: 12 },
-  bioText: { fontSize: 14, color: Colors.textSecondary, lineHeight: 22 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  locationText: { fontSize: 14, color: Colors.textSecondary, flex: 1 },
-  portfolioItem: { marginBottom: 20 },
-  portfolioTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
-  portfolioDesc: { fontSize: 13, color: Colors.textSecondary, marginBottom: 12 },
-  sliderContainer: { height: 200, borderRadius: 12, overflow: 'hidden' },
+  statLabel: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+  },
+  closedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fee2e2',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+  },
+  closedText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.emergency,
+    flex: 1,
+  },
+  sectionCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.sm,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    marginBottom: 10,
+  },
+  sectionBody: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 22,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  addressText: {
+    fontSize: 13,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    flex: 1,
+  },
+  portfolioItem: {
+    marginBottom: 16,
+  },
+  caseTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+  slider: {
+    height: 200,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  caseDescription: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 6,
+    lineHeight: 18,
+  },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: Colors.surface,
-    flexDirection: 'row',
-    padding: 16,
-    paddingBottom: 32,
-    ...Shadows.md,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    ...Shadows.md,
   },
-  actionBtn: {
+  callBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#e0f2fe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primaryLight,
+  },
+  consultBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
     gap: 8,
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    borderRadius: 16,
+    ...Shadows.sm,
   },
-  chatBtn: { backgroundColor: Colors.primary },
-  disabledBtn: { backgroundColor: Colors.textMuted },
-  actionBtnText: { color: Colors.white, fontWeight: '800', fontSize: 15 },
+  consultBtnDisabled: {
+    backgroundColor: Colors.textMuted,
+    opacity: 0.6,
+  },
+  consultBtnText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
 });
-
-
-

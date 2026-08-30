@@ -102,7 +102,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <Search size={20} color={Colors.textMuted} />
           <TextInput 
             style={styles.searchInput}
-            placeholder="Search doctors, specialties..."
+            placeholder={language === 'ar' ? "ابحث عن طبيب، التخصص، العيادة..." : "Search doctors, specialties..."}
             placeholderTextColor={Colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -113,7 +113,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             style={[styles.filterPill, !selectedSpecialty && styles.filterPillActive]}
             onPress={() => setSelectedSpecialty(null)}
           >
-            <Text style={[styles.filterPillText, !selectedSpecialty && styles.filterPillTextActive]}>All</Text>
+            <Text style={[styles.filterPillText, !selectedSpecialty && styles.filterPillTextActive]}>{language === 'ar' ? "الكل" : "All"}</Text>
           </TouchableOpacity>
           {specialties.map(spec => (
             <TouchableOpacity 
@@ -155,7 +155,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               />
               <View style={styles.doctorInfo}>
                 <Text style={styles.doctorName}>{doctor.profileData?.fullName}</Text>
-                <Text style={styles.doctorSpecialty}>{doctor.specialty || 'General Dentist'}</Text>
+                <Text style={styles.doctorSpecialty}>{doctor.specialty || (language === 'ar' ? 'طبيب أسنان عام' : 'General Dentist')}</Text>
                 <View style={styles.ratingRow}>
                   <Star size={14} color="#f59e0b" fill="#f59e0b" />
                   <Text style={styles.ratingText}>{doctor.rating.toFixed(1)}</Text>
@@ -165,7 +165,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             <View style={styles.doctorFooter}>
               <View style={styles.footerItem}>
                 <MapPin size={14} color={Colors.textSecondary} />
-                <Text style={styles.footerText} numberOfLines={1}>{doctor.clinicAddress || 'Clinic Address Not Set'}</Text>
+                <Text style={styles.footerText} numberOfLines={1}>{doctor.clinicAddress || (language === 'ar' ? 'العنوان غير محدد' : 'Clinic Address Not Set')}</Text>
               </View>
               <View style={styles.priceTag}>
                 <Text style={styles.priceText}>{language === 'ar' ? `يبدأ من ${doctor.consultationFee || 350} ج.م` : `From ${doctor.consultationFee || 350} EGP`}</Text>
@@ -173,7 +173,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
             {!doctor.isAcceptingPatients && (
               <View style={styles.offlineBadge}>
-                <Text style={styles.offlineText}>Temporarily Closed</Text>
+                <Text style={styles.offlineText}>{language === 'ar' ? "غير متاح حالياً" : "Temporarily Closed"}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -181,7 +181,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
         {filteredDoctors.length === 0 && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No doctors found.</Text>
+            <Text style={styles.emptyStateText}>{language === 'ar' ? "لم يتم العثور على أطباء مطابقين" : "No doctors found."}</Text>
           </View>
         )}
       </ScrollView>
