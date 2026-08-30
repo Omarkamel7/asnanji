@@ -54,6 +54,8 @@ const SECTOR_OPTIONS = [
 
 export const NewConsultationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const route = require('@react-navigation/native').useRoute();
+  const doctorId = route.params?.doctorId;
   const { language, isRTL, currentUser, savePatientQuickProfile, createConsultationWithChat } = useApp();
 
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
@@ -190,6 +192,7 @@ export const NewConsultationScreen: React.FC = () => {
 
       // 5. Create consultation and generate instant chat room
       const { consultationId } = await createConsultationWithChat({
+          doctorId,
         patientId: currentUser.id || `pat_${Date.now()}`,
         patientName: patientName.trim(),
         patientPhone: patientPhone.trim(),
@@ -715,3 +718,6 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
 });
+
+
+

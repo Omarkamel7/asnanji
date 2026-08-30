@@ -26,7 +26,8 @@ export async function optimizeImage(uri: string): Promise<string> {
 export async function uploadDentalMedia(
   uri: string,
   folder: 'photos' | 'audio' | 'clinic' | 'portfolio',
-  userId: string = 'anonymous'
+  userId: string = 'anonymous',
+  userRole: 'patient' | 'doctor' = 'patient'
 ): Promise<string | null> {
   if (!isSupabaseConfigured) {
     return uri;
@@ -39,7 +40,13 @@ export async function uploadDentalMedia(
     }
 
     const ext = folder === 'audio' ? (uri.split('.').pop() || 'm4a') : 'jpg';
-    const fileName = `${folder}/${userId}_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+    
+    let pathPrefix = `consultations/${userId}`;
+    if (userRole === 'doctor') {
+      pathPrefix = `doctors/${userId}/${folder}`;
+    }
+
+    const fileName = `${pathPrefix}/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
 
     const response = await fetch(uploadUri);
     const blob = await response.blob();
@@ -68,27 +75,27 @@ export async function uploadDentalMedia(
   }
 }
 
-export async function uploadDentalPhoto(uri: string, userId?: string): Promise<string> {
-  const result = await uploadDentalMedia(uri, 'photos', userId);
+export async function uploadDentalPhoto(uri: string, userId: string = 'anonymous'): Promise<string> {
+  const result = await uploadDentalMedia(uri, 'photos', userId, 'patient');
   return result || uri;
 }
 
-export async function uploadDentalAudio(uri: string, userId?: string): Promise<string> {
-  const result = await uploadDentalMedia(uri, 'audio', userId);
+export async function uploadDentalAudio(uri: string, userId: string = 'anonymous'): Promise<string> {
+  const result = await uploadDentalMedia(uri, 'audio', userId, 'patient');
   return result || uri;
 }
 
-export async function uploadDoctorAvatar(uri: string): Promise<string> {
-  const result = await uploadDentalMedia(uri, 'clinic', 'doctor_avatar');
+export async function uploadDoctorAvatar(uri: string, doctorId: string): Promise<string> {
+  const result = await uploadDentalMedia(uri, 'clinic', doctorId, 'doctor');
   return result || uri;
 }
 
-export async function uploadDoctorCover(uri: string): Promise<string> {
-  const result = await uploadDentalMedia(uri, 'clinic', 'doctor_cover');
+export async function uploadDoctorCover(uri: string, doctorId: string): Promise<string> {
+  const result = await uploadDentalMedia(uri, 'clinic', doctorId, 'doctor');
   return result || uri;
 }
 
-export async function uploadPortfolioImage(uri: string, prefix: 'before' | 'after'): Promise<string> {
-  const result = await uploadDentalMedia(uri, 'portfolio', `case_${prefix}`);
+export async function uploadPortfolioImage(uri: string, doctorId: string): Promise<string> {
+  const result = await uploadDentalMedia(uri, 'portfolio', doctorId, 'doctor');
   return result || uri;
 }

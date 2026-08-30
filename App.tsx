@@ -28,7 +28,9 @@ import { DoctorConsultationDetailScreen } from './src/screens/DoctorConsultation
 import { ChatScreen } from './src/screens/ChatScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { NewConsultationScreen } from './src/screens/NewConsultationScreen';
-import { EditClinicScreen } from './src/screens/doctor/EditClinicScreen';
+import { DoctorProfileScreen } from './src/screens/DoctorProfileScreen';
+
+import { DoctorSettingsScreen } from './src/screens/doctor/DoctorSettingsScreen';
 import { ManageServicesScreen } from './src/screens/doctor/ManageServicesScreen';
 import { ManagePortfolioScreen } from './src/screens/doctor/ManagePortfolioScreen';
 import { UpdateNotifierModal } from './src/components/UpdateNotifierModal';
@@ -257,13 +259,7 @@ const MainNavigation = () => {
           }}
         />
 
-        <Stack.Screen
-          name="EditClinic"
-          component={EditClinicScreen}
-          options={{
-            headerShown: false,
-          }}
-        />
+        
 
         <Stack.Screen
           name="ManageServices"
@@ -300,4 +296,8 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+
+
+
 

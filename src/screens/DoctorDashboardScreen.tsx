@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,7 @@ import {
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
 import { FDI_TEETH } from '../constants/dentalData';
+import { supabase, isSupabaseConfigured } from '../services/supabase';
 
 interface DoctorDashboardScreenProps {
   navigation: any;
@@ -34,7 +35,7 @@ interface DoctorDashboardScreenProps {
 export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
   navigation,
 }) => {
-  const { t, language, complaints, appointments, doctorInbox, setRole, isRTL, refreshClinicData } = useApp();
+  const { t, language, complaints, appointments, doctorInbox, setRole, isRTL, refreshClinicData, currentUser } = useApp();
 
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'diagnosed'>('all');
@@ -44,6 +45,37 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
       refreshClinicData().catch((e) => console.warn('DoctorDashboard focus refresh error:', e));
     }, [])
   );
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !currentUser?.id) return;
+
+    const channel = supabase
+      .channel('doctor_realtime_events')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'consultations', filter: `doctor_id=eq.${currentUser.id}` },
+        (payload) => {
+          Alert.alert('New Consultation', 'A patient has submitted a new consultation request.');
+          refreshClinicData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `doctor_id=eq.${currentUser.id}` },
+        (payload) => {
+          // If it's the doctor themselves sending it, ignore
+          if (payload.new.sender_id === currentUser.id) return;
+          Alert.alert('New Message', 'You have a new message from a patient.');
+          refreshClinicData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.id, refreshClinicData]);
+
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -150,7 +182,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
         <View style={styles.managementGrid}>
           <TouchableOpacity
             style={styles.manageCard}
-            onPress={() => navigation.navigate('EditClinic')}
+            onPress={() => navigation.navigate('DoctorSettings')}
           >
             <View style={[styles.manageIconCircle, { backgroundColor: '#e0f2fe' }]}>
               <Stethoscope size={20} color={Colors.primary} />
@@ -826,3 +858,4 @@ const styles = StyleSheet.create({
     color: Colors.primaryDark,
   },
 });
+

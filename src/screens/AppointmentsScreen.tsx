@@ -106,6 +106,7 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
         serviceId: selectedService.id,
         serviceNameAr: selectedService.nameAr,
         serviceNameEn: selectedService.nameEn,
+          doctorId: route.params?.doctorId,
         date: dateStr,
         timeSlot: selectedSlot,
         price: selectedService.estimatedPrice,
@@ -707,3 +708,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+

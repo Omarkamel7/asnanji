@@ -1,3 +1,4 @@
+export * from './doctor';
 export type UserRole = 'patient' | 'doctor' | 'admin';
 
 export type Language = 'ar' | 'en';
@@ -52,6 +53,7 @@ export interface PreliminaryDiagnosis {
 export interface DentalComplaint {
   id: string;
   patientId: string;
+  doctorId?: string;
   patientName: string;
   patientPhone: string;
   selectedTeeth: number[]; // FDI numbers
@@ -85,6 +87,7 @@ export type AppointmentStatus = 'confirmed' | 'pending' | 'completed' | 'cancell
 export interface Appointment {
   id: string;
   patientId: string;
+  doctorId?: string;
   patientName: string;
   patientPhone: string;
   serviceId: string;
@@ -168,3 +171,5 @@ export interface ClinicInfo {
   rating: number;
   reviewCount: number;
 }
+
+

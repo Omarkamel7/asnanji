@@ -54,6 +54,8 @@ interface AppContextType {
   appointments: Appointment[];
   bookAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt' | 'status'>) => Promise<Appointment>;
   cancelAppointment: (appointmentId: string) => Promise<void>;
+  doctors: import('../types/doctor').DoctorProfile[];
+  fetchDoctors: () => Promise<void>;
   clinicSettings: ClinicSettings;
   updateClinicSettings: (settings: Partial<ClinicSettings>) => Promise<void>;
   services: DentalService[];
@@ -104,6 +106,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_PATIENT);
   const [complaints, setComplaints] = useState<DentalComplaint[]>(INITIAL_COMPLAINTS);
   const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
+  const [doctors, setDoctors] = useState<import('../types/doctor').DoctorProfile[]>([]);
   const [clinicSettings, setClinicSettings] = useState<ClinicSettings>(DEFAULT_CLINIC_SETTINGS);
   const [services, setServices] = useState<DentalService[]>(DEFAULT_SERVICES);
   const [portfolioCases, setPortfolioCases] = useState<BeforeAfterCase[]>(INITIAL_BEFORE_AFTER_CASES);
@@ -177,6 +180,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Fetch Initial Remote Data (Settings, Services, Portfolio)
     fetchClinicSettings();
+      fetchDoctors();
     fetchServices();
     fetchPortfolio();
     fetchRemoteUserData();
@@ -268,6 +272,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       authListener?.subscription.unsubscribe();
       supabase.removeChannel(realtimeChannel);
     };
+  };
+
+    const fetchDoctors = async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const { data, error } = await supabase
+        .from('doctor_profiles')
+        .select('*, profiles:id (full_name, phone)');
+      if (data && !error) {
+        setDoctors(data.map((d: any) => ({
+          id: d.id,
+          slug: d.slug,
+          specialty: d.specialty,
+          bio: d.bio,
+          clinicAddress: d.clinic_address,
+          consultationFee: d.consultation_fee,
+          avatarUrl: d.avatar_url,
+          isAcceptingPatients: d.is_accepting_patients,
+          rating: Number(d.rating),
+          profileData: {
+            id: d.id,
+            fullName: d.profiles?.full_name || 'Doctor',
+            phone: d.profiles?.phone || '',
+            role: 'doctor'
+          }
+        })));
+      }
+    } catch (e) {
+      console.warn(e);
+    }
   };
 
   const fetchClinicSettings = async () => {
@@ -794,6 +828,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString(),
     };
 
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase.from('appointments').insert({
+          id: newAppointment.id,
+          patient_id: newAppointment.patientId,
+          doctor_id: newAppointment.doctorId || null,
+          service_id: newAppointment.serviceId,
+          appointment_date: newAppointment.date,
+          time_slot: newAppointment.timeSlot,
+          status: newAppointment.status,
+          notes: ''
+        });
+        if (error) {
+          console.error("Failed to book in Supabase", error);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     const updated = [newAppointment, ...appointments];
     setAppointments(updated);
     await AsyncStorage.setItem('@dental_app_appointments', JSON.stringify(updated));
@@ -1107,6 +1161,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       appointments,
       bookAppointment,
       cancelAppointment,
+      doctors,
+      fetchDoctors,
       clinicSettings,
       updateClinicSettings,
       services,
@@ -1156,3 +1212,4 @@ export const useApp = () => {
   }
   return context;
 };
+
