@@ -1,8 +1,8 @@
 export const translations = {
   ar: {
     // App & Header
-    appTitle: 'Ø¹ÙŠØ§Ø¯Ø© Ø¯. ÙƒØ±ÙŠÙ… Ø£Ø¨Ùˆ Ø¨ÙƒØ± Ù„Ù„Ø£Ø³Ù†Ø§Ù†',
-    tagline: 'Ø§Ø¨ØªØ³Ø§Ù…ØªÙƒ ÙÙŠ Ø£ÙŠØ¯Ù Ø£Ù…ÙŠÙ†Ø© Ù…Ø¹ Ø£Ø­Ø¯Ø« Ø§Ù„ØªÙ‚Ù†ÙŠØ§Øª',
+    appTitle: 'ÇÓäÇäÌí',
+    tagline: 'ãäÕÉ ÃØÈÇÁ ÇáÃÓäÇä ÇáãÊÎÕÕÉ',
     patientRole: 'ÙˆØ§Ø¬Ù‡Ø© Ø§Ù„Ù…Ø±ÙŠØ¶',
     doctorRole: 'ÙˆØ§Ø¬Ù‡Ø© Ø§Ù„Ø·Ø¨ÙŠØ¨ (Ù„ÙˆØ­Ø© Ø§Ù„ØªØ­ÙƒÙ…)',
     switchToDoctor: 'Ø§Ù„ØªØ¨Ø¯ÙŠÙ„ Ø¥Ù„Ù‰ Ø­Ø³Ø§Ø¨ Ø§Ù„Ø·Ø¨ÙŠØ¨',
@@ -185,8 +185,8 @@ export const translations = {
   },
   en: {
     // App & Header
-    appTitle: 'Dr. Karim Abo Bakr Dental Clinic',
-    tagline: 'Your smile is in trusted hands with cutting-edge dental care',
+    appTitle: 'ÇÓäÇäÌí',
+    tagline: 'ãäÕÉ ÃØÈÇÁ ÇáÃÓäÇä ÇáãÊÎÕÕÉ',
     patientRole: 'Patient View',
     doctorRole: 'Doctor View (Admin Dashboard)',
     switchToDoctor: 'Switch to Doctor Account',
@@ -367,3 +367,4 @@ export const translations = {
     selected: 'Selected',
   },
 };
+

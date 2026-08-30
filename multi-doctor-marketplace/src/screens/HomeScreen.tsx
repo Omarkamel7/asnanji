@@ -74,8 +74,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <Text style={styles.headerTitle}>Find a Doctor</Text>
+            <View style={styles.topBar}>
+        <View style={styles.brandRow}>
+          <Image
+            source={require('../../assets/app_logo.png')}
+            style={styles.brandLogo}
+            contentFit="contain"
+          />
+          <View>
+            <Text style={styles.headerTitle}>{t.appTitle}</Text>
+            <Text style={styles.headerSubtitle}>{language === 'ar' ? 'œ·Ì· √ÿ»«¡ «·√”‰«‰' : 'Find Your Dentist'}</Text>
+          </View>
+        </View>
         <TouchableOpacity
           style={styles.langButton}
           onPress={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
@@ -193,6 +203,20 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: Colors.surface,
     ...Shadows.sm,
+  },
+    brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  brandLogo: {
+    width: 38,
+    height: 38,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   headerTitle: {
     fontSize: 20,
@@ -371,4 +395,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
   }
 });
+
 
