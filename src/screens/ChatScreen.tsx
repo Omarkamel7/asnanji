@@ -12,9 +12,10 @@ import {
   Alert,
   RefreshControl,
   ScrollView,
+  FlatList,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { FlashList } from '@shopify/flash-list';
+
 import { lightTap } from '../utils/haptics';
 import { CANNED_RESPONSES } from '../constants/cannedResponses';
 import {
@@ -81,7 +82,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
   const [nameError, setNameError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
-  const flatListRef = useRef<FlashList<ChatMessage>>(null);
+  const flatListRef = useRef<FlatList<ChatMessage>>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const linkedComplaint = complaints.find((c) => c.id === consultationId);
@@ -609,7 +610,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
       )}
 
       {/* Messages List */}
-      <FlashList
+      <FlatList
         ref={flatListRef}
         data={consultationMessages}
         keyExtractor={(item) => item.id}

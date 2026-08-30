@@ -3,1546 +3,589 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>عيادة د. كريم أبو بكر للأسنان - النسخة التفاعلية</title>
+  <title>اسنانجي - Asnanji Interactive Preview</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
     * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Cairo", Arial, sans-serif;
+      font-family: 'Cairo', sans-serif;
     }
-
-    body {
-      background-color: #0b132b;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 16px;
-      color: #0f172a;
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
     }
-
-    /* Mobile Shell Frame */
-    .phone-container {
-      width: 100%;
-      max-width: 440px;
-      height: 890px;
-      background: #f8fafc;
-      border-radius: 46px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 10px #1e293b, 0 0 0 12px #334155;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .before-after-container {
       position: relative;
-    }
-
-    /* Top Status Bar */
-    .status-bar {
-      background: #0284c7;
-      color: white;
-      padding: 10px 20px 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      font-weight: 700;
-      z-index: 40;
-    }
-
-    /* App Header */
-    .app-header {
-      background: #ffffff;
-      padding: 10px 16px;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 30;
-    }
-
-    .header-branding {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .header-logo {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      border: 1px solid #e2e8f0;
-      object-fit: cover;
-    }
-
-    .header-title {
-      font-size: 14px;
-      font-weight: 900;
-      color: #0f172a;
-      line-height: 1.2;
-    }
-
-    .header-subtitle {
-      font-size: 11px;
-      color: #0284c7;
-      font-weight: 700;
-    }
-
-    .header-lang-btn {
-      border: 1px solid #cbd5e1;
-      background: #f1f5f9;
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      color: #334155;
-    }
-
-    /* Main Scrollable Content Area */
-    .screen-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding-bottom: 85px;
-    }
-
-    /* Cards & Components */
-    .card {
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 14px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
-    }
-
-    .hero-card {
-      background: linear-gradient(135deg, #0369a1, #0284c7);
-      color: white;
-      border-radius: 20px;
-      padding: 16px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      box-shadow: 0 10px 15px -3px rgba(2, 132, 199, 0.25);
-    }
-
-    .doctor-avatar-circle {
-      width: 65px;
-      height: 65px;
-      border-radius: 33px;
-      border: 2.5px solid white;
-      object-fit: cover;
-      object-position: center 10%;
-    }
-
-    .hero-text h3 {
-      font-size: 16px;
-      font-weight: 900;
-    }
-
-    .hero-text p {
-      font-size: 11px;
-      opacity: 0.9;
-      margin-top: 3px;
-      line-height: 1.4;
-    }
-
-    /* Action Buttons */
-    .action-card {
-      background: white;
-      border: 1.5px solid #e0f2fe;
-      border-radius: 16px;
-      padding: 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s;
-    }
-
-    .action-card:hover {
-      border-color: #0284c7;
-      transform: translateY(-2px);
-    }
-
-    .action-icon {
-      width: 44px;
-      height: 44px;
+      overflow: hidden;
       border-radius: 12px;
-      background: #0284c7;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-
-    .action-info {
-      flex: 1;
-    }
-
-    .action-info strong {
-      font-size: 14px;
-      color: #0f172a;
-      display: block;
-    }
-
-    .action-info span {
-      font-size: 11px;
-      color: #64748b;
-    }
-
-    /* Chips Grid */
-    .chips-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .chip-btn {
-      padding: 8px 12px;
-      background: #f8fafc;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      color: #334155;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.15s;
-    }
-
-    .chip-btn.active {
-      background: #e0f2fe;
-      border-color: #0284c7;
-      color: #0369a1;
-      font-weight: 800;
-    }
-
-    /* Form Fields */
-    .input-field {
-      width: 100%;
-      padding: 11px 13px;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 12px;
-      font-size: 12px;
-      background: #f8fafc;
-      outline: none;
-      margin-top: 5px;
-    }
-
-    .input-field:focus {
-      border-color: #0284c7;
-      background: white;
-    }
-
-    .textarea-field {
-      width: 100%;
-      padding: 11px 13px;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 12px;
-      font-size: 12px;
-      background: #f8fafc;
-      outline: none;
-      min-height: 80px;
-      resize: vertical;
-      margin-top: 5px;
-    }
-
-    .btn-primary {
-      background: #0284c7;
-      color: white;
-      border: none;
-      border-radius: 14px;
-      padding: 14px;
-      font-size: 14px;
-      font-weight: 900;
-      cursor: pointer;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 6px -1px rgba(2, 132, 199, 0.3);
-      transition: all 0.2s;
-    }
-
-    .btn-primary:hover {
-      background: #0369a1;
-    }
-
-    /* Bottom Navigation Tab Bar */
-    .tab-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 70px;
-      background: white;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      padding: 0 8px;
-      z-index: 50;
-    }
-
-    .tab-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      background: none;
-      border: none;
-      color: #94a3b8;
-      font-size: 10px;
-      font-weight: 700;
-      cursor: pointer;
-      flex: 1;
-      padding: 6px 0;
-    }
-
-    .tab-btn.active {
-      color: #0284c7;
-    }
-
-    .tab-icon {
-      font-size: 18px;
-    }
-
-    /* Badges */
-    .badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 10px;
-      font-weight: 800;
-    }
-    .badge-urgent { background: #fee2e2; color: #b91c1c; }
-    .badge-pending { background: #fef3c7; color: #b45309; }
-    .badge-done { background: #dcfce7; color: #15803d; }
-
-    /* Chat Messages */
-    .chat-bubble {
-      max-width: 80%;
-      padding: 10px 14px;
-      border-radius: 16px;
-      font-size: 12px;
-      line-height: 1.5;
-      margin-bottom: 8px;
-    }
-    .chat-me {
-      background: #0284c7;
-      color: white;
-      align-self: flex-start;
-      border-bottom-right-radius: 4px;
-    }
-    .chat-other {
-      background: #f1f5f9;
-      color: #0f172a;
-      align-self: flex-end;
-      border-bottom-left-radius: 4px;
-      border: 1px solid #e2e8f0;
-    }
-
-    /* Doctor Inbox Card */
-    .inbox-card {
-      background: white;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 16px;
-      padding: 12px;
-      margin-bottom: 10px;
-    }
-    .inbox-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
+      user-select: none;
     }
   </style>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 flex flex-col items-center justify-center antialiased">
 
-  <div class="phone-container">
-    <!-- Status Bar -->
-    <div class="status-bar">
-      <span>5G ● 100%</span>
-      <span>عيادة د. كريم أبو بكر</span>
-      <span>9:41 AM</span>
+  <!-- Header Controls -->
+  <div class="w-full max-w-4xl mb-4 flex flex-wrap items-center justify-between gap-3 bg-slate-800/80 backdrop-blur border border-slate-700 p-4 rounded-2xl shadow-xl">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400 font-bold text-xl">
+        🦷
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-white flex items-center gap-2">
+          اسنانجي <span class="text-xs bg-sky-500/20 text-sky-400 px-2 py-0.5 rounded-full border border-sky-500/30">Multi-Doctor v1.4</span>
+        </h1>
+        <p class="text-xs text-slate-400">معاينة تفاعلية حية لمنصة الأطباء المتعددين</p>
+      </div>
     </div>
 
-    <!-- App Header -->
-    <div class="app-header">
-      <div class="header-branding">
-        <img src="assets/app_logo.png" class="header-logo" alt="Logo" onerror="this.src='assets/icon.png'">
-        <div>
-          <div class="header-title" id="hdr-title">عيادة د. كريم أبو بكر</div>
-          <div class="header-subtitle" id="hdr-subtitle">استشاري طب وجراحة الأسنان</div>
+    <!-- Controls -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Role Toggle -->
+      <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-700 text-xs">
+        <button id="rolePatientBtn" onclick="setRole('patient')" class="px-3 py-1.5 rounded-lg font-bold transition bg-sky-600 text-white shadow">
+          👤 مريض (Patient)
+        </button>
+        <button id="roleDoctorBtn" onclick="setRole('doctor')" class="px-3 py-1.5 rounded-lg font-bold transition text-slate-400 hover:text-white">
+          🩺 طبيب (Doctor)
+        </button>
+      </div>
+
+      <!-- Quick Screen Switcher -->
+      <select id="screenSelect" onchange="navigateTo(this.value)" class="bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:border-sky-500 font-semibold">
+        <option value="home">🏠 دليل الأطباء (Home)</option>
+        <option value="doctor_profile">👨‍⚕️ صفحة الطبيب (Mini-Site)</option>
+        <option value="new_consultation">📝 استشارة جديدة (Triage)</option>
+        <option value="doctor_dashboard">📊 لوحة تحكم الطبيب</option>
+        <option value="doctor_settings">⚙️ إعدادات وتوافر الطبيب</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Mobile Phone Mockup -->
+  <div class="relative w-[380px] h-[780px] bg-slate-950 rounded-[48px] p-3 shadow-2xl border-4 border-slate-700 ring-1 ring-slate-600/50 flex flex-col overflow-hidden">
+    
+    <!-- Phone Notch / Island -->
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-50 flex items-center justify-between px-3">
+      <div class="w-2.5 h-2.5 rounded-full bg-slate-800"></div>
+      <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+    </div>
+
+    <!-- App Screen Container -->
+    <div class="w-full h-full bg-slate-50 text-slate-900 rounded-[38px] overflow-hidden flex flex-col pt-7 pb-1 relative shadow-inner">
+      
+      <!-- Top Status Bar Mock -->
+      <div class="px-6 py-1 flex items-center justify-between text-[11px] font-bold text-slate-600">
+        <span>3:30 PM</span>
+        <div class="flex items-center gap-1.5">
+          <span>5G</span>
+          <span>100% 🔋</span>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <button onclick="togglePreviewLang()" class="header-lang-btn" id="btn-lang-toggle">🌐 English</button>
-        <div id="doctor-badge-slot"></div>
+
+      <!-- =================================================================== -->
+      <!-- SCREEN 1: HOME - DOCTOR DIRECTORY -->
+      <!-- =================================================================== -->
+      <div id="screen-home" class="screen-view flex-1 flex flex-col overflow-hidden">
+        <!-- App Top Bar -->
+        <div class="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center text-white text-lg shadow-sm">
+              🦷
+            </div>
+            <div>
+              <h2 class="font-extrabold text-sm text-slate-900 leading-tight">اسنانجي</h2>
+              <p class="text-[10px] text-slate-400 font-medium">دليل أطباء الأسنان المعتمدين</p>
+            </div>
+          </div>
+          <button onclick="alert('تغيير اللغة')" class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-bold border border-slate-200">
+            EN
+          </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+          
+          <!-- Search Bar -->
+          <div class="relative">
+            <input type="text" id="doctorSearch" oninput="filterDoctors()" placeholder="ابحث باسم الطبيب أو التخصص..." class="w-full bg-white border border-slate-200 text-xs rounded-xl py-2.5 pr-8 pl-3 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 shadow-sm">
+            <span class="absolute right-2.5 top-2.5 text-slate-400 text-xs">🔍</span>
+          </div>
+
+          <!-- Specialty Filters -->
+          <div class="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+            <button onclick="setSpecialtyFilter('all')" class="spec-filter active whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-lg bg-sky-600 text-white shadow-sm transition">
+              الكل ✨
+            </button>
+            <button onclick="setSpecialtyFilter('ortho')" class="spec-filter whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 transition hover:bg-slate-50">
+              تقويم أسنان 🦷
+            </button>
+            <button onclick="setSpecialtyFilter('implant')" class="spec-filter whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 transition hover:bg-slate-50">
+              زراعة أسنان 🔩
+            </button>
+            <button onclick="setSpecialtyFilter('cosmetic')" class="spec-filter whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 transition hover:bg-slate-50">
+              تجميل وابتسامة ✨
+            </button>
+          </div>
+
+          <!-- Doctor Cards List -->
+          <div id="doctorList" class="space-y-2.5">
+            <!-- Doctor Card 1 -->
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-sm hover:shadow-md transition cursor-pointer" onclick="navigateTo('doctor_profile')">
+              <div class="flex items-center gap-3">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white text-2xl font-bold shadow">
+                  👨‍⚕️
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xs text-slate-900 truncate">د. كريم أبو بكر</h3>
+                    <span class="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                      متاح الآن 🟢
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-sky-600 font-semibold mt-0.5">استشاري جراحة وتجميل الأسنان</p>
+                  <div class="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
+                    <span class="flex items-center gap-1 text-amber-500 font-bold">⭐ 4.9 (128)</span>
+                    <span>📍 القاهرة، المعادي</span>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] text-slate-400 block">سعر الكشف</span>
+                  <span class="text-xs font-extrabold text-slate-900">350 ج.م</span>
+                </div>
+                <button class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow transition">
+                  عرض العيادة والحجز 👈
+                </button>
+              </div>
+            </div>
+
+            <!-- Doctor Card 2 -->
+            <div class="bg-white border border-slate-200/80 rounded-2xl p-3.5 shadow-sm hover:shadow-md transition cursor-pointer" onclick="navigateTo('doctor_profile')">
+              <div class="flex items-center gap-3">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow">
+                  👩‍⚕️
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-xs text-slate-900 truncate">د. سارة المنشاوي</h3>
+                    <span class="bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                      متاح الآن 🟢
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-purple-600 font-semibold mt-0.5">أخصائية تقويم وتجميل الابتسامة</p>
+                  <div class="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
+                    <span class="flex items-center gap-1 text-amber-500 font-bold">⭐ 5.0 (94)</span>
+                    <span>📍 الجيزة، الدقي</span>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] text-slate-400 block">سعر الكشف</span>
+                  <span class="text-xs font-extrabold text-slate-900">400 ج.م</span>
+                </div>
+                <button class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow transition">
+                  عرض العيادة والحجز 👈
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Screen Content Area -->
-    <div class="screen-content" id="screen-container">
-      <!-- Injected via JavaScript -->
-    </div>
+      <!-- =================================================================== -->
+      <!-- SCREEN 2: DOCTOR PROFILE / MINI-SITE -->
+      <!-- =================================================================== -->
+      <div id="screen-doctor_profile" class="screen-view flex-1 flex flex-col overflow-hidden hidden">
+        <!-- Top Nav -->
+        <div class="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between">
+          <button onclick="navigateTo('home')" class="text-xs font-bold text-slate-600 flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg">
+            ➡️ رجوع
+          </button>
+          <span class="font-bold text-xs text-slate-800">بروفايل الطبيب</span>
+          <button onclick="alert('تم نسخ رابط مشاركة عيادة الطبيب!')" class="text-xs bg-sky-50 text-sky-600 px-2 py-1 rounded-lg font-bold">
+            🔗 مشاركة
+          </button>
+        </div>
 
-    <!-- Bottom Navigation Bar -->
-    <div class="tab-bar">
-      <button onclick="switchTab('home')" class="tab-btn active" id="tab-home">
-        <span class="tab-icon">🏠</span>
-        <span>الرئيسية</span>
-      </button>
-      <button onclick="switchTab('consultation')" class="tab-btn" id="tab-consultation">
-        <span class="tab-icon">🩺</span>
-        <span>استشارة سريعة</span>
-      </button>
-      <button onclick="switchTab('chat')" class="tab-btn" id="tab-chat">
-        <span class="tab-icon">💬</span>
-        <span>المحادثة</span>
-      </button>
-      <button onclick="switchTab('profile')" class="tab-btn" id="tab-profile">
-        <span class="tab-icon">👤</span>
-        <span>حسابي</span>
-      </button>
+        <!-- Scrollable Profile -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+          <!-- Doctor Header Box -->
+          <div class="bg-gradient-to-br from-sky-600 to-blue-800 rounded-2xl p-4 text-white shadow-md text-center relative overflow-hidden">
+            <div class="w-16 h-16 rounded-full bg-white/20 border-2 border-white/40 mx-auto flex items-center justify-center text-3xl shadow">
+              👨‍⚕️
+            </div>
+            <h2 class="font-bold text-sm mt-2">د. كريم أبو بكر</h2>
+            <p class="text-[11px] text-sky-100">استشاري جراحة وتجميل وزراعة الأسنان</p>
+            <div class="mt-2 flex items-center justify-center gap-2 text-xs">
+              <span class="bg-white/20 px-2 py-0.5 rounded-full">⭐ 4.9 (128 تقييم)</span>
+              <span class="bg-emerald-500/80 px-2 py-0.5 rounded-full font-bold">متاح للحجز 🟢</span>
+            </div>
+          </div>
+
+          <!-- Interactive Before & After Showcase -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-bold text-xs text-slate-900">معرض الحالات (Before & After) 📸</h4>
+              <span class="text-[10px] text-sky-600 font-bold">حالة: فينير وابتسامة هوليود</span>
+            </div>
+            
+            <div class="before-after-container bg-slate-900 h-36 relative flex items-center justify-center text-white">
+              <div id="beforeAfterDisplay" class="w-full h-full flex items-center justify-center bg-gradient-to-r from-emerald-700 to-teal-900 p-3 text-center">
+                <div>
+                  <span class="text-2xl block mb-1">✨🦷</span>
+                  <span class="text-xs font-bold text-emerald-200 block">النتيجة النهائية (After)</span>
+                  <span class="text-[10px] text-slate-300">ابتسامة متناسقة وبياض طبيعي</span>
+                </div>
+              </div>
+              <button onclick="toggleBeforeAfter()" class="absolute bottom-2 left-2 bg-slate-900/80 backdrop-blur text-white text-[10px] font-bold px-2.5 py-1 rounded-lg border border-slate-700 hover:bg-slate-900 shadow">
+                🔄 اضغط للمقارنة (Before / After)
+              </button>
+            </div>
+          </div>
+
+          <!-- About & Details -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2 text-xs">
+            <h4 class="font-bold text-slate-900">نبذة عن الطبيب</h4>
+            <p class="text-[11px] text-slate-600 leading-relaxed">
+              خبرة أكثر من 12 عاماً في زراعة وتجميل الأسنان، حاصل على البورد الألماني في زراعة الأسنان الفورية وتصميم الابتسامة الرقمية (DSD).
+            </p>
+            <div class="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-[11px]">
+              <div>
+                <span class="text-slate-400 block">العنوان:</span>
+                <span class="font-semibold text-slate-800">برج النخيل، المعادي</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block">سعر الكشف:</span>
+                <span class="font-semibold text-slate-800">350 ج.م</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="space-y-2 pt-1">
+            <button onclick="navigateTo('new_consultation')" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs py-2.5 rounded-xl shadow flex items-center justify-center gap-2 transition">
+              💬 استشارة أونلاين فورية مع الطبيب
+            </button>
+            <button onclick="alert('تم فتح شاشة حجز موعد مع د. كريم وتأكيد منع التضارب!')" class="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs py-2.5 rounded-xl shadow flex items-center justify-center gap-2 transition">
+              📅 حجز موعد كشف في العيادة
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- SCREEN 3: DOCTOR DASHBOARD -->
+      <!-- =================================================================== -->
+      <div id="screen-doctor_dashboard" class="screen-view flex-1 flex flex-col overflow-hidden hidden">
+        <!-- Top Bar -->
+        <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
+          <div>
+            <h2 class="font-bold text-xs">لوحة تحكم الطبيب 🩺</h2>
+            <p class="text-[10px] text-sky-300">مرحباً د. كريم أبو بكر</p>
+          </div>
+          <button onclick="navigateTo('doctor_settings')" class="text-xs bg-slate-800 text-sky-400 px-2.5 py-1 rounded-lg border border-slate-700 font-bold">
+            ⚙️ الإعدادات
+          </button>
+        </div>
+
+        <!-- Scrollable Dashboard -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+          <!-- Quick Stats Grid -->
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-white border border-slate-200 rounded-xl p-2 shadow-sm">
+              <span class="text-[10px] text-slate-400 block font-semibold">استشارات واردة</span>
+              <span class="text-base font-black text-sky-600">4</span>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-2 shadow-sm">
+              <span class="text-[10px] text-slate-400 block font-semibold">مواعيد اليوم</span>
+              <span class="text-base font-black text-emerald-600">6</span>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl p-2 shadow-sm">
+              <span class="text-[10px] text-slate-400 block font-semibold">التقييم العام</span>
+              <span class="text-base font-black text-amber-500">4.9 ⭐</span>
+            </div>
+          </div>
+
+          <!-- Real-time Alert Banner -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-600 font-bold">📡 Real-time:</span>
+              <span class="text-emerald-800 text-[11px]">الاستماع اللحظي للرسائل مفعل</span>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          </div>
+
+          <!-- Incoming Triage Requests (Isolated Inbox) -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-bold text-xs text-slate-900">حالات الفرز والاستشارة الواردة</h4>
+              <span class="text-[10px] bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-bold">خاص بك فقط</span>
+            </div>
+
+            <div class="space-y-2">
+              <!-- Item 1 -->
+              <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs text-slate-900">أحمد محمود (ألم حاد بالضرس)</span>
+                  <span class="text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">عاجل 🚨</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">الأسنان المصابة: [36, 37] | مستوى الألم: 8/10</p>
+                <div class="mt-2 flex items-center justify-end gap-2">
+                  <button onclick="alert('فتح تفاصيل الفحص والرد بالتشخيص')" class="bg-sky-600 text-white text-[11px] font-bold px-3 py-1 rounded-lg">
+                    فحص وتشخيص 🩺
+                  </button>
+                </div>
+              </div>
+
+              <!-- Item 2 -->
+              <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs text-slate-900">مريم خالد (استفسار تجميل)</span>
+                  <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">روتيني ⏳</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1">مرفق صورة أشعة وفحص ابتسامة</p>
+                <div class="mt-2 flex items-center justify-end gap-2">
+                  <button onclick="alert('فتح الشات المباشر مع المريض')" class="bg-slate-800 text-white text-[11px] font-bold px-3 py-1 rounded-lg">
+                    محادثة مباشرة 💬
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- SCREEN 4: DOCTOR SETTINGS -->
+      <!-- =================================================================== -->
+      <div id="screen-doctor_settings" class="screen-view flex-1 flex flex-col overflow-hidden hidden">
+        <!-- Top Nav -->
+        <div class="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between">
+          <button onclick="navigateTo('doctor_dashboard')" class="text-xs font-bold text-slate-600 flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg">
+            ➡️ لوحة التحكم
+          </button>
+          <span class="font-bold text-xs text-slate-800">إعدادات وتوافر العيادة</span>
+          <button onclick="saveDoctorSettingsMock()" class="text-xs bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold shadow">
+            💾 حفظ
+          </button>
+        </div>
+
+        <!-- Settings Form -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3 text-xs">
+          <!-- Toggle Switches -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-3">
+            <h4 class="font-bold text-slate-900 text-xs">التحكم في التوافر والميزات</h4>
+            
+            <div class="flex items-center justify-between py-1 border-b border-slate-100">
+              <div>
+                <span class="font-bold text-slate-800 block text-xs">وضع الإجازة (Vacation Mode)</span>
+                <span class="text-[10px] text-slate-400">إيقاف استقبال المرضى مؤقتاً</span>
+              </div>
+              <input type="checkbox" id="toggleVacation" class="w-4 h-4 text-rose-600 rounded">
+            </div>
+
+            <div class="flex items-center justify-between py-1 border-b border-slate-100">
+              <div>
+                <span class="font-bold text-slate-800 block text-xs">الاستشارات الفورية (Instant Consult)</span>
+                <span class="text-[10px] text-slate-400">السماح للمرضى بطلب كشف أونلاين</span>
+              </div>
+              <input type="checkbox" id="toggleConsult" checked class="w-4 h-4 text-sky-600 rounded">
+            </div>
+
+            <div class="flex items-center justify-between py-1">
+              <div>
+                <span class="font-bold text-slate-800 block text-xs">حجز المواعيد (Online Bookings)</span>
+                <span class="text-[10px] text-slate-400">تفعيل حجز الزيارات بالعيادة</span>
+              </div>
+              <input type="checkbox" id="toggleBooking" checked class="w-4 h-4 text-sky-600 rounded">
+            </div>
+          </div>
+
+          <!-- Profile Details Form -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2">
+            <h4 class="font-bold text-slate-900 text-xs">البيانات المهنية والتسعير</h4>
+            
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block mb-1">التخصص</label>
+              <input type="text" value="استشاري جراحة وتجميل الأسنان" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
+            </div>
+
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block mb-1">سعر الكشف (ج.م)</label>
+              <input type="number" value="350" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
+            </div>
+
+            <div>
+              <label class="text-[10px] font-bold text-slate-500 block mb-1">عنوان العيادة</label>
+              <input type="text" value="برج النخيل، المعادي، القاهرة" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- SCREEN 5: NEW CONSULTATION (TRIAGE) -->
+      <!-- =================================================================== -->
+      <div id="screen-new_consultation" class="screen-view flex-1 flex flex-col overflow-hidden hidden">
+        <!-- Top Nav -->
+        <div class="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between">
+          <button onclick="navigateTo('doctor_profile')" class="text-xs font-bold text-slate-600 flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg">
+            ➡️ رجوع
+          </button>
+          <span class="font-bold text-xs text-slate-800">طلب استشارة أونلاين</span>
+          <div class="w-8"></div>
+        </div>
+
+        <!-- Triage Form -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3 text-xs">
+          <!-- Doctor Assign Banner -->
+          <div class="bg-sky-50 border border-sky-200 rounded-xl p-2.5 flex items-center gap-2">
+            <span class="text-lg">👨‍⚕️</span>
+            <div>
+              <span class="font-bold text-sky-900 block text-[11px]">موجهة إلى: د. كريم أبو بكر</span>
+              <span class="text-[10px] text-sky-700">سيصل إشعار فوري للطبيب بمجرد الإرسال</span>
+            </div>
+          </div>
+
+          <!-- Pain Level Slider -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-slate-900 text-xs">شدة الألم</span>
+              <span id="painLevelText" class="text-xs font-black text-rose-600">7 / 10 (ألم شديد ⚡)</span>
+            </div>
+            <input type="range" min="1" max="10" value="7" oninput="updatePain(this.value)" class="w-full accent-rose-600">
+          </div>
+
+          <!-- Symptoms Checklist -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm space-y-2">
+            <span class="font-bold text-slate-900 text-xs block">الأعراض المصاحبة</span>
+            <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+              <label class="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <input type="checkbox" checked class="rounded text-sky-600">
+                <span>حساسية بارد/ساخن 🧊</span>
+              </label>
+              <label class="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <input type="checkbox" checked class="rounded text-sky-600">
+                <span>نزيف لثة 🩸</span>
+              </label>
+              <label class="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <input type="checkbox" class="rounded text-sky-600">
+                <span>تورم بالخد 🤕</span>
+              </label>
+              <label class="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                <input type="checkbox" class="rounded text-sky-600">
+                <span>كسر بالسن 🦷</span>
+              </label>
+            </div>
+          </div>
+
+          <button onclick="alert('تم إرسال الاستشارة وتنبيه الطبيب فوراً عبر Supabase Realtime!')" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs py-2.5 rounded-xl shadow">
+            إرسال الاستشارة وبدء المحادثة 🚀
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom Navigation Bar (Patient vs Doctor Dynamic) -->
+      <div class="bg-white border-t border-slate-200 px-4 py-2 flex items-center justify-around text-[10px] font-bold text-slate-500">
+        <button onclick="navigateTo('home')" id="tabHome" class="flex flex-col items-center gap-0.5 text-sky-600">
+          <span class="text-base">🏠</span>
+          <span>الرئيسية</span>
+        </button>
+        <button onclick="alert('شاشة مواعيدي')" class="flex flex-col items-center gap-0.5 hover:text-slate-900">
+          <span class="text-base">📅</span>
+          <span>مواعيدي</span>
+        </button>
+        <button onclick="alert('شاشة استشاراتي والشات')" class="flex flex-col items-center gap-0.5 hover:text-slate-900">
+          <span class="text-base">💬</span>
+          <span>المحادثات</span>
+        </button>
+        <button onclick="navigateTo('doctor_dashboard')" id="tabDocDash" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-900">
+          <span class="text-base">🩺</span>
+          <span>طبيبي</span>
+        </button>
+      </div>
+
     </div>
   </div>
 
   <script>
-    const I18N = {
-      ar: {
-        appTitle: 'عيادة د. كريم أبو بكر',
-        appSub: 'استشاري طب وجراحة الأسنان',
-        navHome: 'الرئيسية',
-        navConsultation: 'استشارة سريعة',
-        navChat: 'المحادثة',
-        navProfile: 'حسابي',
-        doctorMode: '✓ وضع الطبيب',
-        heroBio: 'ابتسامتك في أيدٍ أمينة مع أحدث التقنيات الرقمية المتقدمة لطب وزراعة وتجميل الأسنان.',
-        startConsTitle: 'طلب استشارة وفحص طبي فوري',
-        startConsSub: 'حدد الأعراض والسن والألم وتواصل مباشرة مع الطبيب',
-        chatTitle: 'محادثة الطبيب المباشرة',
-        chatSub: 'إرسال واستقبال الرسائل والصوت والصور',
-        ourServices: '✨ خدمات العيادة المتميزة:',
-        service1: 'تجميل وهوليود سمايل',
-        service1Sub: 'فينير وابتسامة رقمية',
-        service2: 'زراعة الأسنان الفورية',
-        service2Sub: 'أحدث الغرسات الألمانية',
-        intakeTitle: 'طلب تشخيص مبدئي للأسنان',
-        intakeSub: 'حدد الأعراض والسن المصاب ليصلك التوجيه الطبي المباشر من د. كريم',
-        step1Teeth: '1. حدد موضع السن المصاب (اختياري):',
-        upperJaw: 'الفك العلوي (يمين ⟵ ⟶ يسار)',
-        lowerJaw: 'الفك السفلي (يمين ⟵ ⟶ يسار)',
-        teethSelected: 'سن محدد',
-        step2Symptoms: '2. ما هي الأعراض التي تشعر بها؟',
-        step2Sub: 'اختر كل الأعراض التي تنطبق على حالتك',
-        step3Pain: '3. ما هي شدة الألم؟',
-        painMild: 'خفيف (1-3)',
-        painMod: 'متوسط (4-6)',
-        painSev: 'شديد جداً (7-10)',
-        step4Desc: '4. وصف الحالة والملاحظات',
-        descPlaceholder: 'اكتب هنا متى بدأ الألم، وهل يزداد مع أكلات معينة أو ليلاً...',
-        step5Media: '5. صور وتوثيق الحالة (اختياري ولكن هام)',
-        voiceRecord: '🎙️ اضغط للتسجيل الصوتي',
-        uploadXray: '🖼️ رفع صورة أشعة (X-Ray)',
-        takePhoto: '📷 تصوير السن المصاب',
-        step6History: '6. التاريخ الصحي السريع',
-        step7Contact: '7. بيانات التواصل للرد عليك',
-        namePlaceholder: 'الاسم بالكامل (مثال: محمد أحمد)',
-        phonePlaceholder: 'رقم الهاتف / الواتساب (+20 100 000 0000)',
-        submitBtn: 'إرسال الشكوى واستلام التشخيص المبدئي',
-        doctorDashboardTitle: 'لوحة تحكم الطبيب د. كريم',
-        doctorWelcome: 'مرحباً بك، لديك',
-        incomingConsultations: 'استشارات واردة من المرضى.',
-        manageClinic: '⚙️ إدارة بيانات ومحتوى العيادة:',
-        btnClinicInfo: '✏️ بيانات العيادة',
-        btnServices: '💲 الخدمات والأسعار',
-        btnPortfolio: '🖼️ معرض الأعمال',
-        btnPreviewPatient: '👁️ معاينة الصفحة الرئيسية كما تظهر للمريض',
-        incomingListTitle: '💬 استشارات ومحادثات المرضى الواردة:',
-        noConsultationsTitle: 'لا توجد استشارات سريعة واردة حالياً',
-        noConsultationsSub: 'بمجرد أن يرسل أي مريض شكواه ستظهر بياناته والأعراض ومستوى الألم هنا فوراً.',
-        openChatBtn: '💬 فتح المحادثة والرد',
-        triageBtn: '🩺 تقرير الحالة',
-        chatOnline: 'متصل',
-        chatAvailable: '● متاح للرد المباشر',
-        chatDoctorName: 'د. كريم أبو بكر',
-        chatInputPlaceholder: 'اكتب رسالتك لدكتور كريم...',
-        personalInfo: '👤 البيانات الشخصية:',
-        patientName: 'الاسم',
-        patientPhone: 'رقم الهاتف',
-        clinicAddressTitle: '🏥 بيانات العيادة:',
-        clinicAddress: 'شارع التحرير، برج الأطباء، الدور الرابع',
-        workingHoursText: 'يومياً من 2 ظهراً حتى 10 مساءً',
-        versionTitle: '✨ إصدار التطبيق والتحديثات',
-        currentVersionLabel: 'الإصدار الحالي:',
-        upToDateBadge: '✓ الأحدث معتمد',
-        checkUpdateBtn: '🔄 فحص وتحميل التحديثات',
-        doctorLoginBtn: '🔐 تسجيل دخول الطبيب والإدارة (Doctor Login)',
-        doctorAccountTitle: 'حساب الطبيب المعتمد',
-        logoutDoctorBtn: '🚪 تسجيل الخروج من حساب الطبيب',
-        editClinicTitle: '✏️ تعديل بيانات العيادة وصور الطبيب',
-        editClinicSub: 'أي تعديل تقوم بحفظه هنا سينعكس فوراً على ما يراه المريض في الصفحة الرئيسية.',
-        saveEditBtn: '💾 حفظ التعديلات',
-        cancelBtn: 'إلغاء',
-        promoBadgeDefault: '✨ مجاناً لفترة محدودة'
-      },
-      en: {
-        appTitle: 'Dr. Karim Dental Clinic',
-        appSub: 'Consultant Dental Surgeon',
-        navHome: 'Home',
-        navConsultation: 'Consultation',
-        navChat: 'Chat',
-        navProfile: 'Profile',
-        doctorMode: '✓ Doctor Mode',
-        heroBio: 'Your smile is in trusted hands with advanced digital dentistry & precision implants.',
-        startConsTitle: 'Instant Dental Consultation & Triage',
-        startConsSub: 'Select affected tooth, symptoms & chat directly with Dr. Karim',
-        chatTitle: 'Direct Doctor Medical Chat',
-        chatSub: 'Send messages, audio notes, and dental photos directly',
-        ourServices: '✨ Specialized Clinic Services:',
-        service1: 'Cosmetics & Hollywood Smile',
-        service1Sub: 'Veneers & Digital Smile Design',
-        service2: 'Immediate Dental Implants',
-        service2Sub: 'German Precision Implants',
-        intakeTitle: 'Dental Complaint & Intake Form',
-        intakeSub: 'Select symptoms and affected tooth for Dr. Karim to evaluate your case',
-        step1Teeth: '1. Select Affected Tooth (Optional):',
-        upperJaw: 'Upper Jaw (Right ⟵ ⟶ Left)',
-        lowerJaw: 'Lower Jaw (Right ⟵ ⟶ Left)',
-        teethSelected: 'Teeth selected',
-        step2Symptoms: '2. What symptoms are you experiencing?',
-        step2Sub: 'Select all symptoms that apply to your condition',
-        step3Pain: '3. How severe is the pain?',
-        painMild: 'Mild (1-3)',
-        painMod: 'Moderate (4-6)',
-        painSev: 'Severe (7-10)',
-        step4Desc: '4. Description & Notes',
-        descPlaceholder: 'Describe when the pain started, triggers, or if it hurts at night...',
-        step5Media: '5. Photos & Media Documentation (Optional)',
-        voiceRecord: '🎙️ Tap to Record Voice Note',
-        uploadXray: '🖼️ Upload X-Ray Image',
-        takePhoto: '📷 Take Tooth Photo',
-        step6History: '6. Quick Health History',
-        step7Contact: '7. Your Contact Information',
-        namePlaceholder: 'Full Name (e.g. John Doe)',
-        phonePlaceholder: 'Mobile / WhatsApp (+20 100 000 0000)',
-        submitBtn: 'Submit Complaint & Get Initial Diagnosis',
-        doctorDashboardTitle: 'Dr. Karim Abo Bakr Dashboard',
-        doctorWelcome: 'Welcome back, you have',
-        incomingConsultations: 'incoming patient consultations.',
-        manageClinic: '⚙️ Clinic Management & Content:',
-        btnClinicInfo: '✏️ Clinic Info',
-        btnServices: '💲 Services & Prices',
-        btnPortfolio: '🖼️ Portfolio Cases',
-        btnPreviewPatient: '👁️ Preview Home Page as Patient',
-        incomingListTitle: '💬 Incoming Patient Consultations:',
-        noConsultationsTitle: 'No incoming consultations currently',
-        noConsultationsSub: 'When a patient submits a complaint, their details and symptoms will appear here instantly.',
-        openChatBtn: '💬 Open Chat & Reply',
-        triageBtn: '🩺 Case Triage',
-        chatOnline: 'Online',
-        chatAvailable: '● Available Online',
-        chatDoctorName: 'Dr. Karim Abo Bakr',
-        chatInputPlaceholder: 'Type your message for Dr. Karim...',
-        personalInfo: '👤 Personal Information:',
-        patientName: 'Full Name',
-        patientPhone: 'Phone Number',
-        clinicAddressTitle: '🏥 Clinic Information:',
-        clinicAddress: 'Tahrir St, Doctors Tower, 4th Floor',
-        workingHoursText: 'Daily from 2:00 PM to 10:00 PM',
-        versionTitle: '✨ App Version & Updates',
-        currentVersionLabel: 'Current Version:',
-        upToDateBadge: '✓ Up to Date',
-        checkUpdateBtn: '🔄 Check for Updates',
-        doctorLoginBtn: '🔐 Doctor & Admin Portal Sign In',
-        doctorAccountTitle: 'Verified Doctor Account',
-        logoutDoctorBtn: '🚪 Sign Out & Return as Patient',
-        editClinicTitle: '✏️ Edit Clinic Information & Photos',
-        editClinicSub: 'Any changes saved here will be immediately visible to patients on the home screen.',
-        saveEditBtn: '💾 Save Changes',
-        cancelBtn: 'Cancel',
-        promoBadgeDefault: '✨ Free for a limited time'
-      }
-    };
+    let currentRole = 'patient';
+    let isAfter = true;
 
-    const SYMPTOMS_I18N = {
-      throbbing_pain: { ar: 'ألم نابض ومستمر', en: 'Throbbing continuous pain' },
-      cold_sensitivity: { ar: 'حساسية شديدة مع المشروبات الباردة', en: 'Severe sensitivity to cold drinks' },
-      hot_sensitivity: { ar: 'ألم عند تناول أطعمة/مشروبات ساخنة', en: 'Pain with hot food/drinks' },
-      chewing_pain: { ar: 'ألم أثناء المضغ أو الضغط على السن', en: 'Pain while chewing or biting' },
-      gum_swelling: { ar: 'تورم أو انتفاخ في اللثة / الوجه', en: 'Gum or facial swelling' },
-      gum_bleeding: { ar: 'نزيف في اللثة عند التفريش', en: 'Bleeding gums when brushing' },
-      broken_tooth: { ar: 'كسر أو شرخ في السن / الحشوة', en: 'Broken or cracked tooth / filling' },
-      loose_tooth: { ar: 'حركة أو تخلخل في السن', en: 'Loose or moving tooth' },
-      night_pain: { ar: 'ألم يزداد ليلاً ويمنع النوم', en: 'Pain worsens at night' },
-      bad_taste: { ar: 'طعم أو رائحة كريهة مستمرة', en: 'Persistent bad taste or odor' }
-    };
-
-    const HEALTH_ALERTS_I18N = {
-      diabetes: { ar: 'مرض السكري', en: 'Diabetes' },
-      hypertension: { ar: 'ضغط الدم المرتفع', en: 'High Blood Pressure' },
-      heart_disease: { ar: 'أمراض القلب', en: 'Heart Disease' },
-      blood_thinners: { ar: 'سيولة في الدم', en: 'Blood Thinners' },
-      penicillin_allergy: { ar: 'حساسية البنسلين / أدوية', en: 'Penicillin / Drug Allergy' },
-      pregnancy: { ar: 'حمل (للسيدات)', en: 'Pregnancy' }
-    };
-
-    const SECTORS_I18N = {
-      upper_right: { ar: 'الفك العلوي (ضروس اليمين)', en: 'Upper Right Molars' },
-      upper_front: { ar: 'الفك العلوي (الأسنان الأمامية والابتسامة)', en: 'Upper Front Smile Teeth' },
-      upper_left: { ar: 'الفك العلوي (ضروس اليسار)', en: 'Upper Left Molars' },
-      lower_right: { ar: 'الفك السفلي (ضروس اليمين)', en: 'Lower Right Molars' },
-      lower_front: { ar: 'الفك السفلي (الأسنان الأمامية)', en: 'Lower Front Teeth' },
-      lower_left: { ar: 'الفك السفلي (ضروس اليسار)', en: 'Lower Left Molars' },
-      general_pain: { ar: 'ألم عام منتشر بالفكين', en: 'General Jaw Pain' }
-    };
-
-    // State Store - Clean Real State
-    const state = {
-      lang: 'ar',
-      role: 'patient', // 'patient' or 'doctor'
-      currentTab: 'home',
-      isEditingClinic: false,
-      isCustomizingForm: false,
-      showClinicInfoCard: true,
-      promoBadgeEnabled: true,
-      promoBadgeText: '✨ مجاناً لفترة محدودة',
-      doctorName: 'د. كريم أبو بكر',
-      doctorTitle: 'استشاري طب وجراحة وتجميل وزراعة الأسنان',
-      doctorBio: 'ابتسامتك في أيدٍ أمينة مع أحدث التقنيات الرقمية المتقدمة لطب وزراعة وتجميل الأسنان.',
-      doctorAvatarUrl: 'assets/doctor_clinic.jpg',
-      doctorCoverUrl: 'assets/doctor_formal.jpg',
-      phoneNumber: '+20 100 000 0000',
-      workingHours: 'يومياً من 2 ظهراً حتى 10 مساءً',
-      locationAddress: 'شارع التحرير، برج الأطباء، الدور الرابع',
-      patientName: '',
-      patientPhone: '',
-      selectedSectors: ['upper_front'],
-      selectedSymptoms: ['throbbing_pain'],
-      painScore: 7,
-      complaintDesc: '',
-      attachedPhotos: [],
-      medicalAlerts: [],
-      activeSymptoms: ['throbbing_pain', 'cold_sensitivity', 'hot_sensitivity', 'chewing_pain', 'gum_swelling', 'gum_bleeding', 'broken_tooth', 'loose_tooth', 'night_pain', 'bad_taste'],
-      activeHealthAlerts: ['diabetes', 'hypertension', 'heart_disease', 'blood_thinners', 'penicillin_allergy', 'pregnancy'],
-      consultations: [],
-      messages: []
-    };
-
-    function t(key) {
-      const cur = state.lang || 'ar';
-      return (I18N[cur] && I18N[cur][key]) ? I18N[cur][key] : (I18N['ar'][key] || key);
+    function navigateTo(screenId) {
+      document.querySelectorAll('.screen-view').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById('screen-' + screenId);
+      if (target) target.classList.remove('hidden');
+      document.getElementById('screenSelect').value = screenId;
     }
 
-    function getPromoBadgeText() {
-      if (state.promoBadgeCustomText && state.promoBadgeCustomText.trim() && state.promoBadgeCustomText !== '✨ مجاناً لفترة محدودة' && state.promoBadgeCustomText !== '✨ Free for a limited time') {
-        return state.promoBadgeCustomText;
-      }
-      return t('promoBadgeDefault');
-    }
-
-    function togglePreviewLang() {
-      state.lang = state.lang === 'en' ? 'ar' : 'en';
-      render();
-    }
-
-    function toggleSector(secId) {
-      if (!state.selectedSectors) state.selectedSectors = [];
-      if (state.selectedSectors.includes(secId)) {
-        state.selectedSectors = state.selectedSectors.filter(s => s !== secId);
+    function setRole(role) {
+      currentRole = role;
+      const patBtn = document.getElementById('rolePatientBtn');
+      const docBtn = document.getElementById('roleDoctorBtn');
+      if (role === 'patient') {
+        patBtn.className = 'px-3 py-1.5 rounded-lg font-bold transition bg-sky-600 text-white shadow';
+        docBtn.className = 'px-3 py-1.5 rounded-lg font-bold transition text-slate-400 hover:text-white';
+        navigateTo('home');
       } else {
-        state.selectedSectors.push(secId);
-      }
-      render();
-    }
-
-    function switchTab(tab) {
-      state.currentTab = tab;
-      state.isEditingClinic = false;
-      state.isCustomizingForm = false;
-      render();
-    }
-
-    function openEditClinic() {
-      state.isEditingClinic = true;
-      state.isCustomizingForm = false;
-      render();
-    }
-
-    function openFormCustomizer() {
-      state.isCustomizingForm = true;
-      state.isEditingClinic = false;
-      render();
-    }
-
-    function toggleSymptomVisibility(symId) {
-      if (state.activeSymptoms.includes(symId)) {
-        if (state.activeSymptoms.length <= 1) {
-          alert('يجب الإبقاء على خيار واحد على الأقل متاحاً للمريض.');
-          return;
-        }
-        state.activeSymptoms = state.activeSymptoms.filter(s => s !== symId);
-      } else {
-        state.activeSymptoms.push(symId);
-      }
-      render();
-    }
-
-    function toggleHealthAlertVisibility(alertId) {
-      if (state.activeHealthAlerts.includes(alertId)) {
-        state.activeHealthAlerts = state.activeHealthAlerts.filter(a => a !== alertId);
-      } else {
-        state.activeHealthAlerts.push(alertId);
-      }
-      render();
-    }
-
-    function saveClinicEdit() {
-      const nameInput = document.getElementById('edit-doc-name');
-      const titleInput = document.getElementById('edit-doc-title');
-      const bioInput = document.getElementById('edit-doc-bio');
-      const phoneInput = document.getElementById('edit-doc-phone');
-      const hoursInput = document.getElementById('edit-doc-hours');
-      const addrInput = document.getElementById('edit-doc-addr');
-      const showInfoInput = document.getElementById('edit-show-clinic-info');
-      const promoEnabledInput = document.getElementById('edit-promo-enabled');
-      const promoTextInput = document.getElementById('edit-promo-text');
-
-      if (nameInput) state.doctorName = nameInput.value;
-      if (titleInput) state.doctorTitle = titleInput.value;
-      if (bioInput) state.doctorBio = bioInput.value;
-      if (phoneInput) state.phoneNumber = phoneInput.value;
-      if (hoursInput) state.workingHours = hoursInput.value;
-      if (addrInput) state.locationAddress = addrInput.value;
-      if (showInfoInput) state.showClinicInfoCard = showInfoInput.checked;
-      if (promoEnabledInput) state.promoBadgeEnabled = promoEnabledInput.checked;
-      if (promoTextInput) state.promoBadgeCustomText = promoTextInput.value.trim();
-
-      state.isEditingClinic = false;
-      alert(state.lang === 'en' ? '✅ Clinic information & visibility settings saved!' : '✅ تم حفظ تعديلات بيانات العيادة وإعدادات الظهور بنجاح!');
-      render();
-    }
-
-    function previewAsPatient() {
-      state.role = 'patient';
-      state.currentTab = 'home';
-      state.isEditingClinic = false;
-      alert(state.lang === 'en' ? '👁️ Switched to Patient Preview Mode! You are now viewing the home page as a patient.' : '👁️ تم التبديل إلى وضع معاينة المريض! ستشاهد الآن الصفحة الرئيسية تماماً كما تظهر للمرضى.');
-      render();
-    }
-
-    function toggleTooth(num) {
-      if (!state.selectedTeeth) state.selectedTeeth = [];
-      if (state.selectedTeeth.includes(num)) {
-        state.selectedTeeth = state.selectedTeeth.filter(n => n !== num);
-      } else {
-        state.selectedTeeth.push(num);
-      }
-      render();
-    }
-
-    function toggleMedicalAlert(alertId) {
-      if (!state.medicalAlerts) state.medicalAlerts = [];
-      if (state.medicalAlerts.includes(alertId)) {
-        state.medicalAlerts = state.medicalAlerts.filter(a => a !== alertId);
-      } else {
-        state.medicalAlerts.push(alertId);
-      }
-      render();
-    }
-
-    function toggleSymptom(symId) {
-      if (!state.selectedSymptoms) state.selectedSymptoms = [];
-      if (state.selectedSymptoms.includes(symId)) {
-        state.selectedSymptoms = state.selectedSymptoms.filter(s => s !== symId);
-      } else {
-        state.selectedSymptoms.push(symId);
-      }
-      render();
-    }
-
-    function loginDoctor() {
-      const email = prompt(state.lang === 'en' ? 'Enter Doctor Email:' : 'أدخل بريد الطبيب:', 'karim@smartdental.com');
-      const pass = prompt(state.lang === 'en' ? 'Enter Password:' : 'أدخل كلمة المرور:', '••••••••');
-      if (email && email.includes('karim')) {
-        state.role = 'doctor';
-        state.currentTab = 'home';
-        alert(state.lang === 'en' ? 'Welcome Dr. Karim! Signed in to Doctor Portal.' : 'مرحباً بك يا د. كريم أبو بكر! تم تسجيل الدخول كمدير للعيادة.');
-        render();
+        docBtn.className = 'px-3 py-1.5 rounded-lg font-bold transition bg-sky-600 text-white shadow';
+        patBtn.className = 'px-3 py-1.5 rounded-lg font-bold transition text-slate-400 hover:text-white';
+        navigateTo('doctor_dashboard');
       }
     }
 
-    function logoutDoctor() {
-      state.role = 'patient';
-      alert(state.lang === 'en' ? 'Signed out and returned to patient mode.' : 'تم تسجيل الخروج والعودة لواجهة المريض.');
-      render();
-    }
-
-    function submitConsultation() {
-      const nameInput = document.getElementById('input-name');
-      const phoneInput = document.getElementById('input-phone');
-      const descInput = document.getElementById('input-desc');
-
-      if (nameInput) state.patientName = nameInput.value;
-      if (phoneInput) state.patientPhone = phoneInput.value;
-      if (descInput) state.complaintDesc = descInput.value;
-
-      if (!state.patientName || !state.patientPhone) {
-        alert(state.lang === 'en' ? 'Please enter your name and phone number' : 'يرجى إدخال اسمك ورقم الهاتف للرد عليك');
-        return;
-      }
-
-      const symLabels = (state.selectedSymptoms || []).map(s => (SYMPTOMS_I18N[s] ? SYMPTOMS_I18N[s][state.lang || 'ar'] : s)).join('، ');
-      const teethStr = (state.selectedSectors && state.selectedSectors.length > 0)
-        ? state.selectedSectors.map(s => (SECTORS_I18N[s] ? SECTORS_I18N[s][state.lang || 'ar'] : s)).join(' + ')
-        : (state.lang === 'en' ? 'General Jaw Check' : 'فحص عام بالفكين');
-
-      const newCons = {
-        id: 'c_' + Date.now(),
-        patientName: state.patientName,
-        patientPhone: state.patientPhone,
-        symptoms: symLabels,
-        pain: state.painScore,
-        teeth: teethStr,
-        desc: state.complaintDesc || (state.lang === 'en' ? 'Preliminary intake consultation' : 'استشارة وفحص مبدئي'),
-        urgency: state.painScore >= 8 ? 'urgent' : 'moderate',
-        status: 'pending',
-        time: state.lang === 'en' ? 'Just now' : 'الآن',
-        lastMsg: state.complaintDesc || (state.lang === 'en' ? 'New consultation request' : 'طلب استشارة جديد')
-      };
-      state.consultations.unshift(newCons);
-
-      state.messages.push({
-        id: 'm_' + Date.now(),
-        senderRole: 'patient',
-        senderName: state.patientName,
-        text: `🚨 ${state.lang === 'en' ? 'New Consultation Case' : 'طلب استشارة جديد'}:\n• ${state.lang === 'en' ? 'Symptoms' : 'الأعراض'}: ${symLabels}\n• ${state.lang === 'en' ? 'Teeth' : 'الأسنان'}: ${teethStr}\n• ${state.lang === 'en' ? 'Pain Level' : 'شدة الألم'}: ${state.painScore}/10\n• ${state.lang === 'en' ? 'Notes' : 'وصف الشكوى'}: ${state.complaintDesc || (state.lang === 'en' ? 'None' : 'لا يوجد')}`,
-        time: state.lang === 'en' ? 'Just now' : 'الآن'
-      });
-
-      alert(state.lang === 'en' ? 'Complaint submitted successfully! Opening chat with Dr. Karim.' : 'تم إرسال الشكوى بنجاح وبدء غرفة المحادثة مع د. كريم!');
-      switchTab('chat');
-    }
-
-    function saveChatProfile() {
-      const nameInput = document.getElementById('chat-patient-name');
-      const phoneInput = document.getElementById('chat-patient-phone');
-      if (nameInput) state.patientName = nameInput.value.trim();
-      if (phoneInput) state.patientPhone = phoneInput.value.trim();
-
-      if (!state.patientName || !state.patientPhone) {
-        alert(state.lang === 'en' ? 'Please enter your name and phone number to start chatting' : 'يرجى إدخال اسمك ورقم هاتفك أولاً للبدء والمتابعة');
-        return;
-      }
-      alert(state.lang === 'en' ? 'Profile saved! You can now send messages to Dr. Karim.' : 'تم حفظ بياناتك بنجاح! يمكنك الآن بدء المحادثة وإرسال الرسائل للطبيب.');
-      render();
-    }
-
-    function sendChat() {
-      if (state.role === 'patient' && (!state.patientName || !state.patientPhone)) {
-        alert(state.lang === 'en' ? 'Please enter your name and phone number first before sending a message.' : 'يرجى إدخال اسمك ورقم هاتفك في الخانات الموضحة أولاً قبل إرسال أي رسالة.');
-        return;
-      }
-      const input = document.getElementById('chat-text-input');
-      if (!input || !input.value.trim()) return;
-      state.messages.push({
-        id: 'm_' + Date.now(),
-        senderRole: state.role,
-        senderName: state.role === 'doctor' ? (state.lang === 'en' ? 'Dr. Karim Abo Bakr' : 'د. كريم أبو بكر') : (state.patientName || (state.lang === 'en' ? 'Patient' : 'المريض')),
-        text: input.value.trim(),
-        time: state.lang === 'en' ? 'Now' : 'الآن'
-      });
-      input.value = '';
-      render();
-    }
-
-    function render() {
-      const container = document.getElementById('screen-container');
-      const doctorBadgeSlot = document.getElementById('doctor-badge-slot');
-      const mobileFrame = document.querySelector('.mobile-frame');
-      const hdrTitle = document.getElementById('hdr-title');
-      const hdrSubtitle = document.getElementById('hdr-subtitle');
-      const btnLang = document.getElementById('btn-lang-toggle');
-
-      const isEn = state.lang === 'en';
-
-      // 1. Dynamic Layout Direction
-      if (mobileFrame) {
-        mobileFrame.style.direction = isEn ? 'ltr' : 'rtl';
-        mobileFrame.style.textAlign = isEn ? 'left' : 'right';
-      }
-
-      // 2. Dynamic Header
-      if (hdrTitle) hdrTitle.innerText = t('appTitle');
-      if (hdrSubtitle) hdrSubtitle.innerText = t('appSub');
-      if (btnLang) btnLang.innerText = isEn ? '🌐 العربية' : '🌐 English';
-
-      // 3. Dynamic Tabs
-      const tabHome = document.getElementById('tab-home');
-      const tabCons = document.getElementById('tab-consultation');
-      const tabChat = document.getElementById('tab-chat');
-      const tabProf = document.getElementById('tab-profile');
-
-      if (tabHome) tabHome.innerHTML = `<span class="tab-icon">🏠</span><span>${t('navHome')}</span>`;
-      if (tabCons) tabCons.innerHTML = `<span class="tab-icon">🩺</span><span>${t('navConsultation')}</span>`;
-      if (tabChat) tabChat.innerHTML = `<span class="tab-icon">💬</span><span>${t('navChat')}</span>`;
-      if (tabProf) tabProf.innerHTML = `<span class="tab-icon">👤</span><span>${t('navProfile')}</span>`;
-
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      const activeBtn = document.getElementById(`tab-${state.currentTab}`);
-      if (activeBtn) activeBtn.classList.add('active');
-
-      // 4. Doctor Badge Slot
-      if (state.role === 'doctor') {
-        doctorBadgeSlot.innerHTML = `
-          <div style="background: #e0f2fe; color: #0284c7; padding: 4px 8px; border-radius: 8px; font-size: 10px; font-weight: 800;">
-            ${t('doctorMode')}
+    function toggleBeforeAfter() {
+      isAfter = !isAfter;
+      const display = document.getElementById('beforeAfterDisplay');
+      if (isAfter) {
+        display.className = 'w-full h-full flex items-center justify-center bg-gradient-to-r from-emerald-700 to-teal-900 p-3 text-center transition-all duration-300';
+        display.innerHTML = `
+          <div>
+            <span class="text-2xl block mb-1">✨🦷</span>
+            <span class="text-xs font-bold text-emerald-200 block">النتيجة النهائية (After)</span>
+            <span class="text-[10px] text-slate-300">ابتسامة متناسقة وبياض طبيعي</span>
           </div>
         `;
       } else {
-        doctorBadgeSlot.innerHTML = ``;
-      }
-
-      // 5. Screen Content Rendering
-      // 1. Home Tab
-      if (state.currentTab === 'home') {
-        if (state.isCustomizingForm) {
-          // Doctor Consultation Form Customizer Screen
-          container.innerHTML = `
-            <div class="card" style="border-inline-start: 4px solid #0284c7;">
-              <strong style="font-size: 15px; color: #0369a1; display: block; margin-bottom: 2px;">📋 تخصيص خيارات وأسئلة الاستشارة للمرضى</strong>
-              <span style="font-size: 11px; color: #64748b;">حدد الخيارات التي تريد إظهارها أو إخفاءها من المريض في خطوتي الأعراض والتاريخ الصحي.</span>
-            </div>
-
-            <!-- Section 1: Symptoms Customizer (Step 2) -->
-            <div class="card">
-              <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px;">2. قائمة الأعراض المتاحة للمريض:</strong>
-              <span style="font-size: 10px; color: #64748b; display: block; margin-bottom: 10px;">اضغط على أي عرض لتفعيله أو تعطيله من نموذج المريض:</span>
-
-              <div style="display: flex; flex-direction: column; gap: 6px;">
-                ${Object.keys(SYMPTOMS_I18N).map(key => {
-                  const isEnabled = state.activeSymptoms.includes(key);
-                  const label = SYMPTOMS_I18N[key][state.lang || 'ar'];
-                  return `
-                    <div onclick="toggleSymptomVisibility('${key}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 10px; border: 1.5px solid ${isEnabled ? '#86efac' : '#e2e8f0'}; background: ${isEnabled ? '#f0fdf4' : '#f8fafc'}; cursor: pointer;">
-                      <span style="font-size: 12px; color: ${isEnabled ? '#166534' : '#94a3b8'}; font-weight: ${isEnabled ? '700' : '500'}; text-decoration: ${isEnabled ? 'none' : 'line-through'};">${label}</span>
-                      <span style="font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: ${isEnabled ? '#22c55e' : '#cbd5e1'}; color: white;">
-                        ${isEnabled ? '✓ مفعل ويظهر' : '✗ معطل ومخفي'}
-                      </span>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-
-            <!-- Section 2: Health History Customizer (Step 6) -->
-            <div class="card">
-              <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px;">6. أسئلة التاريخ الصحي المتاحة للمريض:</strong>
-              <span style="font-size: 10px; color: #64748b; display: block; margin-bottom: 10px;">اضغط على أي تحذير صحي لتفعيله أو إلغائه:</span>
-
-              <div style="display: flex; flex-direction: column; gap: 6px;">
-                ${Object.keys(HEALTH_ALERTS_I18N).map(key => {
-                  const isEnabled = state.activeHealthAlerts.includes(key);
-                  const label = HEALTH_ALERTS_I18N[key][state.lang || 'ar'];
-                  return `
-                    <div onclick="toggleHealthAlertVisibility('${key}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 10px; border: 1.5px solid ${isEnabled ? '#93c5fd' : '#e2e8f0'}; background: ${isEnabled ? '#eff6ff' : '#f8fafc'}; cursor: pointer;">
-                      <span style="font-size: 12px; color: ${isEnabled ? '#1e40af' : '#94a3b8'}; font-weight: ${isEnabled ? '700' : '500'}; text-decoration: ${isEnabled ? 'none' : 'line-through'};">${label}</span>
-                      <span style="font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 6px; background: ${isEnabled ? '#0284c7' : '#cbd5e1'}; color: white;">
-                        ${isEnabled ? '✓ مفعل ويظهر' : '✗ معطل ومخفي'}
-                      </span>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
-              <button class="btn-primary" onclick="state.isCustomizingForm=false; alert('✅ تم حفظ خيارات نموذج الاستشارة بنجاح!'); render();">
-                💾 حفظ وتطبيق على نموذج المريض
-              </button>
-              <button onclick="previewAsPatient(); switchTab('consultation');" style="padding: 12px; background: #f0f9ff; border: 1.5px solid #0284c7; color: #0284c7; border-radius: 12px; font-weight: 800; cursor: pointer;">
-                👁️ معاينة كيف تظهر للمريض الآن
-              </button>
-              <button onclick="state.isCustomizingForm=false; render();" style="padding: 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 700; cursor: pointer;">
-                إلغاء والعودة
-              </button>
-            </div>
-          `;
-        } else if (state.isEditingClinic) {
-          // Doctor Edit Clinic Screen
-          container.innerHTML = `
-            <div class="card" style="border-inline-start: 4px solid #0284c7;">
-              <strong style="font-size: 15px; color: #0369a1; display: block; margin-bottom: 2px;">${t('editClinicTitle')}</strong>
-              <span style="font-size: 11px; color: #64748b;">${t('editClinicSub')}</span>
-            </div>
-
-            <div class="card">
-              <!-- Visibility Switch for Clinic Information -->
-              <div style="background: #f0fdf4; border: 1.5px solid #86efac; padding: 12px; border-radius: 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-                <div>
-                  <strong style="font-size: 12px; color: #166534; display: block;">🏥 إظهار كارت بيانات ومواعيد العيادة للمرضى</strong>
-                  <span style="font-size: 10px; color: #475569;">تفعيل أو إخفاء كارت (العنوان، الهاتف، المواعيد) من شاشة حسابي لدى المريض.</span>
-                </div>
-                <input type="checkbox" id="edit-show-clinic-info" ${state.showClinicInfoCard ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #16a34a; cursor: pointer;">
-              </div>
-
-              <!-- Promo Ribbon Badge Controller -->
-              <div style="background: #fffbeb; border: 1.5px solid #fde68a; padding: 12px; border-radius: 12px; margin-bottom: 12px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                  <div>
-                    <strong style="font-size: 12px; color: #92400e; display: block;">🎁 شارة العرض المجاني الترويجي (Promo Badge)</strong>
-                    <span style="font-size: 10px; color: #78350f;">إظهار شريط لامع ثلاثي الأبعاد على كارت طلب الاستشارة للمريض.</span>
-                  </div>
-                  <input type="checkbox" id="edit-promo-enabled" ${state.promoBadgeEnabled ? 'checked' : ''} style="width: 20px; height: 20px; accent-color: #f59e0b; cursor: pointer;">
-                </div>
-                <label style="font-size: 11px; font-weight: 800; color: #92400e; display: block; margin-top: 6px;">النص المكتوب على الشارة:</label>
-                <input id="edit-promo-text" class="input-field" value="${state.promoBadgeText || '✨ مجاناً لفترة محدودة'}" placeholder="مثال: ✨ مجاناً لفترة محدودة بمناسبة الافتتاح" style="background: white; border-color: #fcd34d; margin-top: 4px;">
-              </div>
-
-              <label style="font-size: 12px; font-weight: 800; color: #0f172a;">${isEn ? 'Doctor & Clinic Name:' : 'اسم الطبيب والعيادة:'}</label>
-              <input id="edit-doc-name" class="input-field" value="${state.doctorName}">
-
-              <label style="font-size: 12px; font-weight: 800; color: #0f172a; margin-top: 10px; display: block;">${isEn ? 'Specialty & Professional Title:' : 'المسمى والتخصص المهني:'}</label>
-              <input id="edit-doc-title" class="input-field" value="${state.doctorTitle}">
-
-              <label style="font-size: 12px; font-weight: 800; color: #0f172a; margin-top: 10px; display: block;">${isEn ? 'Clinic Bio / Description:' : 'نبذة وسيرة العيادة للمرضى:'}</label>
-              <textarea id="edit-doc-bio" class="textarea-field">${state.doctorBio}</textarea>
-
-              <label style="font-size: 12px; font-weight: 800; color: #0f172a; margin-top: 10px; display: block;">${isEn ? 'Phone / WhatsApp:' : 'رقم الهاتف / الواتساب:'}</label>
-              <input id="edit-doc-phone" class="input-field" value="${state.phoneNumber}">
-
-              <label style="font-size: 12px; font-weight: 800; color: #0f172a; margin-top: 10px; display: block;">${isEn ? 'Working Hours:' : 'مواعيد العمل:'}</label>
-              <input id="edit-doc-hours" class="input-field" value="${state.workingHours}">
-
-              <label style="font-size: 12px; font-weight: 800; color: #0f172a; margin-top: 10px; display: block;">${isEn ? 'Clinic Address:' : 'عنوان العيادة:'}</label>
-              <input id="edit-doc-addr" class="input-field" value="${state.locationAddress}">
-
-              <div style="display: flex; gap: 8px; margin-top: 14px;">
-                <button class="btn-primary" onclick="saveClinicEdit()" style="flex: 1;">
-                  ${t('saveEditBtn')}
-                </button>
-                <button onclick="state.isEditingClinic=false; render();" style="padding: 12px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: 700; cursor: pointer;">
-                  ${t('cancelBtn')}
-                </button>
-              </div>
-            </div>
-          `;
-        } else if (state.role === 'doctor') {
-          // Doctor Dashboard
-          container.innerHTML = `
-            <div class="hero-card">
-              <img src="${state.doctorAvatarUrl}" class="doctor-avatar-circle" alt="Dr. Karim">
-              <div class="hero-text">
-                <h3>${t('doctorDashboardTitle')}</h3>
-                <p>${t('doctorWelcome')} ${state.consultations.length} ${t('incomingConsultations')}</p>
-              </div>
-            </div>
-
-            <!-- Clinic Management Grid -->
-            <div class="card">
-              <strong style="font-size: 12px; color: #0284c7; display: block; margin-bottom: 8px;">${t('manageClinic')}</strong>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <button onclick="openEditClinic()" style="padding: 10px; font-size: 11px; font-weight: 800; background: #f0f9ff; border: 1px solid #0284c7; color: #0284c7; border-radius: 10px; cursor: pointer;">
-                  ${t('btnClinicInfo')}
-                </button>
-                <button onclick="openFormCustomizer()" style="padding: 10px; font-size: 11px; font-weight: 800; background: #f0fdf4; border: 1.5px solid #16a34a; color: #16a34a; border-radius: 10px; cursor: pointer;">
-                  📋 تخصيص خيارات الاستشارة
-                </button>
-              </div>
-              <button onclick="previewAsPatient()" style="width: 100%; margin-top: 10px; padding: 10px; font-size: 11px; font-weight: 800; background: #eff6ff; border: 1.5px solid #93c5fd; color: #0369a1; border-radius: 10px; cursor: pointer;">
-                ${t('btnPreviewPatient')}
-              </button>
-            </div>
-
-            <strong style="font-size: 13px; margin-top: 4px; display: block;">${t('incomingListTitle')}</strong>
-
-            ${state.consultations.length === 0 ? `
-              <div class="card" style="text-align: center; padding: 30px 16px; color: #64748b;">
-                <div style="font-size: 30px; margin-bottom: 6px;">📋</div>
-                <strong style="display: block; font-size: 13px; color: #0f172a;">${t('noConsultationsTitle')}</strong>
-                <p style="font-size: 11px; margin-top: 2px;">${t('noConsultationsSub')}</p>
-              </div>
-            ` : state.consultations.map(c => `
-              <div class="inbox-card">
-                <div class="inbox-header">
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 32px; height: 32px; border-radius: 16px; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">${c.patientName.charAt(0)}</div>
-                    <div>
-                      <strong style="font-size: 13px; display: block;">${c.patientName}</strong>
-                      <span style="font-size: 10px; color: #64748b;">${c.patientPhone}</span>
-                    </div>
-                  </div>
-                  <span class="badge ${c.urgency === 'urgent' ? 'badge-urgent' : 'badge-pending'}">${c.urgency === 'urgent' ? (isEn ? 'Urgent' : 'عاجلة') : (isEn ? 'Moderate' : 'متوسطة')}</span>
-                </div>
-                <div style="background: #f8fafc; padding: 8px; border-radius: 8px; font-size: 11px; margin: 6px 0; color: #334155;">
-                  "${c.desc}"
-                </div>
-                <div style="display: flex; gap: 8px;">
-                  <button onclick="switchTab('chat')" class="btn-primary" style="padding: 8px; font-size: 11px; flex: 1;">
-                    ${t('openChatBtn')}
-                  </button>
-                  <button onclick="alert(isEn ? 'Case clinical triage report' : 'تقرير تشخيص الحالة')" style="padding: 8px 12px; font-size: 11px; font-weight: 800; background: #f0fdf4; border: 1px solid #86efac; color: #166534; border-radius: 10px; cursor: pointer;">
-                    ${t('triageBtn')}
-                  </button>
-                </div>
-              </div>
-            `).join('')}
-          `;
-        } else {
-          // Patient Home
-          container.innerHTML = `
-            <div class="hero-card">
-              <img src="${state.doctorAvatarUrl}" class="doctor-avatar-circle" alt="${state.doctorName}">
-              <div class="hero-text">
-                <h3>${isEn ? 'Dr. Karim Dental Clinic' : state.doctorName}</h3>
-                <p>${isEn ? t('heroBio') : state.doctorBio}</p>
-              </div>
-            </div>
-
-            <!-- Quick Action Cards -->
-            <div class="action-card" onclick="switchTab('consultation')" style="position: relative; overflow: visible; ${state.promoBadgeEnabled ? 'border: 2px solid #0284c7; background: #f0f9ff; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.15);' : ''}">
-              ${state.promoBadgeEnabled ? `
-                <div style="position: absolute; top: -11px; ${isEn ? 'right: 14px' : 'left: 14px'}; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-size: 10.5px; font-weight: 900; padding: 3px 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.4); display: flex; align-items: center; gap: 4px; z-index: 2; letter-spacing: 0.2px;">
-                  <span>${getPromoBadgeText()}</span>
-                </div>
-              ` : ''}
-              <div class="action-icon">🩺</div>
-              <div class="action-info">
-                <strong>${t('startConsTitle')}</strong>
-                <span>${t('startConsSub')}</span>
-              </div>
-              <span style="color: #0284c7; font-weight: 900; font-size: 16px;">${isEn ? '→' : '←'}</span>
-            </div>
-
-            <div class="action-card" onclick="switchTab('chat')" style="position: relative; overflow: visible; ${state.promoBadgeEnabled ? 'border: 2px solid #0d9488; background: #f0fdfa; box-shadow: 0 4px 14px rgba(13, 148, 136, 0.15);' : ''}">
-              ${state.promoBadgeEnabled ? `
-                <div style="position: absolute; top: -11px; ${isEn ? 'right: 14px' : 'left: 14px'}; background: linear-gradient(135deg, #10b981, #059669); color: white; font-size: 10.5px; font-weight: 900; padding: 3px 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4); display: flex; align-items: center; gap: 4px; z-index: 2; letter-spacing: 0.2px;">
-                  <span>${getPromoBadgeText()}</span>
-                </div>
-              ` : ''}
-              <div class="action-icon" style="background: #0d9488;">💬</div>
-              <div class="action-info">
-                <strong>${t('chatTitle')}</strong>
-                <span>${t('chatSub')}</span>
-              </div>
-              <span style="color: #0d9488; font-weight: 900; font-size: 16px;">${isEn ? '→' : '←'}</span>
-            </div>
-
-            <!-- Services Section -->
-            <div class="card">
-              <strong style="font-size: 13px; margin-bottom: 8px; display: block;">${t('ourServices')}</strong>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <div style="background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                  <div style="font-size: 14px; margin-bottom: 2px;">💎</div>
-                  <strong style="font-size: 12px; display: block;">${t('service1')}</strong>
-                  <span style="font-size: 10px; color: #0284c7; font-weight: 800;">${t('service1Sub')}</span>
-                </div>
-                <div style="background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                  <div style="font-size: 14px; margin-bottom: 2px;">🦷</div>
-                  <strong style="font-size: 12px; display: block;">${t('service2')}</strong>
-                  <span style="font-size: 10px; color: #0284c7; font-weight: 800;">${t('service2Sub')}</span>
-                </div>
-              </div>
-            </div>
-          `;
-        }
-      }
-
-      // 2. Consultation Intake / Requests Tab
-      else if (state.currentTab === 'consultation') {
-        if (state.role === 'doctor') {
-          // Doctor View: Incoming Consultation Requests
-          container.innerHTML = `
-            <div style="background: #e0f2fe; border: 1.5px solid #0284c7; padding: 12px; border-radius: 14px; margin-bottom: 8px;">
-              <strong style="color: #0369a1; font-size: 13px; display: block;">${t('manageClinic')}</strong>
-              <span style="font-size: 11px; color: #475569;">${t('incomingListTitle')}</span>
-            </div>
-
-            ${state.consultations.length === 0 ? `
-              <div class="card" style="text-align: center; padding: 40px 16px; color: #64748b;">
-                <div style="font-size: 36px; margin-bottom: 8px;">📋</div>
-                <strong style="display: block; font-size: 14px; color: #0f172a; margin-bottom: 4px;">${t('noConsultationsTitle')}</strong>
-                <p style="font-size: 11px;">${t('noConsultationsSub')}</p>
-              </div>
-            ` : state.consultations.map(c => `
-              <div class="inbox-card">
-                <div class="inbox-header">
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                    <div style="width: 34px; height: 34px; border-radius: 17px; background: #0284c7; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px;">${c.patientName.charAt(0)}</div>
-                    <div>
-                      <strong style="font-size: 13px; display: block; color: #0f172a;">${c.patientName}</strong>
-                      <span style="font-size: 11px; color: #0284c7; font-weight: 700;">📞 ${c.patientPhone}</span>
-                    </div>
-                  </div>
-                  <span class="badge ${c.urgency === 'urgent' ? 'badge-urgent' : 'badge-pending'}">${c.urgency === 'urgent' ? (isEn ? 'Urgent ⚡' : 'عاجلة ⚡') : (isEn ? 'Moderate' : 'متوسطة')}</span>
-                </div>
-
-                <div style="font-size: 11px; color: #475569; margin: 4px 0;">
-                  <strong>${isEn ? 'Symptoms:' : 'الأعراض:'}</strong> ${c.symptoms}
-                </div>
-                <div style="font-size: 11px; color: #0284c7; font-weight: 800; margin-bottom: 4px;">
-                  📍 ${c.teeth} | ${isEn ? 'Pain Level:' : 'شدة الألم:'} ${c.pain}/10
-                </div>
-
-                <div style="background: #f8fafc; padding: 10px; border-radius: 10px; font-size: 12px; color: #1e293b; border: 1px solid #e2e8f0; margin-bottom: 8px;">
-                  "${c.desc}"
-                </div>
-
-                <div style="display: flex; gap: 8px;">
-                  <button onclick="switchTab('chat')" class="btn-primary" style="padding: 10px; font-size: 12px; flex: 1;">
-                    ${t('openChatBtn')}
-                  </button>
-                  <button onclick="alert(isEn ? 'Case clinical triage report' : 'كتابة تقرير التشخيص الطبي')" style="padding: 10px 14px; font-size: 12px; font-weight: 800; background: #f0fdf4; border: 1px solid #86efac; color: #166534; border-radius: 12px; cursor: pointer;">
-                    ${t('triageBtn')}
-                  </button>
-                </div>
-              </div>
-            `).join('')}
-          `;
-        } else {
-          // Patient View: Full Guided Consultation Layout
-          container.innerHTML = `
-            <div style="text-align: center; margin-bottom: 12px;">
-              <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">${t('intakeTitle')}</h3>
-              <p style="margin: 2px 0 0; font-size: 11px; color: #64748b;">${t('intakeSub')}</p>
-            </div>
-
-            <!-- Step 1: Interactive Smiling Dental Arches (Visual Smile & Jaws) -->
-            <div class="card" style="border-inline-start: 4px solid #0284c7;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <strong style="font-size: 13px; color: #0f172a;">1. حدد موضع الألم في الابتسامة والفكين:</strong>
-                ${state.selectedSectors && state.selectedSectors.length > 0 ? `<span style="font-size: 11px; color: #0284c7; font-weight: 800;">${state.selectedSectors.length} موضع محدد ✓</span>` : ''}
-              </div>
-              <span style="font-size: 11px; color: #64748b; display: block; margin-bottom: 10px;">اضغط على الجزء المصاب في الفك العلوي أو السفلي لتحديده مباشرة:</span>
-
-              <!-- Upper Smile Arch Box -->
-              <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 14px; padding: 12px; margin-bottom: 10px; text-align: center;">
-                <div style="font-size: 11px; font-weight: 800; color: #166534; margin-bottom: 8px;">
-                  😁 الفك العلوي والابتسامة (Upper Smile)
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 6px;">
-                  ${[
-                    { id: 'upper_right', icon: '🦷', title: 'ضروس اليمين', sub: 'فك علوي' },
-                    { id: 'upper_front', icon: '✨', title: 'الأسنان الأمامية', sub: 'الابتسامة العلوية' },
-                    { id: 'upper_left', icon: '🦷', title: 'ضروس اليسار', sub: 'فك علوي' }
-                  ].map(sec => {
-                    const isSel = (state.selectedSectors || []).includes(sec.id);
-                    return `
-                      <div onclick="toggleSector('${sec.id}')" style="background: ${isSel ? '#0284c7' : '#ffffff'}; color: ${isSel ? '#ffffff' : '#1e293b'}; border: 1.5px solid ${isSel ? '#0284c7' : '#cbd5e1'}; border-radius: 10px; padding: 10px 4px; cursor: pointer; transition: all 0.2s; box-shadow: ${isSel ? '0 4px 8px rgba(2,132,199,0.25)' : 'none'};">
-                        <div style="font-size: 16px; margin-bottom: 2px;">${sec.icon}</div>
-                        <strong style="font-size: 11px; display: block;">${sec.title}</strong>
-                        <span style="font-size: 9px; opacity: 0.85; display: block;">${sec.sub}</span>
-                        ${isSel ? '<span style="font-size: 10px; font-weight: 900; margin-top: 2px; display: block;">✓ محدد</span>' : ''}
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              </div>
-
-              <!-- Lower Jaw Arch Box -->
-              <div style="background: #eff6ff; border: 1.5px solid #93c5fd; border-radius: 14px; padding: 12px; text-align: center;">
-                <div style="font-size: 11px; font-weight: 800; color: #1e40af; margin-bottom: 8px;">
-                  🦷 الفك السفلي (Lower Jaw)
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 6px;">
-                  ${[
-                    { id: 'lower_right', icon: '🦷', title: 'ضروس اليمين', sub: 'فك سفلي' },
-                    { id: 'lower_front', icon: '✨', title: 'الأسنان الأمامية', sub: 'الفك السفلي' },
-                    { id: 'lower_left', icon: '🦷', title: 'ضروس اليسار', sub: 'فك سفلي' }
-                  ].map(sec => {
-                    const isSel = (state.selectedSectors || []).includes(sec.id);
-                    return `
-                      <div onclick="toggleSector('${sec.id}')" style="background: ${isSel ? '#0284c7' : '#ffffff'}; color: ${isSel ? '#ffffff' : '#1e293b'}; border: 1.5px solid ${isSel ? '#0284c7' : '#cbd5e1'}; border-radius: 10px; padding: 10px 4px; cursor: pointer; transition: all 0.2s; box-shadow: ${isSel ? '0 4px 8px rgba(2,132,199,0.25)' : 'none'};">
-                        <div style="font-size: 16px; margin-bottom: 2px;">${sec.icon}</div>
-                        <strong style="font-size: 11px; display: block;">${sec.title}</strong>
-                        <span style="font-size: 9px; opacity: 0.85; display: block;">${sec.sub}</span>
-                        ${isSel ? '<span style="font-size: 10px; font-weight: 900; margin-top: 2px; display: block;">✓ محدد</span>' : ''}
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              </div>
-
-              <!-- General Pain Option -->
-              <div onclick="toggleSector('general_pain')" style="margin-top: 8px; padding: 8px 12px; border-radius: 10px; border: 1px dashed ${(state.selectedSectors||[]).includes('general_pain') ? '#0284c7' : '#cbd5e1'}; background: ${(state.selectedSectors||[]).includes('general_pain') ? '#e0f2fe' : '#f8fafc'}; color: ${(state.selectedSectors||[]).includes('general_pain') ? '#0369a1' : '#64748b'}; font-size: 11px; font-weight: 700; text-align: center; cursor: pointer;">
-                🎯 ألم عام منتشر في الفكين / غير محدد
-              </div>
-            </div>
-
-            <!-- Step 2: Symptoms Checklist (Filtered by Doctor Active List) -->
-            <div class="card">
-              <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 2px;">${t('step2Symptoms')}</strong>
-              <span style="font-size: 11px; color: #64748b; display: block; margin-bottom: 8px;">${t('step2Sub')}</span>
-              
-              <div style="display: flex; flex-direction: column; gap: 6px;">
-                ${state.activeSymptoms.map(key => {
-                  const isChecked = (state.selectedSymptoms || []).includes(key);
-                  const label = (SYMPTOMS_I18N[key] ? SYMPTOMS_I18N[key][state.lang || 'ar'] : key);
-                  return `
-                    <div onclick="toggleSymptom('${key}')" style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 1px solid ${isChecked ? '#0284c7' : '#e2e8f0'}; background: ${isChecked ? '#f0f9ff' : '#fff'}; cursor: pointer;">
-                      <div style="width: 18px; height: 18px; border-radius: 9px; border: 1.5px solid ${isChecked ? '#0284c7' : '#94a3b8'}; background: ${isChecked ? '#0284c7' : '#fff'}; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 900;">
-                        ${isChecked ? '✓' : ''}
-                      </div>
-                      <span style="font-size: 12px; color: ${isChecked ? '#0369a1' : '#1e293b'}; font-weight: ${isChecked ? '700' : '500'};">${label}</span>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-
-            <!-- Step 3: Pain Scale -->
-            <div class="card">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <strong style="font-size: 13px; color: #0f172a;">${t('step3Pain')}</strong>
-                <span style="background: #ffedd5; color: #c2410c; font-weight: 800; font-size: 12px; padding: 2px 10px; border-radius: 8px;">
-                  ${state.painScore} / 10
-                </span>
-              </div>
-              <div style="display: flex; gap: 4px; justify-content: space-between; margin-bottom: 6px;">
-                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(val => `
-                  <button onclick="state.painScore=${val}; render();" style="flex: 1; height: 36px; border-radius: 8px; border: 1px solid ${state.painScore === val ? '#ea580c' : '#e2e8f0'}; background: ${state.painScore === val ? '#ea580c' : '#f8fafc'}; color: ${state.painScore === val ? '#fff' : '#334155'}; font-size: 12px; font-weight: 800; cursor: pointer;">
-                    ${val}
-                  </button>
-                `).join('')}
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 10px; color: #64748b;">
-                <span>${t('painMild')}</span>
-                <span>${t('painMod')}</span>
-                <span>${t('painSev')}</span>
-              </div>
-            </div>
-
-            <!-- Step 4: Notes -->
-            <div class="card">
-              <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 6px;">${t('step4Desc')}</strong>
-              <textarea id="input-desc" class="textarea-field" placeholder="${t('descPlaceholder')}">${state.complaintDesc}</textarea>
-            </div>
-
-            <!-- Step 5: Media & Voice Note -->
-            <div class="card">
-              <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 8px;">${t('step5Media')}</strong>
-              <div onclick="alert(isEn ? 'Voice recorder activated 🎙️' : 'تم تفعيل التسجيل الصوتي المباشر للشكوى 🎙️')" style="border: 2px dashed #0284c7; background: #f0f9ff; border-radius: 12px; padding: 12px; text-align: center; color: #0284c7; font-weight: 800; font-size: 12px; cursor: pointer; margin-bottom: 8px;">
-                ${t('voiceRecord')}
-              </div>
-              <div style="display: flex; gap: 8px;">
-                <button onclick="alert(isEn ? 'Selected X-Ray upload' : 'تم تحديد رفع صورة أشعة X-Ray')" style="flex: 1; padding: 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 11px; font-weight: 700; cursor: pointer;">
-                  ${t('uploadXray')}
-                </button>
-                <button onclick="alert(isEn ? 'Opened Camera to take photo' : 'تم فتح الكاميرا لتصوير السن')" style="flex: 1; padding: 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 11px; font-weight: 700; cursor: pointer;">
-                  ${t('takePhoto')}
-                </button>
-              </div>
-            </div>
-
-            <!-- Step 6: Health History (Filtered by Doctor Active List) -->
-            ${state.activeHealthAlerts.length > 0 ? `
-              <div class="card">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                  <strong style="font-size: 13px; color: #0f172a;">${t('step6History')}</strong>
-                  <span style="color: #ef4444; font-size: 12px;">🛡️</span>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 6px;">
-                  ${state.activeHealthAlerts.map(key => {
-                    const isChecked = (state.medicalAlerts || []).includes(key);
-                    const label = (HEALTH_ALERTS_I18N[key] ? HEALTH_ALERTS_I18N[key][state.lang || 'ar'] : key);
-                    return `
-                      <div onclick="toggleMedicalAlert('${key}')" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; border: 1px solid ${isChecked ? '#ef4444' : '#e2e8f0'}; background: ${isChecked ? '#fef2f2' : '#fff'}; cursor: pointer;">
-                        <div style="width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid ${isChecked ? '#ef4444' : '#94a3b8'}; background: ${isChecked ? '#ef4444' : '#fff'}; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 900;">
-                          ${isChecked ? '✓' : ''}
-                        </div>
-                        <span style="font-size: 11px; color: ${isChecked ? '#991b1b' : '#1e293b'}; font-weight: ${isChecked ? '700' : '500'};">${label}</span>
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              </div>
-            ` : ''}
-
-            <!-- Step 7: Contact Information -->
-            <div class="card" style="border-inline-start: 4px solid #0284c7;">
-              <strong style="font-size: 13px; color: #0369a1; display: block; margin-bottom: 6px;">${t('step7Contact')}</strong>
-              <input id="input-name" class="input-field" placeholder="${t('namePlaceholder')}" value="${state.patientName}">
-              <input id="input-phone" class="input-field" placeholder="${t('phonePlaceholder')}" value="${state.patientPhone}">
-            </div>
-
-            <!-- Submit Button -->
-            <button class="btn-primary" onclick="submitConsultation()" style="margin-bottom: 20px;">
-              <span>${t('submitBtn')}</span>
-              <span>⚡</span>
-            </button>
-          `;
-        }
-      }
-
-      // 4. Chat Tab
-      else if (state.currentTab === 'chat') {
-        const needsProfile = (state.role === 'patient' && (!state.patientName || !state.patientPhone));
-
-        container.innerHTML = `
-          <div style="background: #f1f5f9; padding: 10px 14px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <img src="${state.doctorAvatarUrl}" style="width: 32px; height: 32px; border-radius: 16px; object-fit: cover;">
-              <div>
-                <strong style="font-size: 12px; display: block;">${state.role === 'doctor' ? (state.patientName || (isEn ? 'Patient' : 'المريض')) : t('chatDoctorName')}</strong>
-                <span style="font-size: 9px; color: #16a34a;">${t('chatAvailable')}</span>
-              </div>
-            </div>
-            <span class="badge badge-done">${t('chatOnline')}</span>
-          </div>
-
-          ${needsProfile ? `
-            <div class="card" style="border-inline-start: 4px solid #0284c7; background: #f0f9ff; margin: 10px 0;">
-              <strong style="font-size: 13px; color: #0369a1; display: block; margin-bottom: 3px;">
-                👋 ${isEn ? 'Welcome to Direct Chat with Dr. Karim' : 'مرحباً بك في المحادثة المباشرة مع د. كريم'}
-              </strong>
-              <span style="font-size: 11px; color: #475569; display: block; margin-bottom: 8px;">
-                ${isEn ? 'Please enter your name and phone number to begin messaging and follow-up:' : 'يرجى إدخال اسمك ورقم هاتفك أولاً لتتمكن من إرسال الرسائل ومتابعة حالتك:'}
-              </span>
-              <input id="chat-patient-name" class="input-field" placeholder="${isEn ? 'Full Name (e.g. John Doe)' : 'الاسم بالكامل (مثال: محمد أحمد)'}" value="${state.patientName}">
-              <input id="chat-patient-phone" class="input-field" placeholder="${isEn ? 'Phone / WhatsApp (+20 100 000 0000)' : 'رقم الهاتف / الواتساب (+20 100 000 0000)'}" value="${state.patientPhone}">
-              <button class="btn-primary" onclick="saveChatProfile()" style="margin-top: 6px; padding: 10px; font-size: 12px;">
-                ${isEn ? 'Save & Start Chatting 💬' : 'حفظ وبدء المحادثة المباشرة 💬'}
-              </button>
-            </div>
-          ` : ''}
-
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; margin: 10px 0;">
-            ${state.messages.length === 0 ? `
-              <div style="text-align: center; color: #94a3b8; font-size: 11px; margin: 30px 0;">
-                ${isEn ? 'No previous messages. Start your consultation chat with Dr. Karim!' : 'لا توجد رسائل سابقة. ابدأ المحادثة المباشرة مع دكتور كريم!'}
-              </div>
-            ` : state.messages.map(m => {
-              const isMe = (state.role === 'doctor' && m.senderRole === 'doctor') || (state.role === 'patient' && m.senderRole === 'patient');
-              return `
-                <div class="chat-bubble ${isMe ? 'chat-me' : 'chat-other'}">
-                  <div style="font-weight: 800; font-size: 10px; margin-bottom: 2px; opacity: 0.9;">${m.senderName}</div>
-                  <div style="white-space: pre-line;">${m.text}</div>
-                  <div style="font-size: 9px; opacity: 0.8; text-align: ${isEn ? 'right' : 'left'}; margin-top: 4px;">${m.time}</div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-
-          <div style="display: flex; gap: 6px; align-items: center;">
-            <button onclick="if(state.role==='patient'&&(!state.patientName||!state.patientPhone)){alert('يرجى إدخال اسمك ورقم هاتفك أولاً');}else{alert(isEn?'Attach image':'إرفاق صورة');}" style="padding: 10px; background: white; border: 1.5px solid #cbd5e1; border-radius: 12px; cursor: pointer;">📷</button>
-            <button onclick="if(state.role==='patient'&&(!state.patientName||!state.patientPhone)){alert('يرجى إدخال اسمك ورقم هاتفك أولاً');}else{alert(isEn?'Voice message':'تسجيل رسالة صوتية');}" style="padding: 10px; background: white; border: 1.5px solid #cbd5e1; border-radius: 12px; cursor: pointer;">🎤</button>
-            <input id="chat-text-input" class="input-field" style="margin-top: 0; flex: 1;" placeholder="${needsProfile ? (isEn ? 'Enter your name and phone first...' : 'أدخل اسمك ورقم هاتفك أولاً أعلاه...') : t('chatInputPlaceholder')}" onkeydown="if(event.key==='Enter') sendChat()">
-            <button onclick="sendChat()" style="padding: 10px 14px; background: #0284c7; color: white; border: none; border-radius: 12px; font-weight: 900; cursor: pointer;">➤</button>
+        display.className = 'w-full h-full flex items-center justify-center bg-gradient-to-r from-slate-800 to-zinc-900 p-3 text-center transition-all duration-300';
+        display.innerHTML = `
+          <div>
+            <span class="text-2xl block mb-1">⚠️🦷</span>
+            <span class="text-xs font-bold text-amber-300 block">قبل العلاج (Before)</span>
+            <span class="text-[10px] text-slate-400">تصبغات وتزاحم في الأسنان الأمامية</span>
           </div>
         `;
       }
-
-      // 5. Profile Tab
-      else if (state.currentTab === 'profile') {
-        if (state.role === 'doctor') {
-          container.innerHTML = `
-            <div class="card" style="background: #e0f2fe; border: 1.5px solid #0284c7;">
-              <strong style="color: #0369a1; font-size: 14px; display: block;">${t('doctorAccountTitle')}</strong>
-              <span style="font-size: 11px; color: #475569;">${state.doctorName} (karim@smartdental.com)</span>
-            </div>
-
-            <!-- App Language Card -->
-            <div class="card">
-              <strong style="font-size: 13px; display: block; margin-bottom: 8px;">${t('langCardTitle')}</strong>
-              <div style="display: flex; gap: 8px;">
-                <button onclick="state.lang='ar'; render();" style="flex: 1; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 12px; border: 1px solid ${!isEn ? '#0284c7' : '#cbd5e1'}; background: ${!isEn ? '#e0f2fe' : '#f8fafc'}; color: ${!isEn ? '#0369a1' : '#475569'}; cursor: pointer;">
-                  ${t('langAr')}
-                </button>
-                <button onclick="state.lang='en'; render();" style="flex: 1; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 12px; border: 1px solid ${isEn ? '#0284c7' : '#cbd5e1'}; background: ${isEn ? '#e0f2fe' : '#f8fafc'}; color: ${isEn ? '#0369a1' : '#475569'}; cursor: pointer;">
-                  ${t('langEn')}
-                </button>
-              </div>
-            </div>
-
-            <!-- Version Card -->
-            <div class="card">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div>
-                  <strong style="font-size: 13px; display: block;">${t('versionTitle')}</strong>
-                  <span style="font-size: 11px; color: #64748b;">${t('currentVersionLabel')} v1.2.0 (Build 12)</span>
-                </div>
-                <span class="badge badge-done">${t('upToDateBadge')}</span>
-              </div>
-              <button onclick="alert(isEn ? 'Checking for cloud updates... You have the latest version v1.2.0' : 'جاري فحص التحديثات السحابية... تطبيقك محدث لآخر إصدار v1.2.0')" class="btn-primary" style="background: #0284c7; padding: 10px; font-size: 12px;">
-                ${t('checkUpdateBtn')}
-              </button>
-            </div>
-
-            <div class="card">
-              <button class="btn-primary" style="background: #dc2626; margin-top: 4px;" onclick="logoutDoctor()">
-                ${t('logoutDoctorBtn')}
-              </button>
-            </div>
-          `;
-        } else {
-          container.innerHTML = `
-            <div class="card">
-              <strong style="font-size: 13px; display: block; margin-bottom: 8px;">${t('personalInfo')}</strong>
-              <input class="input-field" placeholder="${t('patientName')}" value="${state.patientName}" oninput="state.patientName = this.value">
-              <input class="input-field" placeholder="${t('patientPhone')}" value="${state.patientPhone}" oninput="state.patientPhone = this.value">
-            </div>
-
-            <!-- App Language Card -->
-            <div class="card">
-              <strong style="font-size: 13px; display: block; margin-bottom: 8px;">${t('langCardTitle')}</strong>
-              <div style="display: flex; gap: 8px;">
-                <button onclick="state.lang='ar'; render();" style="flex: 1; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 12px; border: 1px solid ${!isEn ? '#0284c7' : '#cbd5e1'}; background: ${!isEn ? '#e0f2fe' : '#f8fafc'}; color: ${!isEn ? '#0369a1' : '#475569'}; cursor: pointer;">
-                  ${t('langAr')}
-                </button>
-                <button onclick="state.lang='en'; render();" style="flex: 1; padding: 10px; border-radius: 10px; font-weight: 800; font-size: 12px; border: 1px solid ${isEn ? '#0284c7' : '#cbd5e1'}; background: ${isEn ? '#e0f2fe' : '#f8fafc'}; color: ${isEn ? '#0369a1' : '#475569'}; cursor: pointer;">
-                  ${t('langEn')}
-                </button>
-              </div>
-            </div>
-
-            <!-- Version Card -->
-            <div class="card">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <div>
-                  <strong style="font-size: 13px; display: block;">${t('versionTitle')}</strong>
-                  <span style="font-size: 11px; color: #64748b;">${t('currentVersionLabel')} v1.2.0 (Build 12)</span>
-                </div>
-                <span class="badge badge-done">${t('upToDateBadge')}</span>
-              </div>
-              <button onclick="alert(isEn ? 'Checking for cloud updates... You have the latest version v1.2.0' : 'جاري فحص التحديثات السحابية... تطبيقك محدث لآخر إصدار v1.2.0')" class="btn-primary" style="background: #0284c7; padding: 10px; font-size: 12px;">
-                ${t('checkUpdateBtn')}
-              </button>
-            </div>
-
-            ${state.showClinicInfoCard ? `
-              <div class="card" style="border-inline-start: 4px solid #0284c7;">
-                <strong style="font-size: 13px; display: block; margin-bottom: 8px;">${t('clinicAddressTitle')}</strong>
-                <div style="font-size: 11px; color: #475569; line-height: 1.6;">
-                  <div>📍 <strong>${isEn ? 'Address:' : 'العنوان:'}</strong> ${state.locationAddress || t('clinicAddress')}</div>
-                  <div>📞 <strong>${isEn ? 'Phone:' : 'الهاتف:'}</strong> <span style="direction: ltr; display: inline-block;">${state.phoneNumber || '+20 100 000 0000'}</span></div>
-                  <div>⏰ <strong>${isEn ? 'Hours:' : 'مواعيد العمل:'}</strong> ${state.workingHours || t('workingHoursText')}</div>
-                </div>
-              </div>
-            ` : ''}
-
-            <button onclick="loginDoctor()" style="background: #f0f9ff; border: 1.5px dashed #0284c7; color: #0284c7; padding: 14px; border-radius: 14px; font-weight: 800; font-size: 12px; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-              <span>${t('doctorLoginBtn')}</span>
-            </button>
-          `;
-        }
-      }
     }
 
-    // Initial render
-    render();
+    function updatePain(val) {
+      const text = document.getElementById('painLevelText');
+      if (val < 4) text.innerText = val + ' / 10 (ألم خفيف 🟢)';
+      else if (val < 8) text.innerText = val + ' / 10 (ألم متوسط 🟡)';
+      else text.innerText = val + ' / 10 (ألم حاد وشديد 🚨)';
+    }
+
+    function setSpecialtyFilter(spec) {
+      document.querySelectorAll('.spec-filter').forEach(btn => {
+        btn.className = 'spec-filter whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 transition hover:bg-slate-50';
+      });
+      event.target.className = 'spec-filter active whitespace-nowrap text-[11px] font-bold px-3 py-1.5 rounded-lg bg-sky-600 text-white shadow-sm transition';
+    }
+
+    function filterDoctors() {
+      // Mock filter
+    }
+
+    function saveDoctorSettingsMock() {
+      alert('تم حفظ إعدادات وتوافر الطبيب بنجاح على قاعدة البيانات!');
+      navigateTo('doctor_dashboard');
+    }
   </script>
 </body>
 </html>

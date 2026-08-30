@@ -305,7 +305,7 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
                     isSelected && styles.symptomTextSelected,
                   ]}
                 >
-                  {language === 'ar' ? symptom.labelAr : symptom.labelEn}
+                  {language === 'ar' ? symptom.nameAr : symptom.nameEn}
                 </Text>
               </TouchableOpacity>
             );

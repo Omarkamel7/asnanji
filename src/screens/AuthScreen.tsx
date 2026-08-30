@@ -8,20 +8,24 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Image,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
+import { Image } from 'expo-image';
 import {
   Stethoscope,
   User,
   Lock,
   Mail,
   Phone,
+  Briefcase,
+  MapPin,
+  DollarSign,
+  PlusCircle,
+  X,
   ShieldCheck,
-  Globe,
-  ArrowRight,
-  Sparkles,
+  Check,
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
@@ -45,55 +49,60 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Admin Create Doctor Modal States
+  const [showAdminDoctorModal, setShowAdminDoctorModal] = useState(false);
+  const [adminDocName, setAdminDocName] = useState('');
+  const [adminDocEmail, setAdminDocEmail] = useState('');
+  const [adminDocPhone, setAdminDocPhone] = useState('');
+  const [adminDocSpecialty, setAdminDocSpecialty] = useState('');
+  const [adminDocFee, setAdminDocFee] = useState('350');
+  const [adminDocAddress, setAdminDocAddress] = useState('');
+  const [adminDocPassword, setAdminDocPassword] = useState('');
+  const [adminCreating, setAdminCreating] = useState(false);
+
   // Handle Sign In
   const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
       Alert.alert(
         language === 'ar' ? 'تنبيه' : 'Notice',
         language === 'ar'
-          ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور'
-          : 'Please enter your email and password'
+          ? 'يرجى إدخال البريد الإلكتروني أو رقم الهاتف وكلمة المرور'
+          : 'Please enter your email/phone and password'
       );
       return;
     }
 
     setLoading(true);
 
+    let authEmail = email.trim();
+    // If phone number entered, format to internal email
+    if (/^[0-9+]+$/.test(authEmail.replace(/\s+/g, ''))) {
+      authEmail = `${authEmail.replace(/[^0-9]/g, '')}@asnanji.local`;
+    }
+
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: authEmail,
         password: password.trim(),
       });
 
       if (error) {
         setLoading(false);
-        const isCredError = error.message.toLowerCase().includes('invalid login credentials') || error.message.toLowerCase().includes('invalid grant');
+        const isCredError =
+          error.message.toLowerCase().includes('invalid login credentials') ||
+          error.message.toLowerCase().includes('invalid grant');
+
         const errMsg = isCredError
-          ? (language === 'ar'
-              ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة، أو لم يتم إنشاء هذا الحساب بعد.\n\nهل تود إنشاء الحساب الآن؟'
-              : 'Invalid credentials or account not registered yet. Would you like to create an account now?')
+          ? language === 'ar'
+            ? 'بيانات الدخول غير صحيحة، يرجى التأكد من البريد وكلمة المرور'
+            : 'Invalid credentials. Please verify your email and password.'
           : error.message;
 
-        if (isCredError) {
-          Alert.alert(
-            language === 'ar' ? 'تعذر تسجيل الدخول' : 'Sign In Failed',
-            errMsg,
-            [
-              { text: language === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
-              {
-                text: language === 'ar' ? 'إنشاء حساب جديد' : 'Sign Up Now',
-                onPress: () => setMode('signup'),
-              },
-            ]
-          );
-        } else {
-          Alert.alert(language === 'ar' ? 'خطأ' : 'Error', errMsg);
-        }
+        Alert.alert(language === 'ar' ? 'فشل تسجيل الدخول' : 'Sign In Failed', errMsg);
         return;
       }
 
       if (data.user) {
-        const isDoc = email.trim().toLowerCase() === 'karim@smartdental.com' || email.trim().toLowerCase().includes('doctor');
         // Fetch user profile from Supabase
         const { data: profile } = await supabase
           .from('profiles')
@@ -101,11 +110,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
           .eq('id', data.user.id)
           .single();
 
-        let determinedRole: UserRole = (profile?.role as UserRole) || (isDoc ? 'doctor' : 'patient');
-        let determinedName = profile?.full_name || (isDoc ? 'د. كريم أبو بكر' : 'مستخدم');
-        let determinedPhone = profile?.phone || (isDoc ? '+20 100 000 0000' : '');
+        const isDoctorEmail =
+          authEmail.toLowerCase().includes('doctor') ||
+          authEmail.toLowerCase().includes('karim@smartdental.com');
 
-        setRole(determinedRole);
+        const determinedRole: UserRole =
+          (profile?.role as UserRole) || (isDoctorEmail ? 'doctor' : 'patient');
+        const determinedName =
+          profile?.full_name || (determinedRole === 'doctor' ? 'د. كريم أبو بكر' : 'مريض');
+        const determinedPhone = profile?.phone || '';
+
         await updateUserProfile({
           id: data.user.id,
           fullName: determinedName,
@@ -119,14 +133,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
           },
         });
 
+        setRole(determinedRole);
         setLoading(false);
-        if (navigation && typeof navigation.canGoBack === 'function' && navigation.canGoBack()) {
-          navigation.goBack();
-        }
         return;
       }
     } else {
-      // Local development simulation
       setTimeout(() => {
         setLoading(false);
         if (email.includes('doctor') || email.includes('karim')) {
@@ -134,9 +145,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
         } else {
           setRole('patient');
         }
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        }
       }, 500);
       return;
     }
@@ -144,83 +152,67 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
     setLoading(false);
   };
 
-  // Handle Sign Up
+  // Handle Patient Sign Up
   const handleSignUp = async () => {
     if (!fullName.trim() || !email.trim() || !password.trim()) {
       Alert.alert(
-        language === 'ar' ? 'تنبيه' : 'Notice',
-        language === 'ar'
-          ? 'يرجى إدخال الاسم، البريد الإلكتروني وكلمة المرور'
-          : 'Please fill in name, email and password'
+        language === 'ar' ? 'بيانات ناقصة' : 'Missing Information',
+        language === 'ar' ? 'يرجى ملء جميع الحقول المطلوبة' : 'Please fill in all fields'
       );
       return;
     }
 
     setLoading(true);
 
+    let authEmail = email.trim();
+    if (/^[0-9+]+$/.test(authEmail.replace(/\s+/g, ''))) {
+      authEmail = `${authEmail.replace(/[^0-9]/g, '')}@asnanji.local`;
+    }
+
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: authEmail,
         password: password.trim(),
         options: {
           data: {
             full_name: fullName.trim(),
             phone: phone.trim(),
-            role: email.trim() === 'karim@smartdental.com' ? 'doctor' : 'patient',
+            role: selectedRole,
           },
         },
       });
 
       if (error) {
         setLoading(false);
-        Alert.alert(language === 'ar' ? 'خطأ' : 'Error', error.message);
+        Alert.alert(language === 'ar' ? 'خطأ في إنشاء الحساب' : 'Registration Error', error.message);
         return;
       }
 
       if (data.user) {
-        const isDoc = email.trim() === 'karim@smartdental.com';
-        // Insert into public.profiles
-        await (supabase.from('profiles') as any).upsert({
+        await supabase.from('profiles').upsert({
           id: data.user.id,
-          full_name: fullName.trim() || (isDoc ? 'د. كريم أبو بكر' : 'مستخدم جديد'),
+          full_name: fullName.trim(),
           phone: phone.trim(),
-          role: isDoc ? 'doctor' : 'patient',
-          has_diabetes: false,
-          has_hypertension: false,
-          has_penicillin_allergy: false,
+          role: selectedRole,
+          updated_at: new Date().toISOString(),
         });
 
-        setRole(isDoc ? 'doctor' : 'patient');
-        updateUserProfile({
+        await updateUserProfile({
           id: data.user.id,
-          fullName: fullName.trim() || (isDoc ? 'د. كريم أبو بكر' : 'مستخدم جديد'),
+          fullName: fullName.trim(),
           phone: phone.trim(),
+          role: selectedRole,
+          medicalHistory: currentUser.medicalHistory,
         });
 
+        setRole(selectedRole);
         setLoading(false);
-        Alert.alert(
-          language === 'ar' ? 'تم إنشاء الحساب بنجاح' : 'Account Created',
-          language === 'ar' ? 'مرحباً بك في المنظومة الذكية للعيادة!' : 'Welcome to the Smart Dental Clinic!'
-        );
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        }
         return;
       }
     } else {
-      // Offline fallback
       setTimeout(() => {
         setLoading(false);
-        const isDoc = email.trim() === 'karim@smartdental.com';
-        setRole(isDoc ? 'doctor' : selectedRole);
-        updateUserProfile({
-          id: `user_${Date.now()}`,
-          fullName: fullName.trim(),
-          phone: phone.trim(),
-        });
-        if (navigation.canGoBack()) {
-          navigation.goBack();
-        }
+        setRole(selectedRole);
       }, 500);
       return;
     }
@@ -228,16 +220,85 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
     setLoading(false);
   };
 
-  // Instant Guest Mode Entry
-  const handleGuestMode = (guestRole: UserRole) => {
-    setRole(guestRole);
-    updateUserProfile({
-      id: `guest_${guestRole}_${Date.now()}`,
-      fullName: guestRole === 'doctor' ? 'د. كريم أبو بكر' : 'مريض زائر (Guest Patient)',
-      phone: '+20 100 000 0000',
-    });
-    if (navigation.canGoBack()) {
-      navigation.goBack();
+  // Admin Handle Create Doctor Account
+  const handleAdminCreateDoctor = async () => {
+    if (!adminDocName.trim() || !adminDocEmail.trim() || !adminDocPassword.trim()) {
+      Alert.alert('تنبيه', 'يرجى إدخال اسم الطبيب وبريده وكلمة المرور');
+      return;
+    }
+
+    setAdminCreating(true);
+
+    let docAuthEmail = adminDocEmail.trim();
+    if (/^[0-9+]+$/.test(docAuthEmail.replace(/\s+/g, ''))) {
+      docAuthEmail = `${docAuthEmail.replace(/[^0-9]/g, '')}@asnanji.local`;
+    }
+
+    try {
+      const { data: authData, error: authErr } = await supabase.auth.signUp({
+        email: docAuthEmail,
+        password: adminDocPassword.trim(),
+        options: {
+          data: {
+            full_name: adminDocName.trim(),
+            phone: adminDocPhone.trim(),
+            role: 'doctor',
+          },
+        },
+      });
+
+      if (authErr) {
+        throw authErr;
+      }
+
+      if (authData.user) {
+        const docId = authData.user.id;
+
+        // 1. Insert into profiles
+        await supabase.from('profiles').upsert({
+          id: docId,
+          full_name: adminDocName.trim(),
+          phone: adminDocPhone.trim(),
+          role: 'doctor',
+          updated_at: new Date().toISOString(),
+        });
+
+        // 2. Insert into doctor_profiles
+        await supabase.from('doctor_profiles').upsert({
+          id: docId,
+          slug: docId,
+          title: 'استشاري طب وجراحة الأسنان',
+          specialty: adminDocSpecialty.trim() || 'جراحة وتجميل الأسنان',
+          bio: 'طبيب معتمد في منصة اسنانجي لتقديم أعلى مستويات الرعاية والتشخيص الدقيق.',
+          clinic_address: adminDocAddress.trim() || 'القاهرة، مصر',
+          consultation_fee: Number(adminDocFee) || 350,
+          is_accepting_patients: true,
+          updated_at: new Date().toISOString(),
+        });
+
+        // 3. Insert into doctor_settings
+        await supabase.from('doctor_settings').upsert({
+          doctor_id: docId,
+          enable_instant_consultation: true,
+          enable_booking: true,
+          enable_chat: true,
+          working_days: ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday'],
+          working_hours_start: '10:00',
+          working_hours_end: '22:00',
+          updated_at: new Date().toISOString(),
+        });
+
+        setAdminCreating(false);
+        setShowAdminDoctorModal(false);
+
+        Alert.alert(
+          'تم إنشاء حساب الطبيب بنجاح! 🎉',
+          `تم تسجيل د. ${adminDocName} وتفعيل حسابه. يمكنه الآن تسجيل الدخول مباشرة ببريده وكلمة المرور.`
+        );
+      }
+    } catch (err: any) {
+      setAdminCreating(false);
+      Alert.alert('خطأ أثناء إنشاء حساب الطبيب', err?.message || 'يرجى المحاولة مرة أخرى');
     }
   };
 
@@ -246,176 +307,307 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Top Language Toggle */}
-        <View style={styles.topBar}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* App Logo & Header */}
+        <View style={styles.headerBox}>
+          <View style={styles.logoWrapper}>
+            <Image
+              source={require('../../assets/icon.png')}
+              style={styles.logoImage}
+              contentFit="contain"
+            />
+          </View>
+          <Text style={styles.appTitle}>{t.appTitle}</Text>
+          <Text style={styles.appSubtitle}>{t.tagline}</Text>
+        </View>
+
+        {/* Mode Selector (Sign In / Sign Up) */}
+        <View style={styles.modeSelector}>
           <TouchableOpacity
-            style={styles.langBtn}
-            onPress={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
+            style={[styles.modeTab, mode === 'signin' && styles.modeTabActive]}
+            onPress={() => setMode('signin')}
           >
-            <Globe size={14} color={Colors.primaryDark} />
-            <Text style={styles.langBtnText}>
-              {language === 'ar' ? 'English' : 'عربي'}
+            <Text style={[styles.modeTabText, mode === 'signin' && styles.modeTabTextActive]}>
+              {language === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.modeTab, mode === 'signup' && styles.modeTabActive]}
+            onPress={() => setMode('signup')}
+          >
+            <Text style={[styles.modeTabText, mode === 'signup' && styles.modeTabTextActive]}>
+              {language === 'ar' ? 'إنشاء حساب جديد' : 'Sign Up'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Clinic Branding Header */}
-        <View style={styles.brandingHeader}>
-          <Image
-            source={require('../../assets/app_logo.png')}
-            style={styles.logoAvatar}
-            resizeMode="contain"
-          />
-          <Text style={styles.appTitle}>{t.appTitle}</Text>
-          <Text style={styles.tagline}>{t.tagline}</Text>
-        </View>
-
-        {/* Mode Switcher Tabs */}
-        <View style={styles.authCard}>
-          <View style={styles.tabSwitchContainer}>
-            <TouchableOpacity
-              style={[
-                styles.tabBtn,
-                mode === 'signin' && styles.tabBtnActive,
-              ]}
-              onPress={() => setMode('signin')}
-            >
-              <Text
-                style={[
-                  styles.tabBtnText,
-                  mode === 'signin' && styles.tabBtnTextActive,
-                ]}
-              >
-                {t.signIn}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.tabBtn,
-                mode === 'signup' && styles.tabBtnActive,
-              ]}
-              onPress={() => setMode('signup')}
-            >
-              <Text
-                style={[
-                  styles.tabBtnText,
-                  mode === 'signup' && styles.tabBtnTextActive,
-                ]}
-              >
-                {t.signUp}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Form Fields */}
+        {/* Form Container */}
+        <View style={styles.formCard}>
           {mode === 'signup' && (
             <>
-              {/* Full Name */}
-              <Text style={styles.fieldLabel}>{t.fullNamePlaceholder}:</Text>
-              <View style={styles.inputBox}>
-                <User size={18} color={Colors.textMuted} />
-                <TextInput
-                  style={styles.input}
-                  placeholder={
-                    selectedRole === 'doctor' ? 'د. كريم أبو بكر' : 'أحمد محمود'
-                  }
-                  value={fullName}
-                  onChangeText={setFullName}
-                  textAlign={isRTL ? 'right' : 'left'}
-                />
+              {/* Role Selection */}
+              <View style={styles.roleContainer}>
+                <TouchableOpacity
+                  style={[styles.roleBtn, selectedRole === 'patient' && styles.roleBtnActive]}
+                  onPress={() => setSelectedRole('patient')}
+                >
+                  <User size={18} color={selectedRole === 'patient' ? Colors.white : Colors.textPrimary} />
+                  <Text style={[styles.roleBtnText, selectedRole === 'patient' && styles.roleBtnTextActive]}>
+                    {language === 'ar' ? 'مريض' : 'Patient'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.roleBtn, selectedRole === 'doctor' && styles.roleBtnActive]}
+                  onPress={() => setSelectedRole('doctor')}
+                >
+                  <Stethoscope size={18} color={selectedRole === 'doctor' ? Colors.white : Colors.textPrimary} />
+                  <Text style={[styles.roleBtnText, selectedRole === 'doctor' && styles.roleBtnTextActive]}>
+                    {language === 'ar' ? 'طبيب' : 'Doctor'}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
-              {/* Phone */}
-              <Text style={styles.fieldLabel}>{t.phonePlaceholder}:</Text>
-              <View style={styles.inputBox}>
-                <Phone size={18} color={Colors.textMuted} />
-                <TextInput
-                  style={[styles.input, { writingDirection: 'ltr' }]}
-                  placeholder="+20 111 234 5678"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  textAlign={isRTL ? 'right' : 'left'}
-                />
+              {/* Full Name */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{language === 'ar' ? 'الاسم الكامل' : 'Full Name'}</Text>
+                <View style={styles.inputBox}>
+                  <User size={18} color={Colors.textMuted} />
+                  <TextInput
+                    style={styles.input}
+                    value={fullName}
+                    onChangeText={setFullName}
+                    placeholder={language === 'ar' ? 'محمد أحمد' : 'Mohamed Ahmed'}
+                    placeholderTextColor={Colors.textMuted}
+                    textAlign={isRTL ? 'right' : 'left'}
+                  />
+                </View>
+              </View>
+
+              {/* Phone Number */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}</Text>
+                <View style={styles.inputBox}>
+                  <Phone size={18} color={Colors.textMuted} />
+                  <TextInput
+                    style={styles.input}
+                    value={phone}
+                    onChangeText={setPhone}
+                    placeholder="01012345678"
+                    placeholderTextColor={Colors.textMuted}
+                    keyboardType="phone-pad"
+                    textAlign={isRTL ? 'right' : 'left'}
+                  />
+                </View>
               </View>
             </>
           )}
 
-          {/* Email */}
-          <Text style={styles.fieldLabel}>{t.emailPlaceholder}:</Text>
-          <View style={styles.inputBox}>
-            <Mail size={18} color={Colors.textMuted} />
-            <TextInput
-              style={styles.input}
-              placeholder="example@dental.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              textAlign={isRTL ? 'right' : 'left'}
-            />
+          {/* Email or Phone */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>
+              {language === 'ar' ? 'البريد الإلكتروني أو رقم الهاتف' : 'Email or Phone'}
+            </Text>
+            <View style={styles.inputBox}>
+              <Mail size={18} color={Colors.textMuted} />
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder={
+                  mode === 'signin'
+                    ? language === 'ar'
+                      ? 'البريد أو الهاتف (مثال: 010...)'
+                      : 'Email or Phone'
+                    : 'user@example.com'
+                }
+                placeholderTextColor={Colors.textMuted}
+                autoCapitalize="none"
+                textAlign={isRTL ? 'right' : 'left'}
+              />
+            </View>
           </View>
 
           {/* Password */}
-          <Text style={styles.fieldLabel}>{t.passwordPlaceholder}:</Text>
-          <View style={styles.inputBox}>
-            <Lock size={18} color={Colors.textMuted} />
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              textAlign={isRTL ? 'right' : 'left'}
-            />
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>{language === 'ar' ? 'كلمة المرور' : 'Password'}</Text>
+            <View style={styles.inputBox}>
+              <Lock size={18} color={Colors.textMuted} />
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                placeholderTextColor={Colors.textMuted}
+                secureTextEntry
+                textAlign={isRTL ? 'right' : 'left'}
+              />
+            </View>
           </View>
 
-          {/* Submit Auth Button */}
+          {/* Submit Button */}
           <TouchableOpacity
-            style={styles.submitBtn}
+            style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
             onPress={mode === 'signin' ? handleSignIn : handleSignUp}
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color={Colors.white} />
+              <ActivityIndicator color={Colors.white} size="small" />
             ) : (
               <Text style={styles.submitBtnText}>
-                {mode === 'signin' ? t.signIn : t.signUp}
+                {mode === 'signin'
+                  ? language === 'ar'
+                    ? 'تسجيل الدخول 🚀'
+                    : 'Sign In 🚀'
+                  : language === 'ar'
+                  ? 'إنشاء الحساب الآن ✨'
+                  : 'Sign Up ✨'}
               </Text>
             )}
           </TouchableOpacity>
 
-          {/* Switch Mode Prompt */}
-          <TouchableOpacity
-            style={styles.switchModePrompt}
-            onPress={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-          >
-            <Text style={styles.switchModeText}>
-              {mode === 'signin' ? t.dontHaveAccount : t.alreadyHaveAccount}
-            </Text>
-          </TouchableOpacity>
+          {/* Admin Create Doctor Button */}
+          <View style={styles.adminSection}>
+            <TouchableOpacity
+              style={styles.adminDoctorBtn}
+              onPress={() => setShowAdminDoctorModal(true)}
+            >
+              <PlusCircle size={16} color={Colors.primaryDark} />
+              <Text style={styles.adminDoctorBtnText}>
+                {language === 'ar'
+                  ? '➕ إضافة حساب طبيب جديد (لوحة الإدارة)'
+                  : '➕ Add New Doctor Account (Admin)'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        {/* Quick Guest Mode Card */}
-        <View style={styles.guestCard}>
-          <TouchableOpacity
-            style={styles.guestBtnPatient}
-            onPress={() => handleGuestMode('patient')}
-          >
-            <User size={16} color={Colors.white} />
-            <Text style={styles.guestBtnText}>
-              {language === 'ar' ? '⚡ الدخول كزائر (بدون تسجيل حساب)' : '⚡ Continue as Guest Patient'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ height: 30 }} />
       </ScrollView>
+
+      {/* Admin Create Doctor Modal */}
+      <Modal visible={showAdminDoctorModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalIconBox}>
+                <Stethoscope size={24} color={Colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalTitle}>إضافة طبيب جديد للمنصة 👨‍⚕️</Text>
+                <Text style={styles.modalSubtitle}>
+                  إنشاء حساب طبيب جديد وتفعيله فوراً في Supabase
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowAdminDoctorModal(false)}>
+                <X size={22} color={Colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalForm}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>اسم الطبيب الكامل</Text>
+                  <View style={styles.inputBox}>
+                    <User size={16} color={Colors.textMuted} />
+                    <TextInput
+                      style={styles.input}
+                      value={adminDocName}
+                      onChangeText={setAdminDocName}
+                      placeholder="د. أحمد الشناوي"
+                      placeholderTextColor={Colors.textMuted}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>البريد الإلكتروني للطبيب</Text>
+                  <View style={styles.inputBox}>
+                    <Mail size={16} color={Colors.textMuted} />
+                    <TextInput
+                      style={styles.input}
+                      value={adminDocEmail}
+                      onChangeText={setAdminDocEmail}
+                      placeholder="doctor.ahmed@asnanji.com"
+                      placeholderTextColor={Colors.textMuted}
+                      autoCapitalize="none"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>كلمة المرور المبدئية</Text>
+                  <View style={styles.inputBox}>
+                    <Lock size={16} color={Colors.textMuted} />
+                    <TextInput
+                      style={styles.input}
+                      value={adminDocPassword}
+                      onChangeText={setAdminDocPassword}
+                      placeholder="كلمة مرور من 6 أحرف على الأقل"
+                      placeholderTextColor={Colors.textMuted}
+                      secureTextEntry
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>التخصص الطبي</Text>
+                  <View style={styles.inputBox}>
+                    <Briefcase size={16} color={Colors.textMuted} />
+                    <TextInput
+                      style={styles.input}
+                      value={adminDocSpecialty}
+                      onChangeText={setAdminDocSpecialty}
+                      placeholder="أخصائي تقويم وتجميل الأسنان"
+                      placeholderTextColor={Colors.textMuted}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>سعر الكشف (ج.م)</Text>
+                  <View style={styles.inputBox}>
+                    <DollarSign size={16} color={Colors.textMuted} />
+                    <TextInput
+                      style={styles.input}
+                      value={adminDocFee}
+                      onChangeText={setAdminDocFee}
+                      placeholder="350"
+                      keyboardType="numeric"
+                      placeholderTextColor={Colors.textMuted}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>عنوان العيادة</Text>
+                  <View style={styles.inputBox}>
+                    <MapPin size={16} color={Colors.textMuted} />
+                    <TextInput
+                      style={styles.input}
+                      value={adminDocAddress}
+                      onChangeText={setAdminDocAddress}
+                      placeholder="الدقي، الجيزة"
+                      placeholderTextColor={Colors.textMuted}
+                    />
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.modalSubmitBtn, adminCreating && styles.submitBtnDisabled]}
+              onPress={handleAdminCreateDoctor}
+              disabled={adminCreating}
+            >
+              {adminCreating ? (
+                <ActivityIndicator color={Colors.white} size="small" />
+              ) : (
+                <Text style={styles.modalSubmitText}>تأكيد وإنشاء حساب الطبيب 🚀</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -426,206 +618,214 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    padding: 20,
     paddingTop: 40,
-    paddingBottom: 20,
+    paddingBottom: 60,
   },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 10,
-  },
-  langBtn: {
-    flexDirection: 'row',
+  headerBox: {
     alignItems: 'center',
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
+    marginBottom: 24,
   },
-  langBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-  },
-  brandingHeader: {
+  logoWrapper: {
+    width: 90,
+    height: 90,
+    borderRadius: 24,
+    backgroundColor: Colors.surface,
     alignItems: 'center',
-    marginBottom: 20,
-  },
-  logoAvatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 22,
+    justifyContent: 'center',
     marginBottom: 12,
     ...Shadows.md,
   },
+  logoImage: {
+    width: 75,
+    height: 75,
+  },
   appTitle: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: '900',
     color: Colors.textPrimary,
-    textAlign: 'center',
   },
-  tagline: {
-    fontSize: 12,
+  appSubtitle: {
+    fontSize: 13,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 4,
-    maxWidth: 280,
+    marginTop: 2,
   },
-  authCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.md,
-    marginBottom: 16,
-  },
-  tabSwitchContainer: {
+  modeSelector: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: Colors.border,
     borderRadius: 14,
     padding: 4,
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  tabBtn: {
+  modeTab: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 10,
   },
-  tabBtnActive: {
-    backgroundColor: Colors.white,
+  modeTabActive: {
+    backgroundColor: Colors.surface,
     ...Shadows.sm,
   },
-  tabBtnText: {
+  modeTabText: {
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
-  tabBtnTextActive: {
-    color: Colors.primary,
-    fontWeight: '800',
+  modeTabTextActive: {
+    color: Colors.primaryDark,
   },
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: 6,
-    marginTop: 4,
+  formCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: 20,
+    ...Shadows.sm,
   },
-  rolePickerRow: {
+  roleContainer: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  roleChip: {
+  roleBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
     paddingVertical: 10,
     borderRadius: 12,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: '#f8fafc',
+    backgroundColor: Colors.background,
+    gap: 6,
   },
-  roleChipActive: {
+  roleBtnActive: {
+    backgroundColor: Colors.primary,
     borderColor: Colors.primary,
-    backgroundColor: Colors.primaryLight,
   },
-  roleChipText: {
+  roleBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  roleBtnTextActive: {
+    color: Colors.white,
+  },
+  inputGroup: {
+    marginBottom: 14,
+    gap: 6,
+  },
+  inputLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.textSecondary,
-  },
-  roleChipTextActive: {
-    color: Colors.primaryDark,
-    fontWeight: '800',
+    color: Colors.textPrimary,
   },
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
+    borderRadius: 12,
     paddingHorizontal: 12,
-    marginBottom: 12,
+    backgroundColor: Colors.background,
     gap: 8,
   },
   input: {
     flex: 1,
     paddingVertical: 10,
-    fontSize: 13,
+    fontSize: 14,
     color: Colors.textPrimary,
   },
   submitBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 14,
     paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
     marginTop: 8,
-    ...Shadows.sm,
+    ...Shadows.md,
+  },
+  submitBtnDisabled: {
+    opacity: 0.6,
   },
   submitBtnText: {
+    color: Colors.white,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  adminSection: {
+    marginTop: 18,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+    alignItems: 'center',
+  },
+  adminDoctorBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primaryLight,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+  },
+  adminDoctorBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 24,
+    padding: 20,
+    maxHeight: '85%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    paddingBottom: 10,
+  },
+  modalIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+  },
+  modalSubtitle: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  modalForm: {
+    gap: 4,
+    paddingVertical: 6,
+  },
+  modalSubmitBtn: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginTop: 14,
+    ...Shadows.md,
+  },
+  modalSubmitText: {
+    color: Colors.white,
     fontSize: 14,
     fontWeight: '800',
-    color: Colors.white,
-  },
-  switchModePrompt: {
-    marginTop: 14,
-    alignItems: 'center',
-  },
-  switchModeText: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '700',
-  },
-  guestCard: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-  },
-  guestTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    marginBottom: 10,
-  },
-  guestBtnRow: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-  },
-  guestBtnPatient: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 10,
-  },
-  guestBtnDoctor: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: Colors.secondary,
-    borderRadius: 12,
-    paddingVertical: 10,
-  },
-  guestBtnText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: Colors.white,
   },
 });

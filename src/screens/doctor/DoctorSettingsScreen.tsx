@@ -1,24 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, TextInput, Switch, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Switch,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Save } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Save,
+  User,
+  Phone,
+  Briefcase,
+  MapPin,
+  DollarSign,
+  Calendar,
+  Clock,
+  Sparkles,
+  Layers,
+  Image as ImageIcon,
+  ShieldCheck,
+  Check,
+} from 'lucide-react-native';
 import { Colors, Shadows } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
 import { supabase } from '../../services/supabase';
 
+const ALL_DAYS = [
+  { key: 'Saturday', labelAr: 'السبت', labelEn: 'Saturday' },
+  { key: 'Sunday', labelAr: 'الأحد', labelEn: 'Sunday' },
+  { key: 'Monday', labelAr: 'الإثنين', labelEn: 'Monday' },
+  { key: 'Tuesday', labelAr: 'الثلاثاء', labelEn: 'Tuesday' },
+  { key: 'Wednesday', labelAr: 'الأربعاء', labelEn: 'Wednesday' },
+  { key: 'Thursday', labelAr: 'الخميس', labelEn: 'Thursday' },
+  { key: 'Friday', labelAr: 'الجمعة', labelEn: 'Friday' },
+];
+
 export const DoctorSettingsScreen = () => {
-  const navigation = useNavigation();
-  const { currentUser } = useApp();
-  
+  const navigation = useNavigation<any>();
+  const { currentUser, language, isRTL, updateUserProfile } = useApp();
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  
-  const [bio, setBio] = useState('');
+
+  // Profile Details
+  const [fullName, setFullName] = useState(currentUser.fullName || '');
+  const [phone, setPhone] = useState(currentUser.phone || '');
   const [specialty, setSpecialty] = useState('');
+  const [title, setTitle] = useState('');
+  const [bio, setBio] = useState('');
   const [clinicAddress, setClinicAddress] = useState('');
-  const [consultationFee, setConsultationFee] = useState('0');
+  const [consultationFee, setConsultationFee] = useState('300');
+  const [experienceYears, setExperienceYears] = useState('10');
+
+  // Schedule & Working Days
+  const [workingDays, setWorkingDays] = useState<string[]>([
+    'Saturday',
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+  ]);
+  const [startTime, setStartTime] = useState('10:00');
+  const [endTime, setEndTime] = useState('22:00');
+
+  // Feature Toggles
   const [isAcceptingPatients, setIsAcceptingPatients] = useState(true);
-  
   const [enableInstantConsultation, setEnableInstantConsultation] = useState(true);
   const [enableBooking, setEnableBooking] = useState(true);
   const [enableChat, setEnableChat] = useState(true);
@@ -29,113 +83,670 @@ export const DoctorSettingsScreen = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: profileData } = await supabase.from('doctor_profiles').select('*').eq('id', currentUser.id).single();
-    if (profileData) {
-      setBio(profileData.bio || '');
-      setSpecialty(profileData.specialty || '');
-      setClinicAddress(profileData.clinic_address || '');
-      setConsultationFee(profileData.consultation_fee?.toString() || '0');
-      setIsAcceptingPatients(profileData.is_accepting_patients);
+    try {
+      // 1. Fetch from doctor_profiles
+      const { data: profileData } = await supabase
+        .from('doctor_profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (profileData) {
+        setBio(profileData.bio || '');
+        setSpecialty(profileData.specialty || '');
+        setTitle(profileData.title || '');
+        setClinicAddress(profileData.clinic_address || '');
+        setConsultationFee(profileData.consultation_fee?.toString() || '300');
+        if (profileData.is_accepting_patients !== undefined) {
+          setIsAcceptingPatients(profileData.is_accepting_patients);
+        }
+      }
+
+      // 2. Fetch from doctor_settings
+      const { data: settingsData } = await supabase
+        .from('doctor_settings')
+        .select('*')
+        .eq('doctor_id', currentUser.id)
+        .single();
+
+      if (settingsData) {
+        setEnableInstantConsultation(settingsData.enable_instant_consultation ?? true);
+        setEnableBooking(settingsData.enable_booking ?? true);
+        setEnableChat(settingsData.enable_chat ?? true);
+        if (settingsData.working_days) setWorkingDays(settingsData.working_days);
+        if (settingsData.working_hours_start) setStartTime(settingsData.working_hours_start);
+        if (settingsData.working_hours_end) setEndTime(settingsData.working_hours_end);
+      }
+    } catch (e) {
+      console.warn('Error fetching doctor settings:', e);
+    } finally {
+      setLoading(false);
     }
-    const { data: settingsData } = await supabase.from('doctor_settings').select('*').eq('doctor_id', currentUser.id).single();
-    if (settingsData) {
-      setEnableInstantConsultation(settingsData.enable_instant_consultation);
-      setEnableBooking(settingsData.enable_booking);
-      setEnableChat(settingsData.enable_chat);
-    }
-    setLoading(false);
+  };
+
+  const toggleDay = (dayKey: string) => {
+    setWorkingDays((prev) =>
+      prev.includes(dayKey) ? prev.filter((d) => d !== dayKey) : [...prev, dayKey]
+    );
   };
 
   const handleSave = async () => {
     setSaving(true);
-    
-    const profileUpdates = {
-      id: currentUser.id,
-      slug: currentUser.id,
-      bio,
-      specialty,
-      clinic_address: clinicAddress,
-      consultation_fee: Number(consultationFee),
-      is_accepting_patients: isAcceptingPatients,
-      updated_at: new Date().toISOString()
-    };
-    const { error: profileError } = await supabase.from('doctor_profiles').upsert(profileUpdates);
-    
-    const settingsUpdates = {
-      doctor_id: currentUser.id,
-      enable_instant_consultation: enableInstantConsultation,
-      enable_booking: enableBooking,
-      enable_chat: enableChat,
-    };
-    const { error: settingsError } = await supabase.from('doctor_settings').upsert(settingsUpdates);
-    
-    setSaving(false);
-    
-    if (profileError || settingsError) {
-      Alert.alert('Error', (profileError?.message || '') + ' ' + (settingsError?.message || ''));
-    } else {
-      Alert.alert('Success', 'Profile updated successfully');
-      navigation.goBack();
+    try {
+      // 1. Update profiles table
+      await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName.trim(),
+          phone: phone.trim(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', currentUser.id);
+
+      await updateUserProfile({
+        ...currentUser,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+      });
+
+      // 2. Update doctor_profiles table
+      const profileUpdates = {
+        id: currentUser.id,
+        slug: currentUser.id,
+        bio: bio.trim(),
+        specialty: specialty.trim(),
+        title: title.trim(),
+        clinic_address: clinicAddress.trim(),
+        consultation_fee: Number(consultationFee) || 0,
+        is_accepting_patients: isAcceptingPatients,
+        updated_at: new Date().toISOString(),
+      };
+
+      await supabase.from('doctor_profiles').upsert(profileUpdates);
+
+      // 3. Update doctor_settings table
+      const settingsUpdates = {
+        doctor_id: currentUser.id,
+        enable_instant_consultation: enableInstantConsultation,
+        enable_booking: enableBooking,
+        enable_chat: enableChat,
+        working_days: workingDays,
+        working_hours_start: startTime,
+        working_hours_end: endTime,
+        updated_at: new Date().toISOString(),
+      };
+
+      await supabase.from('doctor_settings').upsert(settingsUpdates);
+
+      Alert.alert(
+        language === 'ar' ? 'تم الحفظ بنجاح' : 'Saved Successfully',
+        language === 'ar'
+          ? 'تم تحديث جميع بيانات عيادتك وإعداداتك بالكامل!'
+          : 'All clinic settings and profile information updated!'
+      );
+    } catch (err: any) {
+      Alert.alert(
+        language === 'ar' ? 'خطأ أثناء الحفظ' : 'Save Error',
+        err?.message || (language === 'ar' ? 'يرجى المحاولة مرة أخرى' : 'Please try again')
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (loading) return <View style={styles.center}><ActivityIndicator color={Colors.primary} /></View>;
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>
+          {language === 'ar' ? 'جاري تحميل إعدادات العيادة...' : 'Loading clinic settings...'}
+        </Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}><ArrowLeft color={Colors.textPrimary} /></TouchableOpacity>
-        <Text style={styles.headerTitle}>My Profile Settings</Text>
-        <TouchableOpacity onPress={handleSave} disabled={saving}>
-          {saving ? <ActivityIndicator size="small" color={Colors.primary} /> : <Save color={Colors.primary} />}
-        </TouchableOpacity>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Top Header Card */}
+      <View style={styles.headerCard}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => navigation.goBack()}
+          >
+            {isRTL ? (
+              <ArrowRight size={20} color={Colors.white} />
+            ) : (
+              <ArrowLeft size={20} color={Colors.white} />
+            )}
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerTitle}>
+              {language === 'ar' ? 'لوحة تحكم وإعدادات الطبيب 🩺' : 'Doctor Control Hub 🩺'}
+            </Text>
+            <Text style={styles.headerSubtitle}>
+              {language === 'ar'
+                ? 'تحكم شامل في كل ما يظهر للمرضى في حسابك وعيادتك'
+                : 'Full control over your clinic and patient-facing profile'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Quick Hub Navigation Buttons */}
+        <View style={styles.hubButtonsRow}>
+          <TouchableOpacity
+            style={styles.hubBtn}
+            onPress={() => navigation.navigate('ManageServices')}
+          >
+            <Layers size={18} color={Colors.primaryDark} />
+            <Text style={styles.hubBtnText}>
+              {language === 'ar' ? 'إدارة الخدمات والأسعار' : 'Manage Services'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.hubBtn, { backgroundColor: '#f3e8ff' }]}
+            onPress={() => navigation.navigate('ManagePortfolio')}
+          >
+            <ImageIcon size={18} color="#7e22ce" />
+            <Text style={[styles.hubBtnText, { color: '#7e22ce' }]}>
+              {language === 'ar' ? 'معرض صور الحالات' : 'Manage Portfolio'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
+
+      {/* Section 1: Availability & Vacation Toggles */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>
+          {language === 'ar' ? '1. التحكم في التوافر والميزات' : '1. Availability & Feature Toggles'}
+        </Text>
+
+        <View style={styles.toggleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.toggleLabel}>
+              {language === 'ar' ? 'استقبال المرضى (وضع العمل النشط)' : 'Accepting Patients'}
+            </Text>
+            <Text style={styles.toggleSub}>
+              {language === 'ar'
+                ? 'عطله لتفعيل وضع الإجازة (Vacation Mode) وإيقاف الحجوزات مؤقتاً'
+                : 'Toggle off for Vacation Mode to pause incoming appointments'}
+            </Text>
+          </View>
+          <Switch
+            value={isAcceptingPatients}
+            onValueChange={setIsAcceptingPatients}
+            trackColor={{ false: Colors.border, true: Colors.primary }}
+          />
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.toggleLabel}>
+              {language === 'ar' ? 'الاستشارات الفورية أونلاين' : 'Instant Consultations'}
+            </Text>
+            <Text style={styles.toggleSub}>
+              {language === 'ar'
+                ? 'السماح للمرضى بطلب تشخيص وكشف أونلاين عبر التطبيق'
+                : 'Allow patients to request online triage & consultation'}
+            </Text>
+          </View>
+          <Switch
+            value={enableInstantConsultation}
+            onValueChange={setEnableInstantConsultation}
+            trackColor={{ false: Colors.border, true: Colors.primary }}
+          />
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.toggleLabel}>
+              {language === 'ar' ? 'حجز المواعيد بالعيادة' : 'In-Clinic Bookings'}
+            </Text>
+            <Text style={styles.toggleSub}>
+              {language === 'ar'
+                ? 'إتاحة حجز الزيارات والكشوفات المباشرة في العيادة'
+                : 'Allow patients to book physical visits to your clinic'}
+            </Text>
+          </View>
+          <Switch
+            value={enableBooking}
+            onValueChange={setEnableBooking}
+            trackColor={{ false: Colors.border, true: Colors.primary }}
+          />
+        </View>
+
+        <View style={[styles.toggleRow, { borderBottomWidth: 0 }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.toggleLabel}>
+              {language === 'ar' ? 'المحادثات المباشرة (Live Chat)' : 'Direct Live Chat'}
+            </Text>
+            <Text style={styles.toggleSub}>
+              {language === 'ar'
+                ? 'تفعيل استقبال رسائل الشات والرسائل الصوتية من المرضى'
+                : 'Enable direct messaging and voice notes with patients'}
+            </Text>
+          </View>
+          <Switch
+            value={enableChat}
+            onValueChange={setEnableChat}
+            trackColor={{ false: Colors.border, true: Colors.primary }}
+          />
+        </View>
+      </View>
+
+      {/* Section 2: Personal & Professional Profile */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>
+          {language === 'ar' ? '2. البيانات المهنية والبروفايل' : '2. Professional Profile'}
+        </Text>
+
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Specialty</Text>
-          <TextInput style={styles.input} value={specialty} onChangeText={setSpecialty} placeholder="e.g. Endodontist" />
+          <Text style={styles.inputLabel}>
+            {language === 'ar' ? 'اسم الطبيب الكامل' : 'Doctor Full Name'}
+          </Text>
+          <View style={styles.inputBox}>
+            <User size={18} color={Colors.textMuted} />
+            <TextInput
+              style={styles.textInput}
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="د. كريم أبو بكر"
+              placeholderTextColor={Colors.textMuted}
+              textAlign={isRTL ? 'right' : 'left'}
+            />
+          </View>
         </View>
+
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Bio</Text>
-          <TextInput style={[styles.input, { height: 100 }]} multiline value={bio} onChangeText={setBio} placeholder="About you..." />
+          <Text style={styles.inputLabel}>
+            {language === 'ar' ? 'رقم الهاتف للتواصل / واتساب' : 'Phone / WhatsApp'}
+          </Text>
+          <View style={styles.inputBox}>
+            <Phone size={18} color={Colors.textMuted} />
+            <TextInput
+              style={styles.textInput}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="+20 100 000 0000"
+              placeholderTextColor={Colors.textMuted}
+              keyboardType="phone-pad"
+              textAlign={isRTL ? 'right' : 'left'}
+            />
+          </View>
         </View>
+
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Clinic Address</Text>
-          <TextInput style={styles.input} value={clinicAddress} onChangeText={setClinicAddress} placeholder="123 Street" />
+          <Text style={styles.inputLabel}>
+            {language === 'ar' ? 'التخصص الدقيق' : 'Specialty'}
+          </Text>
+          <View style={styles.inputBox}>
+            <Briefcase size={18} color={Colors.textMuted} />
+            <TextInput
+              style={styles.textInput}
+              value={specialty}
+              onChangeText={setSpecialty}
+              placeholder="استشاري جراحة وزراعة وتجميل الأسنان"
+              placeholderTextColor={Colors.textMuted}
+              textAlign={isRTL ? 'right' : 'left'}
+            />
+          </View>
         </View>
+
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Consultation Fee ($)</Text>
-          <TextInput style={styles.input} value={consultationFee} onChangeText={setConsultationFee} keyboardType="numeric" />
+          <Text style={styles.inputLabel}>
+            {language === 'ar' ? 'سعر الكشف (ج.م)' : 'Consultation Fee (EGP)'}
+          </Text>
+          <View style={styles.inputBox}>
+            <DollarSign size={18} color={Colors.textMuted} />
+            <TextInput
+              style={styles.textInput}
+              value={consultationFee}
+              onChangeText={setConsultationFee}
+              placeholder="350"
+              keyboardType="numeric"
+              placeholderTextColor={Colors.textMuted}
+              textAlign={isRTL ? 'right' : 'left'}
+            />
+          </View>
         </View>
-        <View style={styles.switchGroup}>
-          <Text style={styles.label}>Vacation Mode (Offline)</Text>
-          <Switch value={!isAcceptingPatients} onValueChange={(val) => setIsAcceptingPatients(!val)} trackColor={{ true: Colors.error }} />
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>
+            {language === 'ar' ? 'عنوان وموقع العيادة' : 'Clinic Address'}
+          </Text>
+          <View style={styles.inputBox}>
+            <MapPin size={18} color={Colors.textMuted} />
+            <TextInput
+              style={styles.textInput}
+              value={clinicAddress}
+              onChangeText={setClinicAddress}
+              placeholder="برج الأطباء، شارع النصر، المعادي، القاهرة"
+              placeholderTextColor={Colors.textMuted}
+              textAlign={isRTL ? 'right' : 'left'}
+            />
+          </View>
         </View>
-        <View style={styles.switchGroup}>
-          <Text style={styles.label}>Enable Instant Consultation</Text>
-          <Switch value={enableInstantConsultation} onValueChange={setEnableInstantConsultation} trackColor={{ true: Colors.primary }} />
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>
+            {language === 'ar' ? 'النبذة المهنية وسنوات الخبرة' : 'Professional Bio'}
+          </Text>
+          <TextInput
+            style={styles.textArea}
+            value={bio}
+            onChangeText={setBio}
+            placeholder="اكتب نبذة تعريفية بالخبرات والمؤهلات والشهادات التي تعرض للمرضى..."
+            placeholderTextColor={Colors.textMuted}
+            multiline
+            numberOfLines={4}
+            textAlign={isRTL ? 'right' : 'left'}
+          />
         </View>
-        <View style={styles.switchGroup}>
-          <Text style={styles.label}>Enable Bookings</Text>
-          <Switch value={enableBooking} onValueChange={setEnableBooking} trackColor={{ true: Colors.primary }} />
+      </View>
+
+      {/* Section 3: Schedule & Working Days */}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionTitle}>
+          {language === 'ar' ? '3. جدول وأيام العمل بالعيادة' : '3. Working Days & Schedule'}
+        </Text>
+
+        <Text style={styles.inputLabel}>
+          {language === 'ar' ? 'اختر أيام العمل المتاحة للحجز:' : 'Select Available Working Days:'}
+        </Text>
+
+        <View style={styles.daysGrid}>
+          {ALL_DAYS.map((day) => {
+            const isSelected = workingDays.includes(day.key);
+            return (
+              <TouchableOpacity
+                key={day.key}
+                onPress={() => toggleDay(day.key)}
+                style={[styles.dayPill, isSelected && styles.dayPillSelected]}
+              >
+                <View
+                  style={[
+                    styles.dayCheckbox,
+                    isSelected && styles.dayCheckboxSelected,
+                  ]}
+                >
+                  {isSelected && <Check size={12} color={Colors.white} />}
+                </View>
+                <Text
+                  style={[
+                    styles.dayText,
+                    isSelected && styles.dayTextSelected,
+                  ]}
+                >
+                  {language === 'ar' ? day.labelAr : day.labelEn}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-        <View style={styles.switchGroup}>
-          <Text style={styles.label}>Enable Chat</Text>
-          <Switch value={enableChat} onValueChange={setEnableChat} trackColor={{ true: Colors.primary }} />
+
+        <View style={styles.timeRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.inputLabel}>
+              {language === 'ar' ? 'بداية العمل' : 'Start Time'}
+            </Text>
+            <View style={styles.inputBox}>
+              <Clock size={16} color={Colors.textMuted} />
+              <TextInput
+                style={styles.textInput}
+                value={startTime}
+                onChangeText={setStartTime}
+                placeholder="10:00"
+                placeholderTextColor={Colors.textMuted}
+              />
+            </View>
+          </View>
+
+          <View style={{ flex: 1 }}>
+            <Text style={styles.inputLabel}>
+              {language === 'ar' ? 'نهاية العمل' : 'End Time'}
+            </Text>
+            <View style={styles.inputBox}>
+              <Clock size={16} color={Colors.textMuted} />
+              <TextInput
+                style={styles.textInput}
+                value={endTime}
+                onChangeText={setEndTime}
+                placeholder="22:00"
+                placeholderTextColor={Colors.textMuted}
+              />
+            </View>
+          </View>
         </View>
-      </ScrollView>
-    </View>
+      </View>
+
+      {/* Save Button */}
+      <TouchableOpacity
+        style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+        onPress={handleSave}
+        disabled={saving}
+      >
+        {saving ? (
+          <ActivityIndicator color={Colors.white} size="small" />
+        ) : (
+          <>
+            <Save size={20} color={Colors.white} />
+            <Text style={styles.saveBtnText}>
+              {language === 'ar' ? 'حفظ جميع التعديلات' : 'Save All Changes'}
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, paddingTop: 50, backgroundColor: Colors.surface, ...Shadows.sm },
-  headerTitle: { fontSize: 18, fontWeight: '800' },
-  content: { padding: 16 },
-  inputGroup: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: '700', marginBottom: 8, color: Colors.textSecondary },
-  input: { backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border, borderRadius: 12, padding: 12, fontSize: 15 },
-  switchGroup: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, padding: 16, backgroundColor: Colors.surface, borderRadius: 12, borderWidth: 1, borderColor: Colors.border }
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.background,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  headerCard: {
+    backgroundColor: Colors.primaryDark,
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    ...Shadows.md,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
+  },
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Colors.white,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
+  },
+  hubButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+  },
+  hubBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primaryLight,
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 6,
+  },
+  hubBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+  },
+  sectionCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    ...Shadows.sm,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    paddingBottom: 8,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    gap: 12,
+  },
+  toggleLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  toggleSub: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  inputGroup: {
+    marginBottom: 14,
+    gap: 6,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    backgroundColor: Colors.background,
+    gap: 8,
+  },
+  textInput: {
+    flex: 1,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: Colors.textPrimary,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: Colors.background,
+    fontSize: 13,
+    color: Colors.textPrimary,
+    minHeight: 85,
+    textAlignVertical: 'top',
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 14,
+  },
+  dayPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+    gap: 6,
+  },
+  dayPillSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+  },
+  dayCheckbox: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayCheckboxSelected: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  dayText: {
+    fontSize: 12,
+    color: Colors.textPrimary,
+  },
+  dayTextSelected: {
+    fontWeight: '700',
+    color: Colors.primaryDark,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  saveBtn: {
+    backgroundColor: Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 16,
+    gap: 8,
+    ...Shadows.md,
+  },
+  saveBtnDisabled: {
+    opacity: 0.6,
+  },
+  saveBtnText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: '800',
+  },
 });

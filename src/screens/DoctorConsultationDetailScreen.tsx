@@ -220,7 +220,7 @@ export const DoctorConsultationDetailScreen: React.FC<
             return (
               <View key={sId} style={styles.symptomTag}>
                 <Text style={styles.symptomTagText}>
-                  • {language === 'ar' ? sym?.labelAr : sym?.labelEn}
+                  • {language === 'ar' ? sym?.nameAr : sym?.nameEn}
                 </Text>
               </View>
             );
