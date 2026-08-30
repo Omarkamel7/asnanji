@@ -83,7 +83,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
           <View>
             <Text style={styles.headerTitle}>{t.appTitle}</Text>
-            <Text style={styles.headerSubtitle}>{language === 'ar' ? 'œ·Ì· √ÿ»«¡ «·√”‰«‰' : 'Find Your Dentist'}</Text>
+            <Text style={styles.headerSubtitle}>{language === 'ar' ? '  ' : 'Find Your Dentist'}</Text>
           </View>
         </View>
         <TouchableOpacity
@@ -144,7 +144,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <TouchableOpacity 
             key={doctor.id} 
             style={styles.doctorCard}
-            onPress={() => navigation.navigate('DoctorProfile', { doctorId: doctor.id })}
+            onPress={() => navigation.navigate('DoctorPublicProfile', { doctorId: doctor.id })}
           >
             <View style={styles.doctorHeader}>
               <Image 
@@ -168,7 +168,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <Text style={styles.footerText} numberOfLines={1}>{doctor.clinicAddress || 'Clinic Address Not Set'}</Text>
               </View>
               <View style={styles.priceTag}>
-                <Text style={styles.priceText}>From </Text>
+                <Text style={styles.priceText}>{language === 'ar' ? `Ÿäÿ®ÿØÿ£ ŸÖŸÜ ${doctor.consultationFee || 350} ÿ¨.ŸÖ` : `From ${doctor.consultationFee || 350} EGP`}</Text>
               </View>
             </View>
             {!doctor.isAcceptingPatients && (

@@ -1,5 +1,6 @@
+import ErrorBoundary from './src/components/ErrorBoundary';
 import React from 'react';
-import { View, Text, StatusBar, I18nManager } from 'react-native';
+import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -20,7 +21,6 @@ import { Colors } from './src/constants/theme';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { ComplaintIntakeScreen } from './src/screens/ComplaintIntakeScreen';
-import { AppointmentsScreen } from './src/screens/AppointmentsScreen';
 import { MedicalRecordsScreen } from './src/screens/MedicalRecordsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { DoctorDashboardScreen } from './src/screens/DoctorDashboardScreen';
@@ -281,7 +281,7 @@ const MainNavigation = () => {
         />
 
         <Stack.Screen
-          name="DoctorProfile"
+          name="DoctorPublicProfile"
           component={DoctorProfileScreen}
           options={{ headerShown: false }}
         />
@@ -300,7 +300,7 @@ const MainNavigation = () => {
   );
 };
 
-import ErrorBoundary from './src/components/ErrorBoundary';
+
 
 export default function App() {
   return (

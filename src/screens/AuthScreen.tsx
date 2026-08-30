@@ -112,12 +112,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
 
         const isDoctorEmail =
           authEmail.toLowerCase().includes('doctor') ||
-          authEmail.toLowerCase().includes('karim@smartdental.com');
+          profile?.role === 'doctor';
 
         const determinedRole: UserRole =
           (profile?.role as UserRole) || (isDoctorEmail ? 'doctor' : 'patient');
         const determinedName =
-          profile?.full_name || (determinedRole === 'doctor' ? 'د. كريم أبو بكر' : 'مريض');
+          profile?.full_name || (determinedRole === 'doctor' ? 'طبيب' : 'مريض');
         const determinedPhone = profile?.phone || '';
 
         await updateUserProfile({
@@ -140,7 +140,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
     } else {
       setTimeout(() => {
         setLoading(false);
-        if (email.includes('doctor') || email.includes('karim')) {
+        if (email.includes('doctor')) {
           setRole('doctor');
         } else {
           setRole('patient');
