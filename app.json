@@ -1,60 +1,55 @@
 {
-    "expo":  {
-                 "name":  "ÇÓäÇäÌí",
-                 "slug":  "asnanji",
-                 "version":  "1.4.0",
-                 "orientation":  "portrait",
-                 "icon":  "./assets/icon.png",
-                 "userInterfaceStyle":  "light",
-                 "splash":  {
-                                "image":  "./assets/splash.png",
-                                "resizeMode":  "contain",
-                                "backgroundColor":  "#ffffff"
-                            },
-                 "ios":  {
-                             "supportsTablet":  true
-                         },
-                 "android":  {
-                                 "adaptiveIcon":  {
-                                                      "foregroundImage":  "./assets/adaptive-icon.png",
-                                                      "backgroundColor":  "#ffffff"
-                                                  },
-                                 "permissions":  [
-                                                     "android.permission.RECORD_AUDIO",
-                                                     "android.permission.MODIFY_AUDIO_SETTINGS",
-                                                     "android.permission.RECORD_AUDIO",
-                                                     "android.permission.MODIFY_AUDIO_SETTINGS"
-                                                 ],
-                                 "package":  "com.omarsala7steam.smartdentalclinic"
-                             },
-                 "web":  {
-                             "favicon":  "./assets/favicon.png"
-                         },
-                 "plugins":  [
-                                 [
-                                     "expo-image-picker",
-                                     {
-                                         "photosPermission":  "The app needs access to your photos to upload teeth and X-ray images for dental consultation."
-                                     }
-                                 ],
-                                 [
-                                     "expo-av",
-                                     {
-                                         "microphonePermission":  "The app needs access to your microphone to record voice notes describing dental symptoms."
-                                     }
-                                 ]
-                             ],
-                 "extra":  {
-                               "eas":  {
-                                           "projectId":  "94e65c8f-92b9-447d-bd66-f3edf03b7477"
-                                       }
-                           },
-                 "owner":  "omarsala7s-team",
-                 "runtimeVersion":  {
-                                        "policy":  "appVersion"
-                                    },
-                 "updates":  {
-                                 "url":  "https://u.expo.dev/94e65c8f-92b9-447d-bd66-f3edf03b7477"
-                             }
-             }
+  "expo": {
+    "name": "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+    "slug": "asnanji",
+    "version": "1.4.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.omarsala7steam.smartdentalclinic"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to upload teeth and X-ray images for dental consultation."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "The app needs access to your microphone to record voice notes describing dental symptoms."
+        }
+      ]
+    ],
+    "owner": "omarsala7s-team",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b9170b46-6ab5-4b6f-9d61-b659e3e9bc50"
+      }
+    }
+  }
 }
