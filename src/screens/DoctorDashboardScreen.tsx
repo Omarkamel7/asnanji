@@ -11,7 +11,7 @@ import {
 import { Image } from 'expo-image';
 import { SkeletonConsultationCard } from '../components/SkeletonCard';
 import { useFocusEffect } from '@react-navigation/native';
-import {
+import { 
   Stethoscope,
   Clock,
   AlertCircle,
@@ -26,6 +26,7 @@ import {
   Image as ImageIcon,
   Settings,
   Sparkles,
+  Eye
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
@@ -47,6 +48,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
     setRole,
     isRTL,
     refreshClinicData,
+    doctorViews,
     currentUser,
   } = useApp();
 
@@ -188,7 +190,14 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
           <View style={styles.statBox}>
             <Text style={styles.statNum}>{appointments.length}</Text>
             <Text style={styles.statLabel}>
-              {language === 'ar' ? 'مواعيد اليوم' : 'Appointments'}
+              {language === 'ar' ? 'المواعيد' : 'Appointments'}
+            </Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={[styles.statNum, { color: '#0284c7' }]}>{doctorViews[currentUser?.id] || 0}</Text>
+            <Text style={styles.statLabel}>
+              {language === 'ar' ? 'زيارات البروفايل' : 'Profile Views'}
             </Text>
           </View>
         </View>

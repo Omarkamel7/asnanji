@@ -10,6 +10,7 @@ export interface DoctorProfile {
   isAcceptingPatients: boolean;
   rating: number;
   profileData?: Partial<UserProfile>;
+  viewsCount?: number;
 }
 
 export interface DoctorPortfolio {

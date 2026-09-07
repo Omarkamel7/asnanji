@@ -15,7 +15,7 @@ export const DoctorProfileScreen = () => {
   const route = useRoute();
   const navigation = useNavigation<any>();
   const { doctorId } = route.params as { doctorId: string };
-  const { doctors, language, isRTL } = useApp();
+  const { doctors, language, isRTL, currentUser, recordDoctorProfileVisit } = useApp();
 
   const [doctor, setDoctor] = useState<DoctorProfile | null>(
     doctors.find(d => d.id === doctorId) || null
@@ -74,6 +74,9 @@ export const DoctorProfileScreen = () => {
     };
 
     fetchDetails();
+    if (currentUser?.id !== doctorId) {
+      recordDoctorProfileVisit(doctorId);
+    }
   }, [doctorId]);
 
   if (loading) {

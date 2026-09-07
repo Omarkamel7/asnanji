@@ -69,6 +69,8 @@ interface AppContextType {
   sendMessage: (consultationId: string, text: string, audioUri?: string, imageUri?: string) => Promise<void>;
   refreshClinicData: () => Promise<void>;
   signOut: () => Promise<void>;
+  doctorViews: Record<string, number>;
+  recordDoctorProfileVisit: (doctorId: string) => Promise<void>;
   isAuthenticated: boolean;
   t: typeof translations.ar;
   isRTL: boolean;
@@ -111,6 +113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [services, setServices] = useState<DentalService[]>(DEFAULT_SERVICES);
   const [portfolioCases, setPortfolioCases] = useState<BeforeAfterCase[]>(INITIAL_BEFORE_AFTER_CASES);
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [doctorViews, setDoctorViews] = useState<Record<string, number>>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -143,6 +146,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedAppointments = await AsyncStorage.getItem('@dental_app_appointments');
       if (savedAppointments) {
         setAppointments(JSON.parse(savedAppointments));
+      }
+      const savedViews = await AsyncStorage.getItem('@asnanji_doctor_views');
+      if (savedViews) {
+        setDoctorViews(JSON.parse(savedViews));
       }
       const savedMessages = await AsyncStorage.getItem('@dental_app_messages');
       if (savedMessages) {
@@ -905,6 +912,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const recordDoctorProfileVisit = async (doctorId: string) => {
+    if (!doctorId) return;
+    try {
+      const currentCount = doctorViews[doctorId] || 0;
+      const updatedViews = { ...doctorViews, [doctorId]: currentCount + 1 };
+      setDoctorViews(updatedViews);
+      await AsyncStorage.setItem('@asnanji_doctor_views', JSON.stringify(updatedViews));
+
+      if (isSupabaseConfigured) {
+        // Try incrementing via RPC or direct update if available
+        try {
+          await supabase.rpc('increment_doctor_views', { doc_id: doctorId });
+        } catch (_) {}
+      }
+    } catch (e) {
+      console.warn('Error recording doctor profile visit:', e);
+    }
+  };
+
   const signOut = async () => {
     if (isSupabaseConfigured) {
       await supabase.auth.signOut();
@@ -1210,6 +1236,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       messages,
       sendMessage,
       refreshClinicData,
+      doctorViews,
+      recordDoctorProfileVisit,
       signOut,
       isAuthenticated,
       t,
@@ -1227,6 +1255,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       portfolioCases,
       messages,
       sendMessage,
+      doctorViews,
       isAuthenticated,
       t,
       isRTL,
