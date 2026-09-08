@@ -1,5 +1,5 @@
 export * from './doctor';
-export type UserRole = 'patient' | 'doctor' | 'admin';
+export type UserRole = 'patient' | 'doctor' | 'admin' | 'assistant';
 
 export type Language = 'ar' | 'en';
 
@@ -9,6 +9,7 @@ export interface UserProfile {
   phone: string;
   email?: string;
   role: UserRole;
+  assignedDoctorId?: string;
   gender: 'male' | 'female';
   age?: number;
   avatarUrl?: string;

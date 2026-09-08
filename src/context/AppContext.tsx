@@ -467,11 +467,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const fetchRemoteUserData = async () => {
     if (!isSupabaseConfigured) return;
     try {
+      const targetDoctorId = role === 'doctor' ? currentUser.id : role === 'assistant' ? currentUser.assignedDoctorId : undefined;
+
       // Fetch Consultations (with joined patient profile)
-      const { data: remoteComplaints, error: compErr } = await supabase
+      let consultQuery = supabase
         .from('consultations')
         .select('*, profiles:patient_id (full_name, phone)')
         .order('created_at', { ascending: false });
+
+      if (targetDoctorId) {
+        consultQuery = consultQuery.eq('doctor_id', targetDoctorId);
+      }
+
+      const { data: remoteComplaints, error: compErr } = await consultQuery;
 
       if (remoteComplaints && !compErr) {
         const formatted: DentalComplaint[] = remoteComplaints.map((c: any) => ({
@@ -512,10 +520,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       // Fetch Appointments (with joined patient profile)
-      const { data: remoteAppointments, error: aptErr } = await supabase
+      let aptQuery = supabase
         .from('appointments')
         .select('*, profiles:patient_id (full_name, phone)')
         .order('created_at', { ascending: false });
+
+      if (targetDoctorId) {
+        aptQuery = aptQuery.eq('doctor_id', targetDoctorId);
+      }
+
+      const { data: remoteAppointments, error: aptErr } = await aptQuery;
 
       if (remoteAppointments && !aptErr) {
         const formattedApts: Appointment[] = remoteAppointments.map((a: any) => ({

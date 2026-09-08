@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import {
+import { 
   ArrowLeft,
   ArrowRight,
   Save,
@@ -29,6 +29,7 @@ import {
   Check,
   Eye,
   EyeOff,
+  Users
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../../constants/theme';
 import { useApp } from '../../context/AppContext';
@@ -271,6 +272,15 @@ export const DoctorSettingsScreen = () => {
             <ImageIcon size={18} color="#7e22ce" />
             <Text style={[styles.hubBtnText, { color: '#7e22ce' }]}>
               {language === 'ar' ? 'معرض صور الحالات' : 'Manage Portfolio'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.hubBtn, { backgroundColor: '#ecfdf5' }]}
+            onPress={() => navigation.navigate('ManageAssistants')}
+          >
+            <Users size={18} color="#059669" />
+            <Text style={[styles.hubBtnText, { color: '#059669' }]}>
+              {language === 'ar' ? 'فريق السكرتارية' : 'Clinic Staff'}
             </Text>
           </TouchableOpacity>
         </View>

@@ -117,7 +117,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
         const determinedRole: UserRole =
           (profile?.role as UserRole) || (isDoctorEmail ? 'doctor' : 'patient');
         const determinedName =
-          profile?.full_name || (determinedRole === 'doctor' ? 'طبيب' : 'مريض');
+          profile?.full_name || (determinedRole === 'doctor' ? 'طبيب' : determinedRole === 'assistant' ? 'مساعد العيادة' : 'مريض');
         const determinedPhone = profile?.phone || '';
 
         await updateUserProfile({
@@ -125,6 +125,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
           fullName: determinedName,
           phone: determinedPhone,
           role: determinedRole,
+          assignedDoctorId: profile?.assigned_doctor_id,
           medicalHistory: {
             ...currentUser.medicalHistory,
             hasDiabetes: profile?.has_diabetes || false,

@@ -33,6 +33,8 @@ import { DoctorProfileScreen } from './src/screens/DoctorProfileScreen';
 import { DoctorSettingsScreen } from './src/screens/doctor/DoctorSettingsScreen';
 import { ManageServicesScreen } from './src/screens/doctor/ManageServicesScreen';
 import { ManagePortfolioScreen } from './src/screens/doctor/ManagePortfolioScreen';
+import { ManageAssistantsScreen } from './src/screens/doctor/ManageAssistantsScreen';
+import { AppointmentsScreen } from './src/screens/AppointmentsScreen';
 import { UpdateNotifierModal } from './src/components/UpdateNotifierModal';
 
 const Tab = createBottomTabNavigator();
@@ -194,6 +196,80 @@ const DoctorTabs = () => {
   );
 };
 
+const AssistantTabs = () => {
+  const { t, language } = useApp();
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: Colors.primaryDark,
+        },
+        headerTitleStyle: {
+          fontWeight: '800',
+          fontSize: 16,
+          color: Colors.white,
+        },
+        tabBarStyle: {
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.border,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarActiveTintColor: Colors.primaryDark,
+        tabBarInactiveTintColor: Colors.textMuted,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '700',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="AssistantAppointments"
+        component={AppointmentsScreen}
+        options={{
+          title: language === 'ar' ? 'المواعيد' : 'Appointments',
+          headerTitle: language === 'ar' ? 'جدول مواعيد العيادة' : 'Clinic Schedule',
+          tabBarIcon: ({ color, size }) => (
+            <Calendar size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AssistantInbox"
+        component={DoctorDashboardScreen}
+        options={{
+          title: language === 'ar' ? 'الحالات والمرضى' : 'Patients',
+          headerTitle: language === 'ar' ? 'سجل وحالات المرضى' : 'Patient Records',
+          tabBarIcon: ({ color, size }) => (
+            <Activity size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AssistantChat"
+        component={ChatScreen}
+        options={{
+          title: t.navChat,
+          headerTitle: t.chatTitle,
+          tabBarIcon: ({ color, size }) => (
+            <MessageCircle size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="AssistantProfile"
+        component={ProfileScreen}
+        options={{
+          title: t.navProfile,
+          headerTitle: t.navProfile,
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
 const MainNavigation = () => {
   const { role, language } = useApp();
 
@@ -214,6 +290,12 @@ const MainNavigation = () => {
           <Stack.Screen
             name="PatientRoot"
             component={PatientTabs}
+            options={{ headerShown: false }}
+          />
+        ) : role === 'assistant' ? (
+          <Stack.Screen
+            name="AssistantRoot"
+            component={AssistantTabs}
             options={{ headerShown: false }}
           />
         ) : (
@@ -265,6 +347,12 @@ const MainNavigation = () => {
         <Stack.Screen
           name="DoctorSettings"
           component={DoctorSettingsScreen}
+          options={{ headerShown: false }}
+        />
+
+        <Stack.Screen
+          name="ManageAssistants"
+          component={ManageAssistantsScreen}
           options={{ headerShown: false }}
         />
 
