@@ -10,7 +10,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import {
   Camera,
   Image as ImageIcon,
@@ -54,7 +54,7 @@ const SECTOR_OPTIONS = [
 
 export const NewConsultationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const route = require('@react-navigation/native').useRoute();
+  const route = useRoute<any>();
   const doctorId = route.params?.doctorId;
   const { language, isRTL, currentUser, savePatientQuickProfile, createConsultationWithChat } = useApp();
 

@@ -1,98 +1,47 @@
-# Smart Dental Clinic
+﻿# 🦷 اسنانجي (Asnanji) - Multi-Doctor Dental Healthcare Platform
 
-[![Download APK](https://img.shields.io/badge/Download-Android%20APK%20v1.4.0-0284c7?style=for-the-badge&logo=android)](https://expo.dev/accounts/omarsala7s-team/projects/smart-dental-clinic/builds/334ff61d-f1ef-4ba0-a2a3-1fcaf5176280)
-
-> 📲 **Latest Android APK (v1.4.0)**: [Click here to download & install](https://expo.dev/accounts/omarsala7s-team/projects/smart-dental-clinic/builds/334ff61d-f1ef-4ba0-a2a3-1fcaf5176280)
-
-Smart Dental Clinic is an advanced cross-platform dental telemedicine and clinic management application built with React Native and Expo. It provides interactive dental triage, patient-doctor communication channels, appointment workflows, and a clinic administration portal backed by Supabase.
+منصة أطباء الأسنان الذكية والمتخصصة للاستشارات الطبية عن بعد، حجز المواعيد، وإدارة العيادات (v1.0.0).
 
 ---
 
-## Key Features
+## 📥 تحميل وتثبيت التطبيق (Download App APK)
 
-### Patient Experience
-- **Interactive Dental Mapping**: Visual arch selector allowing patients to pinpoint affected teeth, identify symptoms, and rate pain severity.
-- **Tele-Dentistry Consultation**: Multimodal complaint intake supporting voice notes, clinical photography, and radiographic image attachments.
-- **Real-Time Doctor Messaging**: Direct messaging channel with the consultant dental surgeon for preliminary evaluations and follow-ups.
-- **Bilingual Interface**: Seamless runtime switching between Arabic and English with full RTL (Right-to-Left) and LTR layout adaptations.
+يمكنك تحميل ملف الـ APK المباشر لتثبيت وتجربة التطبيق على هاتفك الأندرويد:
 
-### Clinical & Administrative Portal
-- **Consultation Triage Dashboard**: Centralized review interface for incoming patient cases, medical history alerts, and triage reports.
-- **Intake Form Customization**: Granular control for clinicians to toggle active symptom options, pain thresholds, and health alert categories.
-- **Dynamic Clinic Management**: In-app management of operating hours, clinic contact metadata, location details, and promotional service badges.
-- **Portfolio & Case Management**: Before-and-after procedural showcase with direct image uploads.
+| 📱 رابط التحميل وتثبيت الـ APK | 🌐 صفحة البناء الرسمية ورمز QR | 📦 الحزمة | 🏷️ الإصدار |
+| :--- | :--- | :--- | :--- |
+| [**⬇️ تحميل Asnanji APK (v1.0.0)**](https://expo.dev/accounts/omarsala7s-team/projects/asnanji/builds/6815be60-d277-4b9e-8b3a-982df20c63d3) | [**📲 صفحة Expo Build & QR**](https://expo.dev/accounts/omarsala7s-team/projects/asnanji/builds/6815be60-d277-4b9e-8b3a-982df20c63d3) | `com.omarsala7steam.asnanji` | `v1.0.0 (Build 1)` |
 
 ---
 
-## Technical Architecture
+## 🚀 المميزات الرئيسية (Key Features)
 
-| Layer | Technology |
-| :--- | :--- |
-| **Framework** | React Native 0.76, Expo SDK 52 |
-| **Language** | TypeScript 5.3 |
-| **Backend & Database** | Supabase (PostgreSQL, Row-Level Security, Realtime Subscriptions, Object Storage, Auth) |
-| **Navigation** | React Navigation (Native Stack & Bottom Tabs) |
-| **Audio & Media** | Expo AV, Expo Image Picker |
-| **Vector Icons** | Lucide React Native |
-| **Distribution & Updates** | EAS Build (Android APK / AAB, iOS) and EAS Update (Over-The-Air) |
+- **دليل الأطباء (Doctor Directory)**: استعراض الأطباء المعتمدين، التخصصات، التقييمات، والأسعار مع فلاتر وبحث فوري.
+- **بروفايل الطبيب التفاعلي (Doctor Mini-Site)**: صفحة متكاملة لكل طبيب تشمل معرض الحالات (Before & After Slider)، الأسعار، ومواعيد العمل.
+- **استشارات فورية عن بعد (Online Triage & Consultations)**: إمكانية إرفاق صور الأسنان والأشعة وتحديد مواضع الألم، مع محادثة مباشرة مع الطبيب.
+- **منع الحجز المزدوج (Double Booking Prevention)**: نظام حجز متطور ومؤمن بقواعد بيانات Supabase يمنع تضارب المواعيد.
+- **لوحة تحكم الطبيب (Doctor Dashboard & Settings)**: إدارة شاملة للاستشارات الواردة، الحجوزات، وضع التوافر (Vacation Mode)، وتخصيص الأسعار والسيرة الذاتية.
+- **تنبيهات فورية (Real-time Subscriptions)**: استماع لحظي للرسائل والاستشارات الجديدة عبر قنوات Supabase Realtime.
 
 ---
 
-## Getting Started
+## 🛠️ التقنيات المستخدمة (Tech Stack)
 
-### Prerequisites
-- Node.js LTS (v18 or higher)
-- npm or yarn
-- Expo CLI (`npm install -g expo-cli`)
-- EAS CLI for builds (`npm install -g eas-cli`)
-
-### Installation
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Omarkamel7/smart-dental-clinic.git
-   cd smart-dental-clinic
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Configure environment variables in `.env`:
-   ```env
-   EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-4. Start the development server:
-   ```bash
-   npx expo start
-   ```
+- **Frontend**: React Native, Expo, TypeScript, React Navigation
+- **Backend & Database**: Supabase (PostgreSQL with RLS, Realtime Channels, Storage Buckets)
+- **State Management**: React Context API + AsyncStorage
 
 ---
 
-## Standalone Builds & Distribution
+## 📦 التثبيت والتشغيل المحلي (Getting Started)
 
-### Android APK Build
-To generate a standalone Android APK via EAS Build:
 ```bash
-eas build --platform android --profile preview
-```
+# تثبيت الحزم
+npm install
 
-### Over-The-Air (OTA) Updates
-To publish live runtime updates to installed applications without requiring binary reinstallation:
-```bash
-eas update --auto
+# تشغيل التطبيق في وضع التطوير
+npx expo start
 ```
 
 ---
-
-## Releases & Downloads
-
-Pre-built application binaries and version changelogs are available on the [GitHub Releases](https://github.com/Omarkamel7/smart-dental-clinic/releases) page.
-
----
-
-## License
-
-Proprietary. All rights reserved. Dr. Karim Abo Bakr Dental Center.
+Built with ❤️ for Modern Dental Healthcare.
