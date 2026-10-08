@@ -45,6 +45,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
     complaints,
     appointments,
     doctorInbox,
+    role,
     setRole,
     isRTL,
     refreshClinicData,
@@ -164,9 +165,9 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
               {language === 'ar' ? `مرحباً ${currentUser.fullName || 'د. كريم'}` : `Welcome ${currentUser.fullName}`}
             </Text>
             <Text style={styles.bannerSub}>
-              {language === 'ar'
-                ? 'لوحة تحكم عيادتك وإدارة الاستشارات والمواعيد'
-                : 'Manage your clinic, consultations and patient schedule'}
+              {role === 'assistant'
+                ? (language === 'ar' ? 'إدارة مواعيد واستفسارات المرضى لسكرتارية العيادة' : 'Manage clinic schedule and patient inquiries')
+                : (language === 'ar' ? 'إدارة مواعيد واستشارات العيادة وجدول المرضى' : 'Manage your clinic, consultations and patient schedule')}
             </Text>
           </View>
         </View>
@@ -195,7 +196,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Text style={[styles.statNum, { color: '#0284c7' }]}>{doctorViews[currentUser?.id] || 0}</Text>
+            <Text style={[styles.statNum, { color: '#0284c7' }]}>{doctorViews[currentUser?.assignedDoctorId || currentUser?.id] || 0}</Text>
             <Text style={styles.statLabel}>
               {language === 'ar' ? 'زيارات البروفايل' : 'Profile Views'}
             </Text>
@@ -204,6 +205,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
       </View>
 
       {/* Doctor Management Hub Actions */}
+      {role === 'doctor' && (
       <View style={styles.managementSection}>
         <Text style={styles.sectionTitle}>
           {language === 'ar' ? '⚙️ التحكم في العيادة والخدمات والمحتوى:' : '⚙️ Clinic & Content Management:'}
@@ -258,6 +260,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
           </TouchableOpacity>
         </View>
       </View>
+      )}
 
       {/* Triage Filter Tabs */}
       <View style={styles.triageSectionHeader}>

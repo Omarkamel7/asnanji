@@ -44,6 +44,7 @@ export const DoctorConsultationDetailScreen: React.FC<
     language,
     complaints,
     submitDiagnosis,
+    role,
   } = useApp();
 
   const complaint = complaints.find((c) => c.id === complaintId);
