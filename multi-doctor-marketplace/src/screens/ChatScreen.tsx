@@ -15,6 +15,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { DoctorAvatar } from '../components/DoctorAvatar';
 
 import { lightTap } from '../utils/haptics';
 import { CANNED_RESPONSES } from '../constants/cannedResponses';
@@ -75,7 +76,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
   const [isSending, setIsSending] = useState(false);
 
   // Patient Identification States
-  const hasPatientInfo = !!(currentUser?.fullName && currentUser?.phone && currentUser.fullName !== 'مريض عيادة د. كريم' && currentUser.phone.replace(/[^0-9]/g, '').length >= 8);
+  const hasPatientInfo = !!(currentUser?.fullName && currentUser?.phone && currentUser.phone.replace(/[^0-9]/g, '').length >= 8);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [patientNameInput, setPatientNameInput] = useState(currentUser?.fullName || '');
   const [patientPhoneInput, setPatientPhoneInput] = useState(currentUser?.phone || '');
@@ -373,8 +374,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
       >
         {!isMe && (
           item.senderRole === 'doctor' ? (
-            <Image
-              source={require('../../assets/doctor_clinic.jpg')}
+            <DoctorAvatar
+              name={item.senderName}
+              size={30}
               style={styles.chatDoctorAvatarImg}
             />
           ) : (
@@ -532,8 +534,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
       <View style={styles.headerContextCard}>
         <View style={styles.headerPartnerRow}>
           {role === 'patient' && (
-            <Image
-              source={require('../../assets/doctor_clinic.jpg')}
+            <DoctorAvatar
+              name={linkedComplaint?.diagnosis?.doctorName || 'طبيب'}
+              size={40}
               style={styles.chatHeaderAvatar}
             />
           )}
@@ -794,8 +797,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
             </Text>
             <Text style={{ fontSize: 12, color: Colors.textSecondary, textAlign: 'center', marginBottom: 16, lineHeight: 18 }}>
               {language === 'ar'
-                ? 'يرجى إدخال اسمك ورقم هاتفك أولاً لتتمكن من مراسلة د. كريم ومتابعة حالتك الطبية:'
-                : 'Please enter your name and phone number to message Dr. Karim:'}
+                ? 'يرجى إدخال اسمك ورقم هاتفك أولاً لتتمكن من مراسلة الطبيب ومتابعة حالتك الطبية:'
+                : 'Please enter your name and phone number to message the doctor:'}
             </Text>
 
             <Text style={{ fontSize: 12, fontWeight: '700', color: Colors.textPrimary, marginBottom: 4, textAlign: language === 'ar' ? 'right' : 'left' }}>
@@ -839,7 +842,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
                 marginBottom: phoneError ? 4 : 18,
                 textAlign: language === 'ar' ? 'right' : 'left',
               }}
-              placeholder="+20 100 000 0000"
+              placeholder="+20 100 123 4567"
               keyboardType="phone-pad"
               value={patientPhoneInput}
               onChangeText={(txt) => {

@@ -8,6 +8,7 @@ import { useApp } from '../context/AppContext';
 import { DoctorProfile } from '../types/doctor';
 import { BeforeAfterSlider } from '../components/BeforeAfterSlider';
 import { supabase } from '../services/supabase';
+import { DoctorAvatar } from '../components/DoctorAvatar';
 
 const blurhash = 'LGF5]+Yk^6#M@-5c';
 
@@ -113,11 +114,11 @@ export const DoctorProfileScreen = () => {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Doctor Header Card */}
         <View style={styles.doctorHeaderCard}>
-          <Image 
-            source={doctor.avatarUrl ? { uri: doctor.avatarUrl } : require('../../assets/doctor_clinic.jpg')} 
-            style={styles.avatarLarge}
-            contentFit="cover"
-            placeholder={blurhash}
+          <DoctorAvatar 
+            avatarUrl={doctor.avatarUrl} 
+            name={doctor.profileData?.fullName}
+            size={90}
+            showBadge={doctor.isAcceptingPatients}
           />
           <Text style={styles.doctorName}>{doctor.profileData?.fullName}</Text>
           <Text style={styles.doctorSpecialty}>{doctor.specialty || (language === 'ar' ? 'استشاري طب وجراحة الأسنان' : 'Dental Specialist')}</Text>
@@ -222,13 +223,22 @@ export const DoctorProfileScreen = () => {
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity 
+          style={styles.bookVisitBtn}
+          onPress={() => navigation.navigate('Appointments', { doctorId: doctor.id })}
+        >
+          <Calendar size={18} color={Colors.primaryDark} />
+          <Text style={styles.bookVisitBtnText}>
+            {language === 'ar' ? 'حجز موعد' : 'Book Visit'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
           style={[styles.consultBtn, !doctor.isAcceptingPatients && styles.consultBtnDisabled]}
           disabled={!doctor.isAcceptingPatients}
           onPress={() => navigation.navigate('NewConsultation', { doctorId: doctor.id })}
         >
-          <MessageCircle size={20} color={Colors.white} />
+          <MessageCircle size={18} color={Colors.white} />
           <Text style={styles.consultBtnText}>
-            {language === 'ar' ? 'طلب استشارة فورية مع الطبيب' : 'Consult Online with Doctor'}
+            {language === 'ar' ? 'استشارة فورية' : 'Consult Online'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -497,6 +507,23 @@ const styles = StyleSheet.create({
   consultBtnText: {
     color: Colors.white,
     fontSize: 14,
+    fontWeight: '800',
+  },
+  bookVisitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: Colors.primaryLight,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  bookVisitBtnText: {
+    color: Colors.primaryDark,
+    fontSize: 13,
     fontWeight: '800',
   },
 });

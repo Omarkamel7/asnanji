@@ -59,8 +59,10 @@ interface AppContextType {
   appointments: Appointment[];
   bookAppointment: (appointment: Omit<Appointment, 'id' | 'createdAt' | 'status'>) => Promise<Appointment>;
   cancelAppointment: (appointmentId: string) => Promise<void>;
+  updateAppointmentStatus: (appointmentId: string, status: Appointment['status']) => Promise<void>;
   doctors: import('../types/doctor').DoctorProfile[];
   fetchDoctors: () => Promise<void>;
+  fetchDoctorApplications: () => Promise<void>;
   clinicSettings: ClinicSettings;
   updateClinicSettings: (settings: Partial<ClinicSettings>) => Promise<void>;
   services: DentalService[];
@@ -139,7 +141,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     loadSavedData();
-    initSupabase();
+    const cleanup = initSupabase();
+    return () => {
+      cleanup?.();
+    };
   }, []);
 
   const loadSavedData = async () => {
@@ -177,8 +182,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setMessages(JSON.parse(savedMessages));
       }
       const savedRole = await AsyncStorage.getItem('@dental_app_role');
-      if (savedRole === 'doctor' || savedRole === 'patient') {
-        setRoleState(savedRole);
+      if (savedRole && ['doctor', 'patient', 'admin', 'assistant', 'pending_doctor'].includes(savedRole)) {
+        setRoleState(savedRole as UserRole);
       }
       const savedUser = await AsyncStorage.getItem('@dental_app_current_user');
       if (savedUser) {
@@ -373,6 +378,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setDoctorApplications(
           data.map((d: any) => ({
             id: d.id,
+            userId: d.user_id,
             fullName: d.full_name,
             phone: d.phone,
             email: d.email,
@@ -537,6 +543,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const { data: remoteComplaints, error: compErr } = await consultQuery;
 
+      let fetchedComplaints: DentalComplaint[] = [];
       if (remoteComplaints && !compErr) {
         const formatted: DentalComplaint[] = remoteComplaints.map((c: any) => ({
           id: c.id,
@@ -570,6 +577,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               }
             : undefined,
         }));
+        fetchedComplaints = formatted;
         setComplaints(formatted);
       } else {
         setComplaints([]);
@@ -609,25 +617,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAppointments([]);
       }
 
-      // Fetch Chat Messages
-      const { data: remoteMessages, error: msgErr } = await supabase
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: true });
+      // Fetch Chat Messages only for user's consultations
+      if (fetchedComplaints.length > 0) {
+        const consultationIds = fetchedComplaints.map((c) => c.id);
+        const { data: remoteMessages, error: msgErr } = await supabase
+          .from('messages')
+          .select('*')
+          .in('consultation_id', consultationIds)
+          .order('created_at', { ascending: true });
 
-      if (remoteMessages && !msgErr) {
-        const formattedMsgs: ChatMessage[] = remoteMessages.map((m) => ({
-          id: m.id,
-          consultationId: m.consultation_id || 'general',
-          senderId: m.sender_id,
-          senderName: m.sender_name || (m.sender_role === 'doctor' ? 'الطبيب' : 'مريض'),
-          senderRole: m.sender_role || 'patient',
-          text: m.text || '',
-          audioUri: m.audio_url || undefined,
-          imageUri: m.image_url || undefined,
-          timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        }));
-        setMessages(formattedMsgs);
+        if (remoteMessages && !msgErr) {
+          const formattedMsgs: ChatMessage[] = remoteMessages.map((m) => ({
+            id: m.id,
+            consultationId: m.consultation_id || 'general',
+            senderId: m.sender_id,
+            senderName: m.sender_name || (m.sender_role === 'doctor' ? 'الطبيب' : 'مريض'),
+            senderRole: m.sender_role || 'patient',
+            text: m.text || '',
+            audioUri: m.audio_url || undefined,
+            imageUri: m.image_url || undefined,
+            timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          }));
+          setMessages(formattedMsgs);
+        } else {
+          setMessages([]);
+        }
       } else {
         setMessages([]);
       }
@@ -880,7 +894,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     complaintData: Omit<DentalComplaint, 'id' | 'createdAt' | 'status'>
   ): Promise<DentalComplaint> => {
     const newId = `comp_${Date.now()}`;
-    const validDoctorId = complaintData.doctorId || (doctors[0]?.id) || 'ef3bf898-fbae-48ea-94d1-df36277d1b22';
+    const validDoctorId = complaintData.doctorId || (doctors[0]?.id) || '';
     const newComplaint: DentalComplaint = {
       ...complaintData,
       id: newId,
@@ -984,6 +998,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateAppointmentStatus = async (appointmentId: string, status: Appointment['status']) => {
+    const updated = appointments.map((a) =>
+      a.id === appointmentId ? { ...a, status } : a
+    );
+    setAppointments(updated);
+    await AsyncStorage.setItem('@dental_app_appointments', JSON.stringify(updated));
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('appointments')
+          .update({ status })
+          .eq('id', appointmentId);
+      } catch (err) {
+        console.warn('Supabase update appointment error:', err);
+      }
+    }
+  };
+
   const recordDoctorProfileVisit = async (doctorId: string) => {
     if (!doctorId) return;
     try {
@@ -1005,13 +1038,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const signOut = async () => {
     if (isSupabaseConfigured) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (_) {}
     }
     setIsAuthenticated(false);
     setRoleState('patient');
     setCurrentUser(DEFAULT_PATIENT);
-    await AsyncStorage.removeItem('@dental_app_role');
-    await AsyncStorage.removeItem('@dental_app_current_user');
+    setComplaints([]);
+    setAppointments([]);
+    setMessages([]);
+    setDoctorApplications([]);
+    await AsyncStorage.multiRemove([
+      '@dental_app_role',
+      '@dental_app_current_user',
+      '@dental_app_patient_profile',
+      '@dental_app_complaints',
+      '@dental_app_appointments',
+      '@dental_app_messages',
+    ]);
   };
 
   const savePatientQuickProfile = async (fullName: string, phone: string) => {
@@ -1052,7 +1097,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const validPatientId = isValidUUID(complaintData.patientId || currentUser.id)
       ? (complaintData.patientId || currentUser.id)
       : generateUUID();
-    const validDoctorId = complaintData.doctorId || (doctors[0]?.id) || 'ef3bf898-fbae-48ea-94d1-df36277d1b22';
+    const validDoctorId = complaintData.doctorId || (doctors[0]?.id) || '';
 
     const newComplaint: DentalComplaint = {
       ...complaintData,
@@ -1290,6 +1335,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         try {
           await supabase.from('doctor_applications').insert({
             id: newApp.id,
+            user_id: newApp.userId || null,
             full_name: newApp.fullName,
             phone: newApp.phone,
             email: newApp.email,
@@ -1315,8 +1361,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Phase 1: Super Admin Review Doctor Application
   const reviewDoctorApplication = useCallback(
     async (applicationId: string, status: 'approved' | 'rejected', reason?: string) => {
+      let targetApp: DoctorApplication | undefined;
       setDoctorApplications((prev) =>
-        prev.map((app) => (app.id === applicationId ? { ...app, status, rejectionReason: reason } : app))
+        prev.map((app) => {
+          if (app.id === applicationId) {
+            targetApp = { ...app, status, rejectionReason: reason };
+            return targetApp;
+          }
+          return app;
+        })
       );
 
       if (isSupabaseConfigured) {
@@ -1325,12 +1378,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             .from('doctor_applications')
             .update({ status, rejection_reason: reason || null, updated_at: new Date().toISOString() })
             .eq('id', applicationId);
+
+          if (status === 'approved' && targetApp?.userId) {
+            // 1. Upgrade user profile to doctor role
+            await supabase
+              .from('profiles')
+              .update({ role: 'doctor', updated_at: new Date().toISOString() })
+              .eq('id', targetApp.userId);
+
+            // 2. Create official doctor profile
+            await supabase.from('doctor_profiles').upsert({
+              id: targetApp.userId,
+              slug: targetApp.userId,
+              specialty: targetApp.specialty,
+              title: targetApp.degree === 'professor' ? 'أستاذ دكتور' : targetApp.degree === 'consultant' ? 'استشاري' : 'أخصائي',
+              bio: `د. ${targetApp.fullName} - ${targetApp.specialty} (${targetApp.degree})`,
+              clinic_address: targetApp.clinicAddress,
+              consultation_fee: targetApp.consultationFee,
+              is_verified: true,
+              is_accepting_patients: true,
+              updated_at: new Date().toISOString(),
+            });
+
+            // 3. Create default settings
+            await supabase.from('doctor_settings').upsert({
+              doctor_id: targetApp.userId,
+              enable_instant_consultation: true,
+              enable_booking: true,
+              enable_chat: true,
+              working_days: ['saturday', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday'],
+              working_hours_start: '10:00',
+              working_hours_end: '22:00',
+              updated_at: new Date().toISOString(),
+            });
+
+            fetchDoctors();
+          }
         } catch (err) {
           console.warn('[Supabase] reviewDoctorApplication error:', err);
         }
       }
     },
-    []
+    [doctorApplications, fetchDoctors]
   );
 
   // Phase 1: Clinic Receptionists Management
@@ -1491,8 +1580,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       appointments,
       bookAppointment,
       cancelAppointment,
+      updateAppointmentStatus,
       doctors,
       fetchDoctors,
+      fetchDoctorApplications,
       clinicSettings,
       updateClinicSettings,
       services,
@@ -1529,6 +1620,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       complaints,
       doctorInbox,
       appointments,
+      doctors,
+      fetchDoctors,
+      fetchDoctorApplications,
       clinicSettings,
       services,
       portfolioCases,

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
 import { Image } from 'expo-image';
+import { Maximize2, X } from 'lucide-react-native';
 import { FDI_TEETH } from '../constants/dentalData';
 import { ToothInfo } from '../types';
 import { Colors, Shadows } from '../constants/theme';
@@ -79,21 +80,75 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
     );
   };
 
+  const [showFullModel, setShowFullModel] = useState(false);
+
   return (
     <View style={styles.container}>
       {/* 3D Realistic Dental Arch Reference Banner */}
-      <View style={styles.modelBannerCard}>
+      <TouchableOpacity
+        style={styles.modelBannerCard}
+        onPress={() => setShowFullModel(true)}
+        activeOpacity={0.85}
+      >
         <Image
-          source={require('../../assets/dental_model_reference.jpg')}
+          source={require('../../assets/dental_jaw_centered.jpg')}
           style={styles.modelImage}
-          contentFit="cover"
+          contentFit="contain"
+          cachePolicy="memory-disk"
         />
         <View style={styles.modelOverlayBadge}>
           <Text style={styles.modelBadgeText}>
-            {language === 'ar' ? 'مجسم الأسنان التشريحي 3D (1 - 32)' : '3D Dental Anatomy Model (1 - 32)'}
+            {language === 'ar' ? 'مجسم الأسنان التشريحي الكامل (1 - 32)' : '3D Dental Anatomy Model (1 - 32)'}
           </Text>
         </View>
-      </View>
+        <View style={styles.zoomHintBadge}>
+          <Maximize2 size={12} color="white" />
+          <Text style={styles.zoomHintText}>
+            {language === 'ar' ? 'تكبير' : 'Zoom'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      {/* Full-Screen Jaw Model Modal */}
+      <Modal
+        visible={showFullModel}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowFullModel(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {language === 'ar' ? '🔍 مجسم الفك والأسنان التشريحي الكامل' : '🔍 Full Dental Anatomy Model'}
+              </Text>
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() => setShowFullModel(false)}
+              >
+                <X size={18} color="white" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalImageWrapper}>
+              <Image
+                source={require('../../assets/dental_jaw_centered.jpg')}
+                style={styles.modalFullImage}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+              />
+            </View>
+
+            <View style={styles.modalFooter}>
+              <Text style={styles.modalFooterText}>
+                {language === 'ar'
+                  ? '💡 الفك العلوي: (1 - 16) | الفك السفلي: (17 - 32)'
+                  : '💡 Upper Arch: (1 - 16) | Lower Arch: (17 - 32)'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Jaw Switcher Tabs */}
       <View style={styles.jawTabs}>
@@ -255,13 +310,16 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   modelBannerCard: {
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
-    height: 120,
+    height: 230,
+    backgroundColor: '#0f172a',
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.sm,
+    borderWidth: 1.5,
+    borderColor: '#334155',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.md,
   },
   modelImage: {
     width: '100%',
@@ -271,15 +329,95 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 8,
     left: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 8,
   },
   modelBadgeText: {
     color: Colors.white,
     fontSize: 11,
     fontWeight: '800',
+  },
+  zoomHintBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#475569',
+  },
+  zoomHintText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalContainer: {
+    width: '100%',
+    height: '85%',
+    backgroundColor: '#0f172a',
+    borderRadius: 24,
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+  },
+  modalTitle: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#334155',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalImageWrapper: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalFullImage: {
+    width: '100%',
+    height: '100%',
+  },
+  modalFooter: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#1e293b',
+    alignItems: 'center',
+  },
+  modalFooterText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    fontWeight: '700',
   },
   jawTabs: {
     flexDirection: 'row',

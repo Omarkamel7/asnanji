@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Linking,
 } from 'react-native';
 import { Image } from 'expo-image';
 import {
@@ -37,13 +38,26 @@ import { UserRole } from '../types';
 
 interface AuthScreenProps {
   navigation?: any;
+  route?: any;
 }
 
-export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
+export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => {
   const { language, setLanguage, setRole, updateUserProfile, currentUser, t, isRTL, submitDoctorApplication } = useApp();
 
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [mode, setMode] = useState<'signin' | 'signup'>(
+    route?.params?.initialMode === 'signup' ? 'signup' : 'signin'
+  );
   const [selectedRole, setSelectedRole] = useState<UserRole>('patient');
+
+  // React to route params changes
+  React.useEffect(() => {
+    if (route?.params?.initialMode) {
+      setMode(route?.params?.initialMode);
+    }
+    if (route?.params?.openDoctorModal) {
+      setShowDoctorAppModal(true);
+    }
+  }, [route?.params?.initialMode, route?.params?.openDoctorModal]);
 
   // Form Fields
   const [fullName, setFullName] = useState('');
@@ -54,7 +68,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   // Doctor Application Modal States (Professional Onboarding)
-  const [showDoctorAppModal, setShowDoctorAppModal] = useState(false);
+  const [showDoctorAppModal, setShowDoctorAppModal] = useState(
+    !!route?.params?.openDoctorModal
+  );
   const [appFullName, setAppFullName] = useState('');
   const [appPhone, setAppPhone] = useState('');
   const [appEmail, setAppEmail] = useState('');
@@ -64,12 +80,34 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
   const [appClinicAddress, setAppClinicAddress] = useState('');
   const [appGovernorate, setAppGovernorate] = useState('القاهرة');
   const [appFee, setAppFee] = useState('350');
+  const [appPassword, setAppPassword] = useState('');
   const [appSubmitting, setAppSubmitting] = useState(false);
 
   // Phone Linking Modal (Zero-cost phone capture after Google login)
   const [showPhonePrompt, setShowPhonePrompt] = useState(false);
   const [pendingUserId, setPendingUserId] = useState('');
   const [promptPhone, setPromptPhone] = useState('');
+
+  const navigateAfterAuth = (userRole: UserRole) => {
+    if (navigation?.canGoBack && navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      const target =
+        userRole === 'admin'
+          ? 'AdminRoot'
+          : userRole === 'doctor'
+          ? 'DoctorRoot'
+          : userRole === 'assistant'
+          ? 'AssistantRoot'
+          : userRole === 'pending_doctor'
+          ? 'DoctorPendingRoot'
+          : 'PatientRoot';
+      navigation?.reset?.({
+        index: 0,
+        routes: [{ name: target }],
+      });
+    }
+  };
 
   // Handle Sign In
   const handleSignIn = async () => {
@@ -147,16 +185,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
 
         setRole(determinedRole);
         setLoading(false);
+        navigateAfterAuth(determinedRole);
         return;
       }
     } else {
       setTimeout(() => {
         setLoading(false);
-        if (email.includes('doctor')) {
-          setRole('doctor');
-        } else {
-          setRole('patient');
-        }
+        const resolvedRole = email.includes('doctor') ? 'doctor' : 'patient';
+        setRole(resolvedRole);
+        navigateAfterAuth(resolvedRole);
       }, 500);
       return;
     }
@@ -219,12 +256,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
 
         setRole(selectedRole);
         setLoading(false);
+        navigateAfterAuth(selectedRole);
         return;
       }
     } else {
       setTimeout(() => {
         setLoading(false);
         setRole(selectedRole);
+        navigateAfterAuth(selectedRole);
       }, 500);
       return;
     }
@@ -232,7 +271,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
     setLoading(false);
   };
 
-  // Google One-Tap Sign In with Fallback
+  // Google Sign In
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
@@ -240,7 +279,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: 'https://nvpkcjhrwpglmyehksyd.supabase.co/auth/v1/callback',
+            redirectTo: 'asnanji://auth/callback',
           },
         });
 
@@ -248,39 +287,22 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
           throw error;
         }
 
-        // On native/web session success, check user profile
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session?.user) {
-          const user = sessionData.session.user;
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-          if (!profile?.phone) {
-            setPendingUserId(user.id);
-            setShowPhonePrompt(true);
-          } else {
-            setRole((profile?.role as UserRole) || 'patient');
-          }
+        if (data?.url) {
+          await Linking.openURL(data.url);
         }
       } else {
         // Local simulation fallback
         setTimeout(() => {
           setRole('patient');
+          navigateAfterAuth('patient');
         }, 600);
       }
     } catch (err: any) {
-      console.warn('Google sign-in notice:', err);
-      // Fallback: If browser OAuth redirected or needed local simulation
+      console.warn('Google sign-in error:', err);
       Alert.alert(
-        language === 'ar' ? 'تسجيل الدخول بجوجل' : 'Google Sign-In',
-        language === 'ar'
-          ? 'تم تفعيل الاتصال بجوجل بنجاح! جاري تحويلك لحسابك.'
-          : 'Google authentication active! Proceeding to account.'
+        language === 'ar' ? 'تعذر تسجيل الدخول بجوجل' : 'Google Sign-In Failed',
+        err?.message || (language === 'ar' ? 'يرجى المحاولة بالبريد الإلكتروني وكلمة المرور' : 'Please try with email and password')
       );
-      setRole('patient');
     } finally {
       setGoogleLoading(false);
     }
@@ -312,17 +334,56 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
 
   // Doctor Application Submission Handler
   const handleSubmitDoctorApplication = async () => {
-    if (!appFullName.trim() || !appPhone.trim() || !appEmail.trim() || !appSpecialty.trim() || !appClinicAddress.trim()) {
+    if (
+      !appFullName.trim() ||
+      !appPhone.trim() ||
+      !appEmail.trim() ||
+      !appSpecialty.trim() ||
+      !appClinicAddress.trim() ||
+      appPassword.trim().length < 6
+    ) {
       Alert.alert(
         language === 'ar' ? 'بيانات مطلوبة' : 'Missing Fields',
-        language === 'ar' ? 'يرجى استيفاء كافة بيانات استمارة الاعتماد' : 'Please fill all doctor application fields'
+        language === 'ar'
+          ? 'يرجى استيفاء كافة بيانات استمارة الاعتماد وتعيين كلمة مرور لا تقل عن 6 أحرف'
+          : 'Please fill all doctor application fields and set a password of at least 6 characters'
       );
       return;
     }
 
     setAppSubmitting(true);
     try {
+      let createdUserId = '';
+      if (isSupabaseConfigured) {
+        try {
+          const { data: authData } = await supabase.auth.signUp({
+            email: appEmail.trim(),
+            password: appPassword.trim(),
+            options: {
+              data: {
+                full_name: appFullName.trim(),
+                phone: appPhone.trim(),
+                role: 'pending_doctor',
+              },
+            },
+          });
+          if (authData?.user) {
+            createdUserId = authData.user.id;
+            await supabase.from('profiles').upsert({
+              id: createdUserId,
+              full_name: appFullName.trim(),
+              phone: appPhone.trim(),
+              role: 'pending_doctor',
+              updated_at: new Date().toISOString(),
+            });
+          }
+        } catch (authErr) {
+          console.warn('Doctor auth creation note:', authErr);
+        }
+      }
+
       await submitDoctorApplication({
+        userId: createdUserId || undefined,
         fullName: appFullName.trim(),
         phone: appPhone.trim(),
         email: appEmail.trim(),
@@ -340,14 +401,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
       Alert.alert(
         language === 'ar' ? 'تم استلام طلب انضمامك بنجاح! 🩺✨' : 'Application Received! 🩺✨',
         language === 'ar'
-          ? `أهلاً بك د. ${appFullName} في شبكة أطباء اسنانجي!\nتم إرسال طلبك للإدارة للمراجعة والاعتماد. ستصلك رسالة تأكيد فور التفعيل لبدء استقبال المرضى.`
-          : `Welcome Dr. ${appFullName}! Your clinic application was submitted for admin verification. You will be notified once activated.`
+          ? `أهلاً بك د. ${appFullName} في شبكة أطباء اسنانجي!\nتم تسجيل حسابك بنجاح وطلبك قيد المراجعة والاعتماد الطبي الآن. يمكنك تسجيل الدخول بنفس البريد وكلمة المرور فور اعتماد الحساب.`
+          : `Welcome Dr. ${appFullName}! Your account has been registered and is pending admin verification.`
       );
 
       // Reset form
       setAppFullName('');
       setAppPhone('');
       setAppEmail('');
+      setAppPassword('');
       setAppSpecialty('');
       setAppSyndicateId('');
       setAppClinicAddress('');
@@ -404,25 +466,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
         <View style={styles.formCard}>
           {mode === 'signup' && (
             <>
-              {/* Role Selection */}
-              <View style={styles.roleContainer}>
-                <TouchableOpacity
-                  style={[styles.roleBtn, selectedRole === 'patient' && styles.roleBtnActive]}
-                  onPress={() => setSelectedRole('patient')}
-                >
-                  <User size={18} color={selectedRole === 'patient' ? Colors.white : Colors.textPrimary} />
-                  <Text style={[styles.roleBtnText, selectedRole === 'patient' && styles.roleBtnTextActive]}>
-                    {language === 'ar' ? 'مريض' : 'Patient'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.roleBtn, selectedRole === 'doctor' && styles.roleBtnActive]}
-                  onPress={() => setSelectedRole('doctor')}
-                >
-                  <Stethoscope size={18} color={selectedRole === 'doctor' ? Colors.white : Colors.textPrimary} />
-                  <Text style={[styles.roleBtnText, selectedRole === 'doctor' && styles.roleBtnTextActive]}>
-                    {language === 'ar' ? 'طبيب' : 'Doctor'}
+              {/* Role Indicator Banner */}
+              <View style={{ marginBottom: 14, backgroundColor: '#EFF6FF', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#BFDBFE' }}>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: Colors.primaryDark }}>
+                  {language === 'ar' ? '👤 حساب مريض جديد' : '👤 New Patient Account'}
+                </Text>
+                <TouchableOpacity onPress={() => setShowDoctorAppModal(true)} style={{ marginTop: 4 }}>
+                  <Text style={{ fontSize: 12, color: Colors.primary, fontWeight: '700' }}>
+                    {language === 'ar' ? 'هل أنت طبيب أسنان؟ انقر هنا للتقديم والاعتماد 🩺' : 'Are you a dentist? Tap here to apply for clinic verification 🩺'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -648,6 +699,24 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation }) => {
                       autoCapitalize="none"
                     />
                   </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>كلمة المرور لتسجيل الدخول للحساب</Text>
+                  <View style={styles.inputBox}>
+                    <Lock size={16} color={Colors.textMuted} />
+                    <TextInput
+                      style={styles.input}
+                      value={appPassword}
+                      onChangeText={setAppPassword}
+                      placeholder="••••••••"
+                      placeholderTextColor={Colors.textMuted}
+                      secureTextEntry
+                    />
+                  </View>
+                  <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 4 }}>
+                    ستستخدم هذه الكلمة والبريد الإلكتروني للدخول فور اعتماد الحساب.
+                  </Text>
                 </View>
 
                 <View style={styles.inputGroup}>

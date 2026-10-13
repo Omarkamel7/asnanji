@@ -30,6 +30,7 @@ import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
 import { uploadDentalPhoto } from '../services/supabaseStorage';
 import { UrgencyLevel } from '../types';
+import { DoctorAvatar } from '../components/DoctorAvatar';
 
 const SYMPTOM_OPTIONS = [
   { id: 'sharp_pain', labelAr: 'ألم حاد ومفاجئ', labelEn: 'Sharp Sudden Pain', icon: '⚡' },
@@ -56,7 +57,8 @@ export const NewConsultationScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const doctorId = route.params?.doctorId;
-  const { language, isRTL, currentUser, savePatientQuickProfile, createConsultationWithChat } = useApp();
+  const { language, isRTL, currentUser, savePatientQuickProfile, createConsultationWithChat, doctors } = useApp();
+  const targetDoctor = doctors.find((d) => d.id === doctorId);
 
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [selectedSector, setSelectedSector] = useState<string>('all_mouth');
@@ -143,7 +145,7 @@ export const NewConsultationScreen: React.FC = () => {
       Alert.alert(
         language === 'ar' ? 'بيانات المريض مطلوبة' : 'Name & Phone Required',
         language === 'ar'
-          ? 'يرجى إدخال اسمك ورقم هاتفك حتى يتمكن د. كريم من التعرف على حالتك والرد عليك.'
+          ? `يرجى إدخال اسمك ورقم هاتفك حتى يتمكن ${targetDoctor?.profileData?.fullName || 'الطبيب المعالج'} من التعرف على حالتك والرد عليك.`
           : 'Please enter your name and phone number so the doctor can contact and advise you.'
       );
       return;
@@ -237,7 +239,11 @@ export const NewConsultationScreen: React.FC = () => {
       {/* Top Hero Banner */}
       <View style={styles.heroCard}>
         <View style={styles.heroHeader}>
-          <Image source={require('../../assets/doctor_clinic.jpg')} style={styles.doctorAvatar} />
+          <DoctorAvatar
+            avatarUrl={targetDoctor?.avatarUrl}
+            name={targetDoctor?.profileData?.fullName}
+            size={56}
+          />
           <View style={styles.heroTextContainer}>
             <View style={styles.heroBadge}>
               <Sparkles size={12} color={Colors.white} />
@@ -416,7 +422,7 @@ export const NewConsultationScreen: React.FC = () => {
           <Phone size={18} color={Colors.textMuted} />
           <TextInput
             style={[styles.input, { writingDirection: 'ltr' }]}
-            placeholder="+20 100 000 0000"
+            placeholder="01xxxxxxxxx"
             value={patientPhone}
             onChangeText={setPatientPhone}
             keyboardType="phone-pad"

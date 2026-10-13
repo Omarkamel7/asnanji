@@ -35,6 +35,7 @@ import { useApp } from '../context/AppContext';
 import { FDI_TEETH } from '../constants/dentalData';
 import { exportPrescriptionPdf, directPrintPrescription } from '../services/prescriptionPdf';
 import { BeforeAfterSlider } from '../components/BeforeAfterSlider';
+import { DoctorAvatar } from '../components/DoctorAvatar';
 
 interface MedicalRecordsScreenProps {
   navigation: any;
@@ -427,7 +428,7 @@ export const MedicalRecordsScreen: React.FC<MedicalRecordsScreenProps> = ({
           </Text>
           <TouchableOpacity
             style={styles.newConsultBtn}
-            onPress={() => navigation.navigate('ComplaintIntake')}
+            onPress={() => navigation.navigate('NewConsultation')}
           >
             <Text style={styles.newConsultBtnText}>
               {language === 'ar' ? 'طلب استشارة جديدة' : 'Request New Consultation'}
@@ -505,10 +506,7 @@ export const MedicalRecordsScreen: React.FC<MedicalRecordsScreenProps> = ({
               {item.diagnosis ? (
                 <View style={styles.diagnosisBox}>
                   <View style={styles.diagHeader}>
-                    <Image
-                      source={require('../../assets/doctor_clinic.jpg')}
-                      style={styles.diagDoctorAvatar}
-                    />
+                    <DoctorAvatar name={item.diagnosis.doctorName} size={38} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.diagDoctorName}>
                         {item.diagnosis.doctorName || (language === 'ar' ? 'طبيب العيادة المعالج' : 'Treating Dentist')}

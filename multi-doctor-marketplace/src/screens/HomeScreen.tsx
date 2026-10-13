@@ -23,6 +23,7 @@ import {
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
+import { DoctorAvatar } from '../components/DoctorAvatar';
 
 interface HomeScreenProps {
   navigation: any;
@@ -182,11 +183,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             onPress={() => navigation.navigate('DoctorPublicProfile', { doctorId: doctor.id })}
           >
             <View style={styles.doctorHeader}>
-              <Image 
-                source={doctor.avatarUrl ? { uri: doctor.avatarUrl } : require('../../assets/doctor_clinic.jpg')} 
-                style={styles.doctorAvatar} 
-                contentFit="cover"
-                placeholder={blurhash}
+              <DoctorAvatar
+                avatarUrl={doctor.avatarUrl}
+                name={doctor.profileData?.fullName}
+                size={60}
               />
               <View style={styles.doctorInfo}>
                 <Text style={styles.doctorName}>{doctor.profileData?.fullName}</Text>

@@ -37,6 +37,7 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
   const {
     t,
     language,
+    role,
     currentUser,
     appointments,
     bookAppointment,
@@ -106,7 +107,7 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
         serviceId: selectedService.id,
         serviceNameAr: selectedService.nameAr,
         serviceNameEn: selectedService.nameEn,
-          doctorId: route.params?.doctorId,
+        doctorId: route?.params?.doctorId,
         date: dateStr,
         timeSlot: selectedSlot,
         price: selectedService.estimatedPrice,
@@ -115,7 +116,7 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
       Alert.alert(
         language === 'ar' ? 'تم تأكيد الحجز' : 'Appointment Confirmed',
         language === 'ar'
-          ? `تم حجز موعدك بنجاح يوم ${dateStr} في تمام ${selectedSlot} بعيادة د. كريم أبو بكر.`
+          ? `تم حجز موعدك بنجاح يوم ${dateStr} في تمام ${selectedSlot}.`
           : `Appointment booked on ${dateStr} at ${selectedSlot}.`,
         [
           {
@@ -134,9 +135,15 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
     }
   };
 
-  const myAppointments = appointments.filter(
-    (a) => a.patientId === currentUser.id
-  );
+  const myAppointments = appointments.filter((a) => {
+    if (role === 'doctor') {
+      return a.doctorId === currentUser.id;
+    }
+    if (role === 'assistant') {
+      return a.doctorId === currentUser.assignedDoctorId || a.doctorId === currentUser.id;
+    }
+    return a.patientId === currentUser.id;
+  });
 
   return (
     <ScrollView
