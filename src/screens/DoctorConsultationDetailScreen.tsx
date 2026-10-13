@@ -22,6 +22,8 @@ import {
   Pill,
   Calendar,
   AlertTriangle,
+  Printer,
+  Download,
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
@@ -29,6 +31,7 @@ import { FDI_TEETH, SYMPTOMS_LIST, DEFAULT_SERVICES } from '../constants/dentalD
 import DentalChart from '../components/DentalChart';
 import { AudioRecorder } from '../components/AudioRecorder';
 import { UrgencyLevel } from '../types';
+import { exportPrescriptionPdf, directPrintPrescription } from '../services/prescriptionPdf';
 
 interface DoctorConsultationDetailScreenProps {
   route: any;
@@ -70,6 +73,7 @@ export const DoctorConsultationDetailScreen: React.FC<
   );
   const [requireVisit, setRequireVisit] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPrintingPdf, setIsPrintingPdf] = useState(false);
 
   if (!complaint) {
     return (
@@ -78,6 +82,51 @@ export const DoctorConsultationDetailScreen: React.FC<
       </View>
     );
   }
+
+  const handleExportPdf = async () => {
+    if (!provisionalCondition.trim()) {
+      Alert.alert(
+        language === 'ar' ? 'تنبيه' : 'Alert',
+        language === 'ar' ? 'يرجى كتابة التشخيص المبدئي أولاً لمعاينة الروشتة' : 'Please provide provisional diagnosis first'
+      );
+      return;
+    }
+    setIsPrintingPdf(true);
+    try {
+      const activeDoctorName = currentUser.fullName || (language === 'ar' ? 'طبيب العيادة' : 'Clinic Doctor');
+      await exportPrescriptionPdf({
+        prescription: {
+          id: `rx-${complaint.id}`,
+          consultationId: complaint.id,
+          patientId: complaint.patientId,
+          doctorId: currentUser.id,
+          patientName: complaint.patientName,
+          doctorName: activeDoctorName,
+          diagnosisTitle: provisionalCondition,
+          medications: [
+            {
+              name: medications.split('-')[0]?.trim() || medications,
+              dose: 'كالموصى به',
+              frequency: 'بعد الوجبات',
+              duration: '3 - 5 أيام',
+              notes: firstAidInstructions,
+            },
+          ],
+          specialInstructions: firstAidInstructions,
+          createdAt: new Date().toISOString(),
+        },
+        doctorSpecialty: 'استشاري طب وجراحة الفم والأسنان',
+        clinicName: 'منصة اسنانجي الطبية',
+      });
+    } catch (e) {
+      Alert.alert(
+        language === 'ar' ? 'خطأ' : 'Error',
+        language === 'ar' ? 'تعذر تصدير الروشتة PDF' : 'Failed to export prescription PDF'
+      );
+    } finally {
+      setIsPrintingPdf(false);
+    }
+  };
 
   const handleSendDiagnosis = async () => {
     if (!provisionalCondition.trim()) {
@@ -402,6 +451,24 @@ export const DoctorConsultationDetailScreen: React.FC<
             </>
           )}
         </TouchableOpacity>
+
+        {/* PDF Prescription Preview / Print Button */}
+        <TouchableOpacity
+          style={styles.exportPdfBtn}
+          onPress={handleExportPdf}
+          disabled={isPrintingPdf}
+        >
+          {isPrintingPdf ? (
+            <ActivityIndicator color={Colors.primaryDark} />
+          ) : (
+            <>
+              <Printer size={18} color={Colors.primaryDark} />
+              <Text style={styles.exportPdfBtnText}>
+                {language === 'ar' ? 'معاينة وطباعة الروشتة PDF 🖨️' : 'Preview & Print PDF Prescription 🖨️'}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
 
       <View style={{ height: 40 }} />
@@ -671,5 +738,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: Colors.white,
+  },
+  exportPdfBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    gap: 8,
+    marginTop: 10,
+    ...Shadows.sm,
+  },
+  exportPdfBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primaryDark,
   },
 });

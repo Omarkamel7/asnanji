@@ -24,6 +24,7 @@ import {
 } from '../constants/dentalData';
 import { supabase, isSupabaseConfigured } from '../services/supabase';
 import { generateUUID, isValidUUID } from '../services/uuid';
+import { syncPushTokenWithProfile } from '../services/notifications';
 
 export interface DoctorInboxItem {
   consultationId: string;
@@ -478,6 +479,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
         setCurrentUser(updatedUser);
         AsyncStorage.setItem('@dental_app_current_user', JSON.stringify(updatedUser)).catch(() => {});
+        syncPushTokenWithProfile(userId).catch(() => {});
       }
     } catch (e) {
       console.warn('Fetch remote profile error:', e);

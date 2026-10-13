@@ -1,8 +1,8 @@
-﻿{
+{
   "expo": {
     "name": "اسنانجي",
     "slug": "asnanji",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,7 +24,7 @@
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "package": "com.omarsala7steam.asnanji",
-      "versionCode": 2
+      "versionCode": 3
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -40,6 +40,13 @@
         "expo-av",
         {
           "microphonePermission": "The app needs access to your microphone to record voice notes describing dental symptoms."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0284c7"
         }
       ]
     ],
