@@ -1,309 +1,140 @@
-# 📋 خطة تطوير الإصدار القادم (v1.1.0) - منصة اسنانجي SaaS
+# 📋 Engineering Master Plan: Release v1.1.0 - Asnanji Platform SaaS
 
-> 📌 **حالة الخطة**: معتمدة ومحفوظة - في وضع الانتظار (On Hold) لحين انتهاء تجربة النسخة الحالية وإعطاء إشارة البدء.
-
----
-
-## 🎯 ملخص أهداف الإصدار الجديد
-
-تهدف هذه الخطة إلى معالجة كافة الملاحظات والأخطاء التي تظهر أثناء التجربة الفعلية، بالإضافة إلى رفع معدل استبقاء واستخدام التطبيق (**User Retention & Engagement**) لكلا الطرفين (المريض والعيادة).
+> 📌 **Plan Status**: Approved & Active (In Progress).  
+> 🎯 **Target Version**: `v1.1.0`  
+> 🏢 **Core Domain**: Multi-Doctor SaaS Marketplace & Dental Practice Management.
 
 ---
 
-## 🛑 ملاحظات وأخطاء التجربة الحالية (User Testing Feedback & Bug Fixes)
+## 🎯 Executive Summary & Objectives
 
-> يتم تسجيل هذه المشاكل تباعاً بناءً على تجربتك الميدانية للتطبيق لحلها معاً:
-
-### 🔴 المشكلة 1: فشل إنشاء الحساب (`Network request failed`)
-* **الوصف في التجربة**: عند محاولة إنشاء حساب جديد (سواء مريض أو طبيب) تظهر رسالة:
-  > *"خطأ في إنشاء الحساب: Network request failed"*
-* **السبب التقني**:
-  1. سيرفر قاعدة البيانات السحابية (Supabase) على النطاق `nvpkcjhrwpglmyehksyd.supabase.co` قد يكون في حالة **إيقاف مؤقت (Paused)** على منصة Supabase المجانية ويحتاج استعادة (**Restore / Unpause**)، أو تعذر الوصول للنطاق من الشبكة المحلية.
-  2. ضرورة تفعيل وضع التسجيل الذاتي / التجريبي المحلي في حال غياب الاتصال بقاعدة البيانات لعدم حرمان المستخدم من الدخول.
-* **الحل المطلوب برمجياً وتكوينياً**:
-  1. فحص وتنشيط مشروع Supabase والتأكد من إعدادات الـ Auth (تفعيل `Enable Email Signup`).
-  2. إضافة معالجة ذكية للأخطاء (Fallback / Graceful Error Handling) توضح للمستخدم حالة السيرفر بدقة.
+This document establishes the full engineering roadmap for **Asnanji v1.1.0**. The release addresses all field-testing discoveries, upgrades brand identity to the new official 3D assets, installs a realistic 3D dental arch model, introduces friction-free Google OAuth + zero-cost phone linkage, implements professional doctor credentialing & verification, enables clinic receptionist/assistant delegation, and builds out a comprehensive Electronic Dental Record (EDR) with smart PDF prescriptions.
 
 ---
 
-### 🟡 المشكلة 2: ازدواجية وتضارب طرق إنشاء حساب الطبيب (UX Redundancy & Confusion)
-* **الوصف في التجربة**: في شاشة "إنشاء حساب جديد"، توجد طريقتان مختلفتان ومتزامنتان لإنشاء حساب الطبيب:
-  1. زر الاختيار العلوي بين **[مريض]** و **[طبيب 🩺]**.
-  2. زر إضافي في الأسفل باللون الأخضر: **[➕ إضافة حساب طبيب جديد (لوحة الإدارة)]**.
-* **الأثر على تجربة المستخدم**:
-  - يُحدث ارتباكاً وحيرة لأي شخص يفتح التطبيق (هل أسجل كطبيب من الأعلى أم من الأسفل؟).
-  - وجود زر "لوحة الإدارة" متاحاً للعامة في شاشة التسجيل يقلل من احترافية التطبيق ويثير التساؤلات للمرضى.
-* **الحل المطلوب برمجياً (Unified Doctor Onboarding)**:
-  - **توحيد المسار**: اعتماد طريقة واحدة واضحة وأنيقة:
-    - **الخيار الموصى به**: جعل التسجيل العام للمرضى والأطباء موحداً عبر التبويب العلوي فقط (مريض / طبيب)، وإخفاء أو نقل زر الإدارة إلى مكان مخصص ومحمي (أو إزالته تماماً والاعتماد على التسجيل المباشر للطبيب ببياناته وبيانات عيادته).
+## 🛑 Testing Feedback & Solved Architectural Flaws
+
+### 1. Network Connectivity & Supabase State
+- **Root Cause**: The Supabase cloud project `nvpkcjhrwpglmyehksyd.supabase.co` was paused on the free tier.
+- **Resolution**: Backend unpaused and verified active via live REST checks.
+- **Architecture Addition**: Implement graceful offline caching and informative network status alerts across all auth and intake flows.
+
+### 2. Doctor Registration UX Redundancy
+- **Issue**: Auth screen had conflicting entry points: upper toggle `[Patient / Doctor]` vs. bottom green button `[➕ Add New Doctor (Admin Panel)]`.
+- **Engineering Fix**:
+  - Unify onboarding: Public registration provides one-tap Google login or email signup for patients.
+  - Doctors join through an elegant, dedicated flow: **«Are you a dentist? Apply to join Asnanji Network 👨‍⚕️»**.
+  - Remove public admin button completely; move clinic provisioning to secure admin governance.
+
+### 3. Dental Chart Mojibake & 3D Anatomical Arch Replacement
+- **Issue**:
+  1. `DentalChart.tsx` suffered UTF-8 mojibake (corrupted Arabic labels like `ط§ظ„ظپظƒ ط§ظ„ط¹ظ„ظˆظٹ`).
+  2. The old UI used primitive grey rectangular blocks that were unnatural to tap and read.
+- **Engineering Fix**:
+  1. Replace primitive blocks with the approved realistic 3D typhodont model (`dental_model_reference.jpg`).
+  2. Implement responsive interactive tooth hotspots (teeth 1–32: Upper & Lower arches, incisors, canines, premolars, molars, wisdom teeth).
+  3. Clean UTF-8 Arabic medical terminology with light haptic feedback on selection.
+
+### 4. Official Brand Identity & Visual Assets Rollout
+- **Asset**: High-resolution 3D official logo (`new_official_logo.png`) featuring blue tooth with brace & chat bubble.
+- **Integration Points**:
+  - `icon.png` and `adaptive-icon.png` generated at 1024x1024 for Android.
+  - Centered Splash screen (`splash.png`) on clean backdrop.
+  - App headers across `HomeScreen`, `ProfileScreen`, and `DoctorDashboardScreen`.
+  - Prescription PDF headers.
+
+### 5. Animated Welcome Onboarding & Hero Banner
+- **Experience**: First-time users see a smooth 3-slide walkthrough (persisted in `AsyncStorage` key `@has_seen_onboarding`):
+  1. 🩺 Remote Consultation & AI-assisted triage.
+  2. 📅 Seamless Appointment Scheduling.
+  3. 📁 Lifetime EDR with digital prescriptions.
+- **Home Screen**: Dynamic interactive hero banner with micro-animations guiding users to start their first consultation.
+
+### 6. Smart Back Navigation & Header Standardization
+- **Pattern**: Every inner screen receives an explicit header back arrow (`⬅️` / `➡️` mirroring RTL/LTR).
+- **Hardware Support**: Android hardware `BackHandler` configured to step back to home tab before app exit.
+
+### 7. Comprehensive Patient Dental Record (EDR)
+- **Module 1 - Medical Health Profile**: Allergies, diabetes, hypertension, bleeding disorders, and drug sensitivities.
+- **Module 2 - Prescriptions Archive**: Auto-saved Rx history with instant A4/A5 PDF generation, WhatsApp sharing, and printing.
+- **Module 3 - Diagnostic X-Rays & Scans**: Panorama/periapical image viewer with pinch-to-zoom modal.
+- **Module 4 - Before/After Smile Transformation**: Interactive split-slider comparing baseline vs. completed treatment cases.
+- **Security & Transfer Matrix**:
+  - Patients: Read-write personal info and initial health history.
+  - Doctors: Append-only clinical notes, diagnoses, and prescriptions.
+  - Doctor Switching: Full read-only historical transfer to newly consulted doctors; previous doctor records remain tamper-proof.
+
+### 8. Authentication Architecture (Google One-Tap + Zero-Cost Phone Linking + Doctor Credentialing)
+- **Patient Auth**:
+  - One-tap Google Sign-In via `@react-native-google-signin/google-signin` and Supabase Google OAuth.
+  - **Zero-Cost Phone Capture**: On first Google login, prompt: *"Welcome to Asnanji! Enter your phone number for clinic appointments 📱"*. Number is saved directly to `profiles.phone` without expensive SMS gateway charges.
+- **Doctor Verification Flow**:
+  1. Professional application modal capturing: Full name, specialty, degree, syndicate ID, clinic address, and fee.
+  2. Applications stored in `doctor_applications`.
+  3. Super Admin one-click approval activates doctor account and sends automated welcome dispatch.
+
+### 9. Super Admin Governance & Clinic Receptionist Hierarchy
+- **Super Admin (`role = 'admin'`)**: System-wide doctor verification, clinic audits, metrics, and fee governance.
+- **Clinic Receptionists (`role = 'assistant'`)**:
+  - Doctors can provision up to 2 receptionist accounts (`clinic_doctor_id = current_doctor.id`).
+  - Strict permissions: Manage calendar, confirm arrivals, coordinate slots.
+  - Strictly blocked from: Writing diagnoses, issuing prescriptions, modifying medical records, or viewing other clinics' data.
 
 ---
 
-### 🔴 المشكلة 3: تشوه نصوص مجسم الأسنان واستبداله بالمجسم الطبي الواقعي الجديد (Dental Chart Mojibake & Realistic 3D Model)
-* **الوصف في التجربة**:
-  1. **نصوص عربية تالفة (Mojibake)**: نصوص الفك والأسنان تظهر كرموز غير مفهومة (مثل `ط§ظ„ظپظƒ ط§ظ„ط¹ظ„ظˆظٹ` و `â¬†ï¸ڈ` و `ط·ط§ط­ظ†`) بسبب خطأ في ترميز ملف `DentalChart.tsx`.
-  2. **شكل المجسم الحالي**: عبارة عن كروت ومربعات صماء غير واقعية وتجربة اختيار السن منها صعبة وبدائية.
-* **التعديل المعتمد والمطلوب تنفيذه**:
-  1. **إدراج المجسم الطبي الواقعي الجديد**: استخدام صورة المجسم ثلاثي الأبعاد المعتمدة التي أرسلها المستخدم (مجسم الفك والأسنان الشامل مع دقة وتفاصيل اللثة وأرقام الأسنان 1-32 للفكين العلوي والسفلي).
-  2. **ضبط الأبعاد والاستجابة (Responsive Dimensions)**: ملاءمة حجم المجسم ونسبة العرض للارتفاع (Aspect Ratio) ليتناسب مع مختلف مقاسات شاشات الموبايل بدون أي اقتصاص أو تشوه.
-  3. **إصلاح الترميز بالكامل (UTF-8 Clean)**: إعادة كتابة وتضمين كل النصوص الطبية العربية الصافية (الفك العلوي، الفك السفلي، القواطع، الأنياب، الضواحك، الطواحن، أضراس العقل).
-  4. **نقاط تفاعلية ذكية (Interactive Hotspots)**: جعل اختيار السن على المجسم تفاعلياً وواضحاً وسهل الضغط بالأصابع مع تأثير اهتزاز خفيف (Haptics) وتلوين السن المختار بلون مميز وواضح.
+## 🚀 Future Platform Capabilities (Phases 3 & 4)
+
+1. **Push Notifications 🔔**:
+   - Background push notifications via `expo-notifications` for new appointments, chat messages, and diagnosis releases.
+2. **Offline-First Resilience 📶**:
+   - Queue clinic actions via `@react-native-community/netinfo` + `AsyncStorage` when connectivity drops.
+3. **Automated WebP Image Compression 🖼️**:
+   - Client-side pre-compression via `expo-image-manipulator` to cut payload sizes by 80%.
+4. **Care & Recall Automation ⏰**:
+   - Post-treatment 24h follow-ups and 6-month preventive checkup reminders.
 
 ---
 
-### 🎨 البند 4: تطبيق الهوية البصرية وشعار "اسنانجي" الرسمي الجديد في كامل التطبيق (New Official Brand Identity & Logo Rollout)
-* **الوصف والمطلوب**:
-  - اعتمد المستخدم رسمياً الشعار الجديد ثلاثي الأبعاد المميز (السن الأزرق مع التقويم وفقاعة الشات وشعار "اسنانجي" وسلوجان *"احجز موعدك | استشر طبيبك | ابتسم بثقة"*).
-* **خطة التطبيق في كافة مسارات التطبيق**:
-  1. **أيقونة التطبيق للهواتف (`App Icon & Adaptive Icon`)**:
-     - توليد `icon.png` و `adaptive-icon.png` بمقاسات دقيقة (1024x1024) متوافقة مع متطلبات أندرويد لتبدو فخمة ومتناسقة على شاشات الهواتف.
-  2. **شاشة البداية والتحميل (`Splash Screen`)**:
-     - تحديث `splash.png` لإظهار الشعار الجديد المكتمل في منتصف الشاشة مع خلفية بيضاء متناسقة وسلسة عند فتح التطبيق.
-  3. **شاشة تسجيل الدخول وإنشاء الحساب (`AuthScreen.tsx`)**:
-     - إدراج الشعار الجديد بدقة عالية وشفافية متناسقة في أعلى شاشة الدخول مع ضبط الهوامش.
-  4. **شريط العنوان العلوي (Header Branding)**:
-     - تحديث اللوجو في أعلى الشاشة الرئيسية (`HomeScreen.tsx`)، وشاشة حساب المريض (`ProfileScreen.tsx`)، ولوحة الطبيب (`DoctorDashboardScreen.tsx`).
-  5. **الروشتة الطبية وتقارير الاستشارات المطبوعة (PDF Header)**:
-     - إدراج الشعار الجديد في ترويسة ملفات الـ PDF التي يُصدرها الأطباء لتكون رسمية ومعتمدة.
-
----
-
-### ✨ البند 5: شاشة وبانر تعريفي تفاعلي بأنيميشن جذاب للمستخدم الجديد (Engaging Onboarding & Animated Welcome Hero)
-* **الهدف والتجربة المطلوبة**:
-  - تعريف المستخدم الجديد فور فتح التطبيق بماهية "اسنانجي" وقيمتها وما تقدمه له بأسلوب بصري سلس وشيق يشده للاستخدام فوراً.
-* **المكونات البرمجية والتصميمية المقترحة**:
-  1. **جولة ترحيبية سريعة (Welcome Onboarding Walkthrough)**:
-     - تظهر للمستخدم الجديد أول مرة وتُحفظ حالتها محلياً (`hasSeenOnboarding` في AsyncStorage).
-     - 3 كروت متحركة بنعومة (Fade & Slide Transitions):
-       - 🩺 **كارت 1: استشر طبيبك عن بُعد**: شخّص ألم أسنانك وأرسل الأعراض والصور واحصل على تقرير طبيب فوري.
-       - 📅 **كارت 2: احجز موعدك بسهولة**: اختر اليوم والساعة المناسبة وتلقّ تذكيرات آلية قبل الموعد.
-       - 📄 **كارت 3: ملفك الطبي وروشتتك معك دائماً**: حفظ تاريخ أسنانك وأشعاتك في مكان آمن.
-  2. **أنيميشن بصري جذاب وخفيف (Smooth Engaging Animation)**:
-     - استخدام تأثيرات تفاعلية ناعمة (React Native Animated / Micro-interactions) كحركة ارتداد خفيفة لشعار السن ونبضات ضوئية على المزايا الرئيسية لجذب العين دون إثقال الهاتف.
-  3. **بانر تعريفي ديناميكي في الصفحة الرئيسية (Interactive Welcome Banner)**:
-     - في أعلى الشاشة الرئيسية (`HomeScreen`) يظهر قسم ترحيبي تفاعلي يعرف المستخدم الجديد بكيفية البدء في أول استشارة بنقرة واحدة.
-
----
-
-### 🔙 البند 6: إضافة سهم الرجوع الصريح والتنقل الذكي (Smart Back Button & Header Navigation)
-* **رأي التصميم وتجربة المستخدم (UX Best Practice)**:
-  - **ضروري وحاسم جداً**: في جميع شاشات التطبيق الفرعية والداخلية (مثل: صفحة بروفايل الطبيب، شاشة كتابة الشكوى واختيار السن، تفاصيل الحجز، إدارة الخدمات، إدارة معرض الحالات، وغيرها).
-  - بدون سهم الرجوع في الهيدر، يشعر المستخدم بأنه محاصر (Trapped) داخل الشاشة إذا لم يكن يستخدم أزرار النظام أو إيماءات السحب.
-* **الخطة البرمجية للتنفيذ**:
-  1. **إضافة زر سهم رجوع أنيق في أعلى الهيدر (`Header Back Arrow ⬅️`)**:
-     - يتكيف تلقائياً مع اتجاه اللغة (سهم لليمين في العربي ➡️، ولليسار في الإنجليزي ⬅️).
-     - مصحوب بلمسة اهتزاز خفيفة (`lightTap()`) وانتقال حركي ناعم (`navigation.goBack()`).
-  2. **معالجة زر الرجوع الفيزيائي في أندرويد (`Android Hardware BackHandler`)**:
-     - إذا كان المستخدم في أي تبويب آخر وضغط رجوع، يُعيده التطبيق تلقائياً إلى التبويب الأساسي (الرئيسية) بدلاً من إغلاق التطبيق فجأة.
-
----
-
-### 📁 البند 7: الملف الطبي الرقمي الشامل للمريض (Comprehensive Patient Dental Record - EDR)
-* **الهدف والقيمة للمريض**:
-  - تحويل شاشة "سجلي الطبي" وحساب المريض إلى خزانة صحية رقمية متكاملة تبقى مع المريض دائماً، وتجعله مرتبطاً بالتطبيق مدى الحياة.
-* **الأقسام الأربعة المعتمدة للتنفيذ داخل صفحة السجل الطبي**:
-  1. 🩺 **كارت التاريخ الطبي والحساسية (Medical Health Profile)**:
-     - عرض سريع وأنيق للحالة الصحية (الضغط، السكر، سيولة الدم، وحساسية البنسلين والأدوية) مع إمكانية تعديلها بنقرة واحدة لتنبيه الطبيب تلقائياً قبل أي إجراء.
-  2. 📄 **خزانة الروشتات الرقمية (Prescriptions Archive)**:
-     - أرشفة تلقائية لكل روشتة صادرة من الطبيب للمريض في استشاراته أو زياراته.
-     - زر فوري لتحميل الروشتة كـ **PDF رسمي**، أو مشاركتها عبر واتساب، أو طباعتها للصيدلي.
-  3. 🩻 **معرض الأشعات وفحوصات الأسنان (X-Rays & Scans Gallery)**:
-     - قسم مخصص يجمع كافة صور الأشعة البانورامية وفحوصات الأسنان والمرفقات الطبية الخاصة بالمريض.
-     - دعم العرض بكامل الشاشة وإمكانية التكبير والفحص باللمس (Pinch-to-zoom).
-  4. 📸 **معرض تحول الابتسامة قبل وبعد الخاص بالمريض (My Before & After Transformation)**:
-     - ميزة حصرية تعرض للمريض صوره الشخصية قبل بدء الخطة العلاجية وبعد اكتمالها عبر سلايدر تفاعلي سلس للمقارنة (`Before/After Slider`) ليشاهد الفرق بنفسه في ابتسامته ويشاركها مع أصدقائه.
-
-* **🔐 مصفوفة الصلاحيات الطبية الذكية (Access Control & Multi-Doctor Permissions)**:
-  - **ما يعدله المريض فقط**: بياناته الشخصية، رقم هاتفه، وإقراره الأولي بالحساسية والأمراض المزمنة.
-  - **ما يضيفه الطبيب فقط**: التشخيص الطبي، خطة العلاج، الروشتة والأدوية، ورفع صور الأشعة بعد الجلسات (المريض يستعرضها ويحملها فقط كقراءة Read-Only لمنع أي تلاعب طبي).
-  - **عند انتقال المريض لطبيب جديد (Doctor Switching & File Transfer)**:
-    - بمجرد حجز المريض أو استشارته لطبيب جديد، تُمنح للطبيب الجديد **صلاحية قراءة الملف الطبي بالكامل (Read-Only History)** لرؤية الأشعات والروشتات السابقة وتفادي تكرار الفحوصات المكلفة.
-    - الطبيب الجديد يملك **صلاحية إضافة فقط (Append-Only)** لكتابة تشخيصه وروشتته الجديدة، دون المساس بسجلات الأطباء السابقين لحماية السجل الطبي قانونياً.
-
----
-
-### 🔑 البند 8: نظام المصادقة الاحترافي (تسجيل الدخول بجوجل للمريض + استمارة اعتماد رسمي للأطباء)
-* **1. للمريض: الدخول بنقرة واحدة عبر Google (One-Tap Google Sign-In)**:
-  - **الأهمية والجدوى**: توفير تجربة مستخدم خالية تماماً من التعقيد (Zero Friction)؛ فالمريض لا يحب كتابة إيميل وباسورد وتذكرهم. بنقرة واحدة بحساب Gmail يتم سحب اسمه الموثق وصورته الشخصية وتأكيد حسابه فوراً بدون أي شاشات خطأ أو كلمة مرور.
-  - **المكتبات المستخدمة**: `@react-native-google-signin/google-signin` و Supabase Google OAuth.
-* **2. للطبيب: نظام التقديم والاعتماد المهني المعتمد (Doctor Verification & Onboarding)**:
-  - **الرؤية والهدف**: حماية المنصة قانونياً وطبياً بمنع التسجيل العشوائي لأي شخص غير طبيب، وبناء شبكة أطباء أسنان موثوقة ونظامية.
-  - **مسار التنفيذ العملي**:
-    1. في شاشة الدخول يوجد زر واضح وأنيق: **«هل أنت طبيب أسنان؟ انضم لشبكة أطباء اسنانجي 👨‍⚕️»**.
-    2. يفتح **استمارة تقديم طبيب راقية (Doctor Application Form)** داخل التطبيق تشمل:
-       - اسم الطبيب وتخصصه الدقيق ودرجته العلمية (أخصائي / استشاري).
-       - رقم الهاتف والواتساب والبريد الإلكتروني.
-       - عنوان العيادة والمحافظة وسعر الكشف المبدئي.
-       - رقم القيد بنقابة أطباء الأسنان (مع إمكانية إرفاق صورة كارنيه النقابة أو ترخيص العيادة).
-    3. عند إرسال الطلب، يُحفظ في جدول `doctor_applications`، ويصل إشعار فوري لفريق العمل (واتساب / إيميل الداشبورد).
-    4. تظهر للطبيب رسالة تأكيد احترافية:  
-       > *"أهلاً بك يا دكتور في اسنانجي! تم استلام طلب انضمامك بنجاح، وسيقوم فريق الدعم الفني بمراجعة البيانات وتفعيل حساب عيادتك خلال وقت قصير."*
-    5. **آلية المراجعة والتفعيل بضغطة زر واحدة (Admin Approval Engine)**:
-       - **لوحة إدارة الطلبات داخل التطبيق (In-App Admin Tab)**: شاشة مخصصة لحساب الأدمن تظهر فيها بطاقات الأطباء المتقدمين مع بياناتهم وتراخيصهم.
-       - **عند ضغط الأدمن على زر [✔️ تفعيل واعتماد الحساب]**:
-         1. تقوم دالة أوتوماتيكية (`activate_doctor_account`) بإنشاء حساب رسمي للطبيب في `auth.users` وتعيين `role = 'doctor'`.
-         2. إدراج بياناته في `profiles` و `doctor_profiles` و `doctor_settings` لتبدأ عيادته في الظهور فوراً في التطبيق للمرضى.
-         3. **إرسال رسالة تفعيل فورية للطبيب عبر (واتساب / SMS / بريد إلكتروني)** تحتوي على:
-            > *"🎉 تهانينا د. [الاسم]! تم اعتماد وتفعيل حسابك في شبكة أطباء اسنانجي. يمكنك الآن فتح التطبيق وتسجيل الدخول بحسابك للبدء في استقبال المرضى وإدارة حجوزاتك."*
-
----
-
-### 👑 البند 9: نظام السوبر أدمن وهرمية العيادة (Super Admin & Clinic Staff / Multi-Secretary System)
-* **1. حساب السوبر أدمن (Super Admin Account - أعلى رتبة في النظام)**:
-  - **الرتبة في النظام**: `role = 'admin'`.
-  - **الصلاحيات الشاملة**:
-    - **إدارة شبكة الأطباء**: قبول أو رفض طلبات انضمام الأطباء، تجميد أو حذف أي حساب طبيب مخالف.
-    - **استعراض المنصة الشامل**: رؤية إحصائيات المرضى، وحالات الاستشارات، وحجم المواعيد المحجوزة.
-    - **التحكم المركزي في إعدادات المنصة والأسعار العامة**.
-* **2. نظام السكرتارية التابع للطبيب (Clinic Reception & Multi-Secretary Accounts)**:
-  - **الهدف**: تمكين الطبيب من تفويض المهام الإدارية لسكرتيرتين دون إشراكهم في القرارات الطبية الحساسة.
-  - **طريقة الإنشاء والإدارة**:
-    - من داخل لوحة تحكم الطبيب (`DoctorSettingsScreen`)، قسم مخصص: **«إدارة السكرتارية وفريق العمل (2 حسابات كحد أقصى)»**.
-    - يضغط الطبيب على **[➕ إضافة سكرتيرة جديدة]**، ويدخل: الاسم، رقم الهاتف، والبريد أو كود الدخول وكلمة المرور.
-    - برمجياً: يتم تعيين الدور `role = 'assistant'` مع ربطه برقم الطبيب `clinic_doctor_id = current_doctor.id`.
-  - **مصفوفة صلاحيات السكرتيرة (Strict Assistant Permissions)**:
-    - ✅ **إدارة جدول المواعيد**: إضافة موعد، تعديل التوقيت، إلغاء الحجز، وتأكيد حضور المريض في الانتظار.
-    - ✅ **تنسيق التواصل مع المريض**: إرسال رسائل تذكير بالمواعيد وإرشادات الوصول للعيادة.
-    - ❌ **محظور طبياً**: لا تملك السكرتيرة صلاحية كتابة روشتة، أو تعديل التشخيص، أو كتابة تقرير طبي.
-    - ❌ **عزل البيانات (Data Isolation)**: السكرتيرة ترى مرضى ومواعيد الطبيب التابعة له فقط ولا يمكنها الاطلاع على أطباء المنصة الآخرين.
-
----
-
-## 1️⃣ الميزة الأولى: الإشعارات المنبثقة خارج التطبيق (Push Notifications) 🔔
-
-### 📌 الوصف والهدف:
-وصول إشعار فوري بصوت واهتزاز على شاشة الهاتف حتى والتطبيق مغلق تماماً في الخلفية.
-
-### 📱 سيناريوهات الاستخدام:
-1. **للطبيب والسكرتيرة**:
-   - إشعار لحظي عند حجز موعد جديد: *"📅 حجز جديد: [اسم المريض] يوم الأربعاء الساعة 5:00 م"*.
-   - إشعار عند إرسال استشارة أو رسالة شات جديدة: *"💬 رسالة جديدة من [اسم المريض]"*.
-2. **للمريض**:
-   - إشعار عند تأكيد الحجز: *"✅ تم تأكيد موعدك غداً الساعة 6:00 م مع د. كريم"*.
-   - إشعار عند رد الطبيب على الاستشارة: *"🩺 أرسل الطبيب تشخيصه وخطة العلاج المبدئية"*.
-
-### 🛠️ التفاصيل التقنية والبرمجية:
-- **المكتبات**: `expo-notifications`, `expo-device`.
-- **قاعدة البيانات (Supabase)**:
-  - إضافة عمود `push_token TEXT` في جدول `profiles`.
-  - تسجيل وحفظ التوكن الخاص بجهاز المستخدم فور تسجيل الدخول.
-- **خدمة الإرسال**: استخدام سيرفر Expo Push Notifications API لإرسال التنبيهات المشفرة.
-
----
-
-## 2️⃣ الميزة الثانية: استقرار العمل بدون إنترنت (Offline-First Sync) 📶
-
-### 📌 الوصف والهدف:
-تمكين السكرتيرة والطبيب من الاستمرار في إدارة العيادة وتسجيل الحضور والمواعيد دون أي توقف حتى في حال ضعف أو انقطاع شبكة الإنترنت داخل العيادة.
-
-### 📱 سيناريوهات الاستخدام:
-- عند قيام السكرتيرة بتأكيد حجز أو تعديل موعد مريض أثناء انقطاع الشبكة:
-  - لا تظهر أي شاشات خطأ أو رسائل فشل اتصال.
-  - يتم حفظ العملية فوراً في الذاكرة المحلية مع وسم *"⏳ قيد المزامنة"*.
-  - يستمر التطبيق في العمل بسلاسة تامة.
-  - فور عودة اتصال الإنترنت، يقوم التطبيق تلقائياً برفع وتحديث البيانات في سيرفر Supabase وتتحول الحالة إلى *"✔️ تمت المزامنة"*.
-
-### 🛠️ التفاصيل التقنية والبرمجية:
-- **المكتبات**: `@react-native-community/netinfo`, `AsyncStorage`.
-- **طابور العمليات (Offline Action Queue)**:
-  - إنشاء وحدة وسيطة (`OfflineSyncManager`) تراقب حالة الاتصال.
-  - تخزين العمليات المعلقة في مصفوفة مهام محلية ومزامنتها تلقائياً فور توفر الاتصال.
-
----
-
-## 3️⃣ الميزة الثالثة: الضغط والتحويل التلقائي للصور إلى صيغة WebP 🖼️
-
-### 📌 الوصف والهدف:
-تسريع رفع وفتح صور الأسنان والأشعة بنسبة 300% وتوفير 80% من استهلاك باقة الإنترنت وسعة التخزين السحابي.
-
-### 📱 سيناريوهات الاستخدام:
-- عندما يلتقط المريض صورة لأسنانه أو يرفع صورة أشعة عالية الدقة (بحجم 5 إلى 10 ميجابايت):
-  - يقوم التطبيق تلقائياً وبشكل صامت بضغطها وتحويلها إلى صيغة **WebP** الحديثة قبل الرفع.
-  - ينخفض حجم الملف إلى **300 - 400 كيلوبايت فقط** دون أدنى تأثير على دقة وتفاصيل الأسنان الطبية.
-  - ترتفع سرعة إرسال الصور في الشات وسرعة تحميل معرض الحالات (Before/After) إلى أقصى حد.
-
-### 🛠️ التفاصيل التقنية والبرمجية:
-- **المكتبات**: `expo-image-manipulator`.
-- **التكامل**: دمج دالة المعالجة المسبقة داخل `src/services/supabaseStorage.ts`.
-
----
-
-## 4️⃣ الميزة الرابعة: الروشتة الطبية الرقمية المعتمدة (Smart PDF Prescription) 📄
-
-### 📌 الوصف والهدف:
-تمكين الطبيب من كتابة وتوليد روشتة علاجية رسمية بضغطة زر وتصديرها كملف PDF معتمد يحمل شعار العيادة وبياناتها لمشاركتها مع المريض أو طباعتها.
-
-### 📱 سيناريوهات الاستخدام:
-- من داخل شاشة تشخيص الحالة (`DoctorConsultationDetailScreen`)، يضغط الطبيب على **«إصدار روشتة علاجية 🖨️»**:
-  - يختار الطبيب الدواء والجرعة والتعليمات من قائمة سريعة أو يكتبها يدوياً.
-  - يقوم التطبيق فوراً بتوليد ملف **PDF بتصميم رسمي فاخر**:
-    - **الترويسة**: شعار العيادة، اسم الطبيب ولقبه المهني، رقم الهاتف، وعنوان العيادة.
-    - **بيانات المريض**: الاسم، العمر، التاريخ، والتشخيص الطبي.
-    - **جدول الأدوية**: اسم الدواء، الجرعة، طريقة وتوقيت الاستخدام، والملاحظات الخاصة.
-    - **التذييل**: ختم وتوقيع رقمي معتمد.
-  - يظهر للطبيب زر فوري لمشاركة الروشتة للمريض عبر **واتساب** بنقرة واحدة، أو طباعتها عبر أي طابعة لاسلكية.
-
-### 🛠️ التفاصيل التقنية والبرمجية:
-- **المكتبات**: `expo-print`, `expo-sharing`.
-- **قالب الروشتة**: قالب HTML/CSS مخصص ومهيأ للطباعة بمقاس A5 و A4.
-
----
-
-## 5️⃣ الميزة الخامسة: تذكيرات المتابعة والفحص الدوري (Care & Recall Reminders) ⏰
-
-### 📌 الوصف والهدف:
-بناء علاقة دائمة واهتمام مستمر بالمريض لضمان بقاء التطبيق على هاتفه وعودته للعيادة بانتظام.
-
-### 📱 سيناريوهات الاستخدام:
-1. **متابعة اليوم التالي (Post-Op Check-in)**:
-   - بعد 24 ساعة من إجراء كشف أو جلسة علاجية، يصل المريض إشعار لطيف:  
-     *"حمد لله على سلامتك من عيادة د. كريم! نتمنى أن تكون بأفضل حال اليوم. إليك أهم النصائح لتقليل الألم وسرعة التعافي."*
-2. **الفحص الوقائي الدوري (6-Month Recall)**:
-   - بعد مرور 6 أشهر على آخر زيارة، يُرسل التطبيق تذكيراً:  
-     *"ابتسامتك أمانة! مرّت 6 أشهر منذ فحصك الأخير. احجز جلسة الفحص وتنظيف الجير الوقائية للحفاظ على صحة أسنانك."*
-
-### 🛠️ التفاصيل التقنية والبرمجية:
-- جدولة إشعارات محلية ذكية (`Local Scheduled Notifications`) تستند إلى تاريخ آخر موعد أو استشارة للمريض.
-
----
-
-## 📊 خارطة طريق ومراحل التنفيذ الهندسية المعتمدة (Implementation Roadmap)
-
-تم تقسيم كافة المتطلبات إلى **4 مراحل متسلسلة بدقة**، لضمان استقرار التطبيق واختبار كل مرحلة بعناية:
+## 🏗️ 4-Phase Implementation Roadmap
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│  المرحلة 1: البنية التحتية والمصادقة (Auth, Roles & Database)          │
-│  - حل مشكلة الشبكة + Google Login + استمارة الطبيب + السوبر أدمن + السكرتارية │
+│  Phase 1: Core Foundation & Auth Hierarchy                             │
+│  - Google One-Tap + Phone Linking prompt + Doctor Application Flow     │
+│  - Super Admin verification dashboard + Clinic Assistant Role (2 slots)│
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
 ┌───────────────────────────────────▼────────────────────────────────────┐
-│  المرحلة 2: الهوية البصرية وتجربة المستخدم (UI, Branding & Dental 3D)  │
-│  - اللوجو الجديد + شاشة Splash + مجسم الأسنان الواقعي + سهم الرجوع + Onboarding │
+│  Phase 2: Visual Polish, Branding & Anatomical 3D Model                │
+│  - Official 3D Logo rollout + Splash & Adaptive Icon (1024x1024)       │
+│  - Realistic 3D Dental Arch (1-32 teeth) with Clean UTF-8 Hotspots     │
+│  - Header Back Buttons + Android Hardware BackHandler + Onboarding Hero│
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
 ┌───────────────────────────────────▼────────────────────────────────────┐
-│  المرحلة 3: الملف الطبي الرقمي الشامل (Clinical Records & Prescriptions)│
-│  - كارت الحساسية + أرشيف الروشتات PDF + معرض الأشعات + قبل وبعد التفاعلي │
+│  Phase 3: Clinical Records, EDR & Smart PDF Prescriptions              │
+│  - Comprehensive EDR Screen (Allergies, Rx archive, X-Ray gallery)     │
+│  - Branded PDF Prescription Generator (Print & WhatsApp share)         │
+│  - Interactive Before/After smile comparison slider                    │
+│  - Multi-Doctor record transfer and permission enforcement             │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
 ┌───────────────────────────────────▼────────────────────────────────────┐
-│  المرحلة 4: الإشعارات واستقرار المنصة (Push Notifications & Offline)   │
-│  - إشعارات الموبايل المغلق + ضغط صور WebP + تزامن أوفلاين + التذكيرات الدورية│
+│  Phase 4: Platform Performance & Production Readiness                  │
+│  - Background Push Notifications (`expo-notifications`)                │
+│  - Silent client-side WebP compression (`expo-image-manipulator`)      │
+│  - Offline sync action queue for clinic appointments                   │
+│  - EAS production build & release configuration                        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 🛠️ تفاصيل خطة التنفيذ خطوة بخطوة:
+## 📋 Detailed Task Breakdown by Phase
 
-| المرحلة | المهام المحددة | الملفات والوحدات المتأثرة |
+| Phase | Core Deliverables | Target Files |
 | :--- | :--- | :--- |
-| **المرحلة 1: المصادقة وهيكل الرتب** | 1. معالجة اتصال Supabase وتفعيل Fallback المحلي.<br>2. ربط Google Sign-In للمرضى بنقرة واحدة.<br>3. بناء استمارة انضمام الأطباء داخل التطبيق.<br>4. لوحة مراجعة واعتماد الأطباء للأدمن + إشعار الواتساب.<br>5. تمكين الطبيب من إضافة وتعيين سكرتيرتين وإدارة المواعيد. | `src/services/supabase.ts`<br>`src/screens/AuthScreen.tsx`<br>`src/context/AppContext.tsx`<br>`supabase/schema.sql` |
-| **المرحلة 2: الهوية البصرية والمجسم** | 1. تعميم الشعار الجديد (App Icon, Splash, Headers).<br>2. إزالة زر الإدارة المكرر وتوحيد التسجيل.<br>3. إدراج صورة مجسم الأسنان الواقعي (1-32) وإصلاح نصوص UTF-8.<br>4. إضافة أزرار سهم الرجوع ⬅️ في كل الشاشات الفرعية.<br>5. بناء شرائح الـ Onboarding الترحيبية بأنيميشن ناعم. | `assets/*`<br>`app.json`<br>`src/components/DentalChart.tsx`<br>`App.tsx`<br>`src/screens/HomeScreen.tsx` |
-| **المرحلة 3: الملف الطبي والروشتة** | 1. تطوير صفحة السجل الطبي (4 أقسام متكاملة).<br>2. إضافة كارت الأمراض المزمنة والحساسية.<br>3. نظام توليد الروشتة PDF بشعار العيادة والطباعة/المشاركة.<br>4. معرض الأشعات بتكبير اللمس Pinch-to-zoom.<br>5. معرض صور الأسنان قبل/بعد التفاعلي للمريض.<br>6. تطبيق مصفوفة الصلاحيات ونقل الملف عند تغيير الطبيب. | `src/screens/MedicalRecordsScreen.tsx`<br>`src/screens/DoctorConsultationDetailScreen.tsx`<br>`src/components/BeforeAfterSlider.tsx`<br>`src/types/index.ts` |
-| **المرحلة 4: الإشعارات والمزامنة** | 1. ربط `expo-notifications` للإشعارات الصوتية الفورية.<br>2. تحويل وضغط الصور تلقائياً إلى صيغة WebP.<br>3. تأمين العمل أوفلاين لطابور مواعيد السكرتارية.<br>4. تفعيل نظام التذكيرات الدورية للعناية بالأسنان. | `src/services/supabaseStorage.ts`<br>`src/services/notifications.ts`<br>`src/services/offlineSync.ts` |
-
----
-
-> ⚠️ **تأكيد وضمان التوقف**: هذه الخطة جاهزة ومحفوظة بالكامل، **ولن يتم المساس بالكود أو بناء أي ملف APK** حتى تعطي إشارة البدء الرسمية بعد انتهاء كافة تجاربك.
+| **Phase 1: Auth & Hierarchy** | 1. Implement Google One-Tap sign-in with fallback.<br>2. Build instant post-auth Phone Number Link modal.<br>3. Create Doctor Application form and `doctor_applications` table.<br>4. Super Admin verification tab to activate doctors.<br>5. Doctor Settings: Add up to 2 receptionist accounts (`role = 'assistant'`). | `src/screens/AuthScreen.tsx`<br>`src/services/supabase.ts`<br>`src/context/AppContext.tsx`<br>`supabase/schema.sql`<br>`src/screens/doctor/DoctorSettingsScreen.tsx` |
+| **Phase 2: UI & Dental Model** | 1. Generate app icon, adaptive icon, and splash from `new_official_logo.png`.<br>2. Replace block dental chart with realistic 3D model (`dental_model_reference.jpg`).<br>3. Clean all Arabic UTF-8 mojibake labels.<br>4. Add universal header Back Arrow ⬅️ on all inner screens.<br>5. Build 3-slide animated Onboarding flow + Home hero banner. | `assets/*`<br>`app.json`<br>`src/components/DentalChart.tsx`<br>`App.tsx`<br>`src/screens/HomeScreen.tsx` |
+| **Phase 3: EDR & Prescriptions** | 1. Upgrade `MedicalRecordsScreen.tsx` into 4-part EDR.<br>2. Implement Allergies & Chronic Conditions card.<br>3. Build PDF Prescription generator (`expo-print`, `expo-sharing`).<br>4. Pinch-to-zoom X-ray and scan gallery.<br>5. Before/After transformation slider with touch gestures.<br>6. Apply multi-doctor read-only record sharing rules. | `src/screens/MedicalRecordsScreen.tsx`<br>`src/screens/DoctorConsultationDetailScreen.tsx`<br>`src/components/BeforeAfterSlider.tsx`<br>`src/types/index.ts` |
+| **Phase 4: Notifications & Performance** | 1. Configure Expo Push Notifications token registration.<br>2. Implement WebP silent compression in image upload pipeline.<br>3. Offline queue for receptionist appointment management.<br>4. Scheduled follow-up and recall push notifications. | `src/services/supabaseStorage.ts`<br>`src/services/notifications.ts`<br>`src/services/offlineSync.ts` |

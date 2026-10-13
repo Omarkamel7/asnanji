@@ -11,6 +11,10 @@ import {
   PreliminaryDiagnosis,
   ClinicSettings,
   DentalService,
+  DoctorApplication,
+  ClinicAssistant,
+  Prescription,
+  PatientDentalRecord,
 } from '../types';
 import { translations } from '../constants/translations';
 import {
@@ -74,6 +78,18 @@ interface AppContextType {
   isAuthenticated: boolean;
   t: typeof translations.ar;
   isRTL: boolean;
+  // Phase 1: Doctor Credentialing & Assistants
+  doctorApplications: DoctorApplication[];
+  submitDoctorApplication: (appData: Omit<DoctorApplication, 'id' | 'status' | 'createdAt'>) => Promise<DoctorApplication>;
+  reviewDoctorApplication: (applicationId: string, status: 'approved' | 'rejected', reason?: string) => Promise<void>;
+  clinicAssistants: ClinicAssistant[];
+  addClinicAssistant: (name: string, phone: string, email: string, password: string) => Promise<ClinicAssistant>;
+  removeClinicAssistant: (assistantId: string) => Promise<void>;
+  // Phase 3: Prescriptions & Dental Records
+  prescriptions: Prescription[];
+  addPrescription: (rx: Omit<Prescription, 'id' | 'createdAt'>) => Promise<Prescription>;
+  patientDentalRecords: PatientDentalRecord[];
+  addDentalRecord: (record: Omit<PatientDentalRecord, 'id' | 'createdAt'>) => Promise<PatientDentalRecord>;
 }
 
 const DEFAULT_PATIENT: UserProfile = {
@@ -115,6 +131,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
   const [doctorViews, setDoctorViews] = useState<Record<string, number>>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [doctorApplications, setDoctorApplications] = useState<DoctorApplication[]>([]);
+  const [clinicAssistants, setClinicAssistants] = useState<ClinicAssistant[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [patientDentalRecords, setPatientDentalRecords] = useState<PatientDentalRecord[]>([]);
 
   useEffect(() => {
     loadSavedData();
@@ -1216,6 +1236,203 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [complaints, currentUser.id, currentUser.fullName, role]
   );
 
+  // Phase 1: Doctor Credentialing & Application Submission
+  const submitDoctorApplication = useCallback(
+    async (appData: Omit<DoctorApplication, 'id' | 'status' | 'createdAt'>): Promise<DoctorApplication> => {
+      const newApp: DoctorApplication = {
+        id: generateUUID(),
+        ...appData,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      };
+
+      setDoctorApplications((prev) => [newApp, ...prev]);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from('doctor_applications').insert({
+            id: newApp.id,
+            full_name: newApp.fullName,
+            phone: newApp.phone,
+            email: newApp.email,
+            specialty: newApp.specialty,
+            degree: newApp.degree,
+            syndicate_id: newApp.syndicateId || null,
+            clinic_address: newApp.clinicAddress,
+            governorate: newApp.governorate || null,
+            consultation_fee: newApp.consultationFee,
+            license_document_url: newApp.licenseDocumentUrl || null,
+            status: 'pending',
+          });
+        } catch (err) {
+          console.warn('[Supabase] submitDoctorApplication error:', err);
+        }
+      }
+
+      return newApp;
+    },
+    []
+  );
+
+  // Phase 1: Super Admin Review Doctor Application
+  const reviewDoctorApplication = useCallback(
+    async (applicationId: string, status: 'approved' | 'rejected', reason?: string) => {
+      setDoctorApplications((prev) =>
+        prev.map((app) => (app.id === applicationId ? { ...app, status, rejectionReason: reason } : app))
+      );
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase
+            .from('doctor_applications')
+            .update({ status, rejection_reason: reason || null, updated_at: new Date().toISOString() })
+            .eq('id', applicationId);
+        } catch (err) {
+          console.warn('[Supabase] reviewDoctorApplication error:', err);
+        }
+      }
+    },
+    []
+  );
+
+  // Phase 1: Clinic Receptionists Management
+  const addClinicAssistant = useCallback(
+    async (name: string, phone: string, email: string, password: string): Promise<ClinicAssistant> => {
+      const assistantId = generateUUID();
+      const assistantUserUUID = generateUUID();
+      const newAssistant: ClinicAssistant = {
+        id: assistantId,
+        doctorId: currentUser.id,
+        assistantUserId: assistantUserUUID,
+        name,
+        phone,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+
+      setClinicAssistants((prev) => [...prev, newAssistant]);
+
+      if (isSupabaseConfigured) {
+        try {
+          // 1. Create user account
+          const { data: authData } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { full_name: name, role: 'assistant', doctor_id: currentUser.id } },
+          });
+
+          const createdUserId = authData?.user?.id || assistantUserUUID;
+
+          // 2. Insert profile
+          await supabase.from('profiles').upsert({
+            id: createdUserId,
+            full_name: name,
+            phone,
+            role: 'assistant',
+            assigned_doctor_id: currentUser.id,
+          });
+
+          // 3. Link to clinic_assistants
+          await supabase.from('clinic_assistants').insert({
+            id: assistantId,
+            doctor_id: currentUser.id,
+            assistant_user_id: createdUserId,
+            name,
+            phone,
+            is_active: true,
+          });
+        } catch (err) {
+          console.warn('[Supabase] addClinicAssistant error:', err);
+        }
+      }
+
+      return newAssistant;
+    },
+    [currentUser.id]
+  );
+
+  const removeClinicAssistant = useCallback(
+    async (assistantId: string) => {
+      setClinicAssistants((prev) => prev.filter((a) => a.id !== assistantId));
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from('clinic_assistants').delete().eq('id', assistantId);
+        } catch (err) {
+          console.warn('[Supabase] removeClinicAssistant error:', err);
+        }
+      }
+    },
+    []
+  );
+
+  // Phase 3: Prescriptions Management
+  const addPrescription = useCallback(
+    async (rx: Omit<Prescription, 'id' | 'createdAt'>): Promise<Prescription> => {
+      const newRx: Prescription = {
+        id: generateUUID(),
+        ...rx,
+        createdAt: new Date().toISOString(),
+      };
+
+      setPrescriptions((prev) => [newRx, ...prev]);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from('prescriptions').insert({
+            id: newRx.id,
+            consultation_id: newRx.consultationId || null,
+            patient_id: newRx.patientId,
+            doctor_id: newRx.doctorId,
+            diagnosis_title: newRx.diagnosisTitle,
+            medications: newRx.medications,
+            special_instructions: newRx.specialInstructions || null,
+            pdf_url: newRx.pdfUrl || null,
+          });
+        } catch (err) {
+          console.warn('[Supabase] addPrescription error:', err);
+        }
+      }
+
+      return newRx;
+    },
+    []
+  );
+
+  // Phase 3: Patient Dental Records (Scans, X-rays, Before/After)
+  const addDentalRecord = useCallback(
+    async (record: Omit<PatientDentalRecord, 'id' | 'createdAt'>): Promise<PatientDentalRecord> => {
+      const newRec: PatientDentalRecord = {
+        id: generateUUID(),
+        ...record,
+        createdAt: new Date().toISOString(),
+      };
+
+      setPatientDentalRecords((prev) => [newRec, ...prev]);
+
+      if (isSupabaseConfigured) {
+        try {
+          await supabase.from('patient_dental_records').insert({
+            id: newRec.id,
+            patient_id: newRec.patientId,
+            doctor_id: newRec.doctorId || null,
+            record_type: newRec.recordType,
+            title: newRec.title,
+            image_url: newRec.imageUrl,
+            before_image_url: newRec.beforeImageUrl || null,
+            after_image_url: newRec.afterImageUrl || null,
+            notes: newRec.notes || null,
+            tooth_number: newRec.toothNumber || null,
+          });
+        } catch (err) {
+          console.warn('[Supabase] addDentalRecord error:', err);
+        }
+      }
+
+      return newRec;
+    },
+    []
+  );
+
   const t = translations[language];
   const isRTL = language === 'ar';
 
@@ -1256,6 +1473,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isAuthenticated,
       t,
       isRTL,
+      doctorApplications,
+      submitDoctorApplication,
+      reviewDoctorApplication,
+      clinicAssistants,
+      addClinicAssistant,
+      removeClinicAssistant,
+      prescriptions,
+      addPrescription,
+      patientDentalRecords,
+      addDentalRecord,
     }),
     [
       language,
@@ -1273,6 +1500,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isAuthenticated,
       t,
       isRTL,
+      doctorApplications,
+      submitDoctorApplication,
+      reviewDoctorApplication,
+      clinicAssistants,
+      addClinicAssistant,
+      removeClinicAssistant,
+      prescriptions,
+      addPrescription,
+      patientDentalRecords,
+      addDentalRecord,
     ]
   );
 

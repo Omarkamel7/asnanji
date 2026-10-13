@@ -169,7 +169,9 @@ export const ProfileScreen: React.FC = () => {
             <Text style={styles.roleTitle}>
               {language === 'ar' ? 'حساب الطبيب المعتمد:' : 'Doctor Account:'}
             </Text>
-            <Text style={styles.roleBadge}>د. كريم أبو بكر</Text>
+            <Text style={styles.roleBadge}>
+              {currentUser.fullName || (language === 'ar' ? 'طبيب معتمد' : 'Verified Doctor')}
+            </Text>
           </View>
 
           <TouchableOpacity

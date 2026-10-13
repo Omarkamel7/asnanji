@@ -15,6 +15,11 @@ import {
   MapPin,
   Star,
   Globe,
+  Sparkles,
+  Stethoscope,
+  Calendar,
+  ArrowRight,
+  ArrowLeft,
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
@@ -32,6 +37,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     t,
     doctors,
     refreshClinicData,
+    isRTL,
   } = useApp();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -74,7 +80,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-            <View style={styles.topBar}>
+      <View style={styles.topBar}>
         <View style={styles.brandRow}>
           <Image
             source={require('../../assets/app_logo.png')}
@@ -83,7 +89,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
           <View>
             <Text style={styles.headerTitle}>{t.appTitle}</Text>
-            <Text style={styles.headerSubtitle}>{language === 'ar' ? '  ' : 'Find Your Dentist'}</Text>
+            <Text style={styles.headerSubtitle}>
+              {language === 'ar' ? 'احجز موعدك • استشر طبيبك • ابتسم بثقة' : 'Book • Consult • Smile'}
+            </Text>
           </View>
         </View>
         <TouchableOpacity
@@ -140,6 +148,33 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
         }
       >
+        {/* Animated Welcome Hero Banner */}
+        <View style={styles.heroBanner}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <Sparkles size={16} color="#0284c7" />
+              <Text style={styles.heroBadge}>
+                {language === 'ar' ? 'استشارة فورية بضغطة زر' : 'Instant Dental Consultation'}
+              </Text>
+            </View>
+            <Text style={styles.heroTitle}>
+              {language === 'ar' ? 'هل تشعر بألم في أسنانك؟ 🦷' : 'Experiencing tooth pain? 🦷'}
+            </Text>
+            <Text style={styles.heroSubtitle}>
+              {language === 'ar'
+                ? 'حدد السن على المجسم 3D وأرسل الأعراض لتشخيص مبدئي من أفضل الأطباء'
+                : 'Select tooth on 3D arch & get instant dental triage'}
+            </Text>
+            <TouchableOpacity
+              style={styles.heroActionBtn}
+              onPress={() => navigation.navigate('NewConsultation')}
+            >
+              <Text style={styles.heroActionBtnText}>
+                {language === 'ar' ? 'ابدأ الاستشارة الآن 🩺' : 'Start Consultation 🩺'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
         {filteredDoctors.map(doctor => (
           <TouchableOpacity 
             key={doctor.id} 
@@ -393,7 +428,48 @@ const styles = StyleSheet.create({
   emptyStateText: {
     color: Colors.textMuted,
     fontSize: 15,
-  }
+  },
+  heroBanner: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+    ...Shadows.sm,
+  },
+  heroBadge: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0284C7',
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  heroActionBtn: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    ...Shadows.sm,
+  },
+  heroActionBtnText: {
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: '800',
+  },
 });
 
 
