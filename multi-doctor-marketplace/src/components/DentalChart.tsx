@@ -1,5 +1,6 @@
-import React, { useState, memo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 import { FDI_TEETH } from '../constants/dentalData';
 import { ToothInfo } from '../types';
 import { Colors, Shadows } from '../constants/theme';
@@ -42,8 +43,8 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
         style={[
           styles.toothButton,
           {
-            width: isMolar ? 36 : isPremolar ? 32 : isCanine ? 30 : 28,
-            height: 48,
+            width: isMolar ? 38 : isPremolar ? 33 : isCanine ? 30 : 28,
+            height: 52,
             borderRadius: isMolar ? 10 : isCanine ? 12 : 6,
           },
           isSelected && styles.toothButtonSelected,
@@ -54,14 +55,22 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
           {toothNum}
         </Text>
         <Text style={[styles.toothTypeLabel, isSelected && styles.toothTypeLabelSelected]}>
-          {isMolar ? 'ط·ط§ط­ظ†' : isPremolar ? 'ط¶ط§ط­ظƒ' : isCanine ? 'ظ†ط§ط¨' : 'ظ‚ط§ط·ط¹'}
+          {toothInfo?.type === 'wisdom'
+            ? language === 'ar' ? 'عقل' : 'Wis'
+            : isMolar
+            ? language === 'ar' ? 'ضرس' : 'Mol'
+            : isPremolar
+            ? language === 'ar' ? 'ضاحك' : 'Pre'
+            : isCanine
+            ? language === 'ar' ? 'ناب' : 'Can'
+            : language === 'ar' ? 'قاطع' : 'Inc'}
         </Text>
         <View
           style={[
             styles.toothCusp,
             {
               backgroundColor: isSelected
-                ? 'rgba(255,255,255,0.8)'
+                ? 'rgba(255,255,255,0.9)'
                 : Colors.border,
             },
           ]}
@@ -72,6 +81,20 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
 
   return (
     <View style={styles.container}>
+      {/* 3D Realistic Dental Arch Reference Banner */}
+      <View style={styles.modelBannerCard}>
+        <Image
+          source={require('../../assets/dental_model_reference.jpg')}
+          style={styles.modelImage}
+          contentFit="cover"
+        />
+        <View style={styles.modelOverlayBadge}>
+          <Text style={styles.modelBadgeText}>
+            {language === 'ar' ? 'مجسم الأسنان التشريحي 3D (1 - 32)' : '3D Dental Anatomy Model (1 - 32)'}
+          </Text>
+        </View>
+      </View>
+
       {/* Jaw Switcher Tabs */}
       <View style={styles.jawTabs}>
         <TouchableOpacity
@@ -84,7 +107,7 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
               activeJaw === 'upper' && styles.jawTabBtnTextActive,
             ]}
           >
-            â¬†ï¸ڈ {language === 'ar' ? 'ط§ظ„ظپظƒ ط§ظ„ط¹ظ„ظˆظٹ (Upper)' : 'Upper Jaw'}
+            ⬆️ {language === 'ar' ? 'الفك العلوي (Upper Arch)' : 'Upper Arch'}
           </Text>
         </TouchableOpacity>
 
@@ -98,24 +121,28 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
               activeJaw === 'lower' && styles.jawTabBtnTextActive,
             ]}
           >
-            â¬‡ï¸ڈ {language === 'ar' ? 'ط§ظ„ظپظƒ ط§ظ„ط³ظپظ„ظٹ (Lower)' : 'Lower Jaw'}
+            ⬇️ {language === 'ar' ? 'الفك السفلي (Lower Arch)' : 'Lower Arch'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Anatomical Model Box */}
+      {/* Anatomical Selection Arch Box */}
       <View style={styles.archBox}>
         <View style={styles.directionHeader}>
-          <Text style={styles.directionText}>ًں‘‰ ظٹظ…ظٹظ† ط§ظ„ظ…ط±ظٹط¶</Text>
+          <Text style={styles.directionText}>👉 {language === 'ar' ? 'يمين المريض' : 'Right'}</Text>
           <Text style={styles.archTitle}>
-            {activeJaw === 'upper' ? 'ظ‚ظˆط³ ط§ظ„ظپظƒ ط§ظ„ط¹ظ„ظˆظٹ ط§ظ„طھط´ط±ظٹط­ظٹ' : 'ظ‚ظˆط³ ط§ظ„ظپظƒ ط§ظ„ط³ظپظ„ظٹ ط§ظ„طھط´ط±ظٹط­ظٹ'}
+            {activeJaw === 'upper'
+              ? language === 'ar' ? 'قوس الفك العلوي الطبي' : 'Maxillary Upper Arch'
+              : language === 'ar' ? 'قوس الفك السفلي الطبي' : 'Mandibular Lower Arch'}
           </Text>
-          <Text style={styles.directionText}>ظٹط³ط§ط± ط§ظ„ظ…ط±ظٹط¶ ًں‘ˆ</Text>
+          <Text style={styles.directionText}>{language === 'ar' ? 'يسار المريض' : 'Left'} 👈</Text>
         </View>
 
-        {/* 1. Front Incisors Row (ط§ظ„ط£ط³ظ†ط§ظ† ط§ظ„ط£ظ…ط§ظ…ظٹط©) */}
+        {/* 1. Front Incisors Row */}
         <View style={styles.clusterTitleBox}>
-          <Text style={styles.clusterTitleText}>ط§ظ„ظ‚ظˆط§ط·ط¹ ظˆط§ظ„ط£ط³ظ†ط§ظ† ط§ظ„ط£ظ…ط§ظ…ظٹط©</Text>
+          <Text style={styles.clusterTitleText}>
+            {language === 'ar' ? 'القواطع والأسنان الأمامية' : 'Incisors & Anterior Teeth'}
+          </Text>
         </View>
         <View style={styles.teethClusterRow}>
           {activeJaw === 'upper' ? (
@@ -137,9 +164,11 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
           )}
         </View>
 
-        {/* 2. Canines & Premolars Row (ط§ظ„ط£ظ†ظٹط§ط¨ ظˆط§ظ„ط¶ظˆط§ط­ظƒ) */}
+        {/* 2. Canines & Premolars Row */}
         <View style={styles.clusterTitleBox}>
-          <Text style={styles.clusterTitleText}>ط§ظ„ط£ظ†ظٹط§ط¨ ظˆط§ظ„ط¶ظˆط§ط­ظƒ ط§ظ„ط¬ط§ظ†ط¨ظٹط©</Text>
+          <Text style={styles.clusterTitleText}>
+            {language === 'ar' ? 'الأنياب والضواحك الجانبية' : 'Canines & Premolars'}
+          </Text>
         </View>
         <View style={styles.teethClusterRow}>
           {activeJaw === 'upper' ? (
@@ -165,9 +194,11 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
           )}
         </View>
 
-        {/* 3. Molars & Wisdom Row (ط§ظ„ط¶ط±ظˆط³ ط§ظ„ط®ظ„ظپظٹط© ظˆط¶ط±ط³ ط§ظ„ط¹ظ‚ظ„) */}
+        {/* 3. Molars & Wisdom Row */}
         <View style={styles.clusterTitleBox}>
-          <Text style={styles.clusterTitleText}>ط§ظ„ط¶ط±ظˆط³ ط§ظ„ط®ظ„ظپظٹط© ظˆط¶ط±ط³ ط§ظ„ط¹ظ‚ظ„</Text>
+          <Text style={styles.clusterTitleText}>
+            {language === 'ar' ? 'الضروس الخلفية وضرس العقل' : 'Molars & Wisdom Teeth'}
+          </Text>
         </View>
         <View style={styles.teethClusterRow}>
           {activeJaw === 'upper' ? (
@@ -197,7 +228,9 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
       {/* Selected Teeth Badges */}
       {selectedTeeth.length > 0 && (
         <View style={styles.selectedContainer}>
-          <Text style={styles.selectedTitle}>ط§ظ„ط£ط³ظ†ط§ظ† ط§ظ„ظ…ط­ط¯ط¯ط© ظپظٹ ط§ظ„ظ…ط¬ط³ظ…:</Text>
+          <Text style={styles.selectedTitle}>
+            {language === 'ar' ? 'الأسنان المحددة في المجسم:' : 'Selected Teeth:'}
+          </Text>
           <View style={styles.tagsContainer}>
             {selectedTeeth.map((num) => {
               const info = FDI_TEETH.find((t) => t.fdiNumber === num);
@@ -219,11 +252,38 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 6,
+    marginVertical: 8,
+  },
+  modelBannerCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    height: 120,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadows.sm,
+  },
+  modelImage: {
+    width: '100%',
+    height: '100%',
+  },
+  modelOverlayBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  modelBadgeText: {
+    color: Colors.white,
+    fontSize: 11,
+    fontWeight: '800',
   },
   jawTabs: {
     flexDirection: 'row',
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#E2E8F0',
     borderRadius: 14,
     padding: 4,
     gap: 4,
@@ -231,7 +291,7 @@ const styles = StyleSheet.create({
   },
   jawTabBtn: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 10,
     alignItems: 'center',
   },
@@ -242,62 +302,45 @@ const styles = StyleSheet.create({
   jawTabBtnText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#64748b',
+    color: '#64748B',
   },
   jawTabBtnTextActive: {
     color: Colors.primary,
   },
   archBox: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 20,
-    borderWidth: 1.5,
+    backgroundColor: Colors.surface,
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
     borderColor: Colors.border,
-    padding: 12,
-    alignItems: 'center',
-    gap: 6,
-  },
-  toothLegendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  legendText: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    fontWeight: '600',
+    ...Shadows.sm,
   },
   directionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 4,
+    alignItems: 'center',
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    paddingBottom: 6,
   },
   directionText: {
-    fontSize: 10,
-    color: Colors.textSecondary,
+    fontSize: 11,
     fontWeight: '700',
+    color: Colors.textMuted,
   },
   archTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: Colors.primaryDark,
+    color: Colors.textPrimary,
   },
   clusterTitleBox: {
-    backgroundColor: Colors.white,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginTop: 4,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 6,
   },
   clusterTitleText: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
     color: Colors.textSecondary,
   },
@@ -310,7 +353,7 @@ const styles = StyleSheet.create({
   toothButton: {
     backgroundColor: Colors.white,
     borderWidth: 1.5,
-    borderColor: Colors.borderDark,
+    borderColor: '#CBD5E1',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 4,
@@ -331,12 +374,12 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   toothTypeLabel: {
-    fontSize: 7,
+    fontSize: 7.5,
     fontWeight: '700',
     color: Colors.textMuted,
   },
   toothTypeLabelSelected: {
-    color: 'rgba(255,255,255,0.85)',
+    color: 'rgba(255,255,255,0.9)',
   },
   toothCusp: {
     width: 12,
@@ -345,13 +388,13 @@ const styles = StyleSheet.create({
   },
   midline: {
     width: 2,
-    height: 40,
+    height: 42,
     backgroundColor: Colors.primary,
     marginHorizontal: 4,
     borderRadius: 1,
   },
   selectedContainer: {
-    marginTop: 10,
+    marginTop: 12,
     paddingTop: 8,
   },
   selectedTitle: {

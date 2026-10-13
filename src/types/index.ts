@@ -173,4 +173,65 @@ export interface ClinicInfo {
   reviewCount: number;
 }
 
+export interface DoctorApplication {
+  id: string;
+  fullName: string;
+  phone: string;
+  email: string;
+  specialty: string;
+  degree: 'specialist' | 'consultant' | 'professor';
+  syndicateId?: string;
+  clinicAddress: string;
+  governorate?: string;
+  consultationFee: number;
+  licenseDocumentUrl?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  createdAt: string;
+}
 
+export interface ClinicAssistant {
+  id: string;
+  doctorId: string;
+  assistantUserId: string;
+  name: string;
+  phone: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface PrescriptionMedication {
+  name: string;
+  dose: string;
+  frequency: string;
+  duration: string;
+  notes?: string;
+}
+
+export interface Prescription {
+  id: string;
+  consultationId?: string;
+  patientId: string;
+  doctorId: string;
+  patientName?: string;
+  doctorName?: string;
+  diagnosisTitle: string;
+  medications: PrescriptionMedication[];
+  specialInstructions?: string;
+  pdfUrl?: string;
+  createdAt: string;
+}
+
+export interface PatientDentalRecord {
+  id: string;
+  patientId: string;
+  doctorId?: string;
+  recordType: 'xray' | 'panoramic' | 'photo' | 'before_after';
+  title: string;
+  imageUrl: string;
+  beforeImageUrl?: string;
+  afterImageUrl?: string;
+  notes?: string;
+  toothNumber?: number;
+  createdAt: string;
+}

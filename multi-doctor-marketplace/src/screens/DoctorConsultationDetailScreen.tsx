@@ -45,6 +45,8 @@ export const DoctorConsultationDetailScreen: React.FC<
     complaints,
     submitDiagnosis,
     role,
+    currentUser,
+    addPrescription,
   } = useApp();
 
   const complaint = complaints.find((c) => c.id === complaintId);
@@ -90,9 +92,11 @@ export const DoctorConsultationDetailScreen: React.FC<
     setIsSubmitting(true);
 
     try {
+      const activeDoctorName = currentUser.fullName || (language === 'ar' ? 'طبيب العيادة' : 'Clinic Doctor');
+
       await submitDiagnosis(complaint.id, {
         diagnosedAt: new Date().toISOString(),
-        doctorName: 'د. كريم أبو بكر',
+        doctorName: activeDoctorName,
         provisionalConditionAr: provisionalCondition,
         provisionalConditionEn: provisionalCondition,
         urgencyLevel,
@@ -103,6 +107,28 @@ export const DoctorConsultationDetailScreen: React.FC<
         suggestedServiceId,
         requireClinicVisit: requireVisit,
       });
+
+      // Save formal prescription in EDR archive
+      if (medications.trim()) {
+        await addPrescription({
+          consultationId: complaint.id,
+          patientId: complaint.patientId,
+          doctorId: currentUser.id,
+          patientName: complaint.patientName,
+          doctorName: activeDoctorName,
+          diagnosisTitle: provisionalCondition,
+          medications: [
+            {
+              name: medications.split('-')[0]?.trim() || medications,
+              dose: 'كالموصى به',
+              frequency: 'بعد الوجبات',
+              duration: '3 - 5 أيام',
+              notes: firstAidInstructions,
+            },
+          ],
+          specialInstructions: firstAidInstructions,
+        });
+      }
 
       successTap();
 

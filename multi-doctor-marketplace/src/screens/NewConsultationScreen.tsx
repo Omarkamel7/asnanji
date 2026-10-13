@@ -226,6 +226,14 @@ export const NewConsultationScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+      {/* Top Header Back Navigation */}
+      <View style={styles.navHeaderRow}>
+        <TouchableOpacity style={styles.backBtnPill} onPress={() => navigation.goBack()}>
+          {isRTL ? <ChevronRight size={20} color={Colors.textPrimary} /> : <ChevronLeft size={20} color={Colors.textPrimary} />}
+          <Text style={styles.backBtnText}>{isAr ? 'رجوع' : 'Back'}</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Top Hero Banner */}
       <View style={styles.heroCard}>
         <View style={styles.heroHeader}>
@@ -238,8 +246,8 @@ export const NewConsultationScreen: React.FC = () => {
             <Text style={styles.heroTitle}>{isAr ? 'طلب فحص وتشخيص مبدئي' : 'Medical Case Intake'}</Text>
             <Text style={styles.heroSubtitle}>
               {isAr
-                ? 'حدد الأعراض وموقع الألم ليتلقى د. كريم تفاصيل حالتك والرد عليك مباشرة في الشات.'
-                : 'Describe your symptoms for Dr. Karim to evaluate and guide you in real-time.'}
+                ? 'حدد الأعراض وموقع الألم ليتلقى طبيب الأسنان تفاصيل حالتك والرد عليك مباشرة في الشات.'
+                : 'Describe your symptoms for the dentist to evaluate and guide you in real-time.'}
             </Text>
           </View>
         </View>
@@ -716,6 +724,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
     color: Colors.white,
+  },
+  navHeaderRow: {
+    marginBottom: 8,
+  },
+  backBtnPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 4,
+  },
+  backBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textPrimary,
   },
 });
 

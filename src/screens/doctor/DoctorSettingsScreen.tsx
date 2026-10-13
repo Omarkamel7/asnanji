@@ -47,10 +47,26 @@ const ALL_DAYS = [
 
 export const DoctorSettingsScreen = () => {
   const navigation = useNavigation<any>();
-  const { currentUser, language, isRTL, updateUserProfile, refreshClinicData } = useApp();
+  const {
+    currentUser,
+    language,
+    isRTL,
+    updateUserProfile,
+    refreshClinicData,
+    clinicAssistants,
+    addClinicAssistant,
+    removeClinicAssistant,
+  } = useApp();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Assistant Modal States
+  const [showAssistantModal, setShowAssistantModal] = useState(false);
+  const [astName, setAstName] = useState('');
+  const [astPhone, setAstPhone] = useState('');
+  const [astEmail, setAstEmail] = useState('');
+  const [astPassword, setAstPassword] = useState('');
 
   // Profile Details
   const [fullName, setFullName] = useState(currentUser.fullName || '');
@@ -564,6 +580,98 @@ export const DoctorSettingsScreen = () => {
         </View>
       </View>
 
+      {/* Section 4: Clinic Receptionists & Team (Max 2 Assistants) */}
+      <View style={styles.sectionCard}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <View>
+            <Text style={styles.sectionTitle}>
+              {language === 'ar' ? '4. فريق السكرتارية والاستقبال (2 كحد أقصى)' : '4. Receptionists & Clinic Team (Max 2)'}
+            </Text>
+            <Text style={{ fontSize: 11, color: Colors.textSecondary }}>
+              {language === 'ar' ? 'صلاحيات حصرية لتنظيم المواعيد وتأكيد الحضور فقط' : 'Appointments management permissions only'}
+            </Text>
+          </View>
+          <View style={{ backgroundColor: Colors.primaryLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+            <Text style={{ fontSize: 12, fontWeight: '800', color: Colors.primaryDark }}>
+              {clinicAssistants.length} / 2
+            </Text>
+          </View>
+        </View>
+
+        {clinicAssistants.length === 0 ? (
+          <View style={{ alignItems: 'center', paddingVertical: 14 }}>
+            <Users size={32} color={Colors.textMuted} />
+            <Text style={{ fontSize: 12, color: Colors.textMuted, marginTop: 6, textAlign: 'center' }}>
+              {language === 'ar' ? 'لم تقم بإضافة سكرتيرة بعد. يمكنك تفويض إدارة المواعيد لاثنتين من المساعدات.' : 'No receptionists added yet.'}
+            </Text>
+          </View>
+        ) : (
+          <View style={{ gap: 8, marginBottom: 12 }}>
+            {clinicAssistants.map((assistant) => (
+              <View
+                key={assistant.id}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: Colors.background,
+                  padding: 12,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: Colors.border,
+                }}
+              >
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginEnd: 10 }}>
+                  <User size={18} color={Colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: Colors.textPrimary }}>{assistant.name}</Text>
+                  <Text style={{ fontSize: 11, color: Colors.textSecondary }}>{assistant.phone}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      language === 'ar' ? 'حذف السكرتيرة' : 'Remove Assistant',
+                      language === 'ar' ? `هل أنت متأكد من إزالة حساب ${assistant.name}؟` : `Remove ${assistant.name}?`,
+                      [
+                        { text: language === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
+                        { text: language === 'ar' ? 'حذف' : 'Remove', style: 'destructive', onPress: () => removeClinicAssistant(assistant.id) },
+                      ]
+                    );
+                  }}
+                  style={{ padding: 6 }}
+                >
+                  <Text style={{ fontSize: 12, color: '#E53935', fontWeight: '700' }}>
+                    {language === 'ar' ? 'حذف' : 'Delete'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {clinicAssistants.length < 2 && (
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: Colors.primaryLight,
+              paddingVertical: 10,
+              borderRadius: 10,
+              gap: 8,
+              borderWidth: 1,
+              borderColor: '#BEE3F8',
+            }}
+            onPress={() => setShowAssistantModal(true)}
+          >
+            <Users size={16} color={Colors.primaryDark} />
+            <Text style={{ fontSize: 13, fontWeight: '800', color: Colors.primaryDark }}>
+              {language === 'ar' ? '➕ إضافة سكرتيرة جديدة للعيادة' : '➕ Add New Clinic Assistant'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* Save Button */}
       <TouchableOpacity
         style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
@@ -583,6 +691,111 @@ export const DoctorSettingsScreen = () => {
       </TouchableOpacity>
 
       <View style={{ height: 40 }} />
+
+      {/* Add Assistant Modal */}
+      {showAssistantModal && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'center',
+            padding: 20,
+            zIndex: 9999,
+          }}
+        >
+          <View style={{ backgroundColor: Colors.surface, borderRadius: 20, padding: 20, ...Shadows.md }}>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: Colors.textPrimary, marginBottom: 4 }}>
+              {language === 'ar' ? 'إضافة سكرتيرة جديدة 👩‍💼' : 'Add New Assistant 👩‍💼'}
+            </Text>
+            <Text style={{ fontSize: 11, color: Colors.textSecondary, marginBottom: 14 }}>
+              {language === 'ar' ? 'ستتمكن السكرتيرة من متابعة وتأكيد مواعيد المرضى فقط' : 'Assistant will have appointment management access only'}
+            </Text>
+
+            <View style={{ gap: 10 }}>
+              <View style={styles.inputBox}>
+                <User size={16} color={Colors.textMuted} />
+                <TextInput
+                  style={styles.textInput}
+                  value={astName}
+                  onChangeText={setAstName}
+                  placeholder={language === 'ar' ? 'الاسم الكامل' : 'Full Name'}
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </View>
+              <View style={styles.inputBox}>
+                <Phone size={16} color={Colors.textMuted} />
+                <TextInput
+                  style={styles.textInput}
+                  value={astPhone}
+                  onChangeText={setAstPhone}
+                  placeholder={language === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                  placeholderTextColor={Colors.textMuted}
+                  keyboardType="phone-pad"
+                />
+              </View>
+              <View style={styles.inputBox}>
+                <TextInput
+                  style={styles.textInput}
+                  value={astEmail}
+                  onChangeText={setAstEmail}
+                  placeholder="assistant@clinic.com"
+                  placeholderTextColor={Colors.textMuted}
+                  autoCapitalize="none"
+                />
+              </View>
+              <View style={styles.inputBox}>
+                <TextInput
+                  style={styles.textInput}
+                  value={astPassword}
+                  onChangeText={setAstPassword}
+                  placeholder={language === 'ar' ? 'كلمة المرور' : 'Password'}
+                  placeholderTextColor={Colors.textMuted}
+                  secureTextEntry
+                />
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: Colors.border, alignItems: 'center' }}
+                onPress={() => setShowAssistantModal(false)}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '700', color: Colors.textSecondary }}>
+                  {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: Colors.primary, alignItems: 'center' }}
+                onPress={async () => {
+                  if (!astName.trim() || !astPhone.trim() || !astEmail.trim() || !astPassword.trim()) {
+                    Alert.alert(language === 'ar' ? 'تنبيه' : 'Notice', language === 'ar' ? 'يرجى ملء جميع الحقول' : 'Please fill all fields');
+                    return;
+                  }
+                  try {
+                    await addClinicAssistant(astName.trim(), astPhone.trim(), astEmail.trim(), astPassword.trim());
+                    setShowAssistantModal(false);
+                    setAstName('');
+                    setAstPhone('');
+                    setAstEmail('');
+                    setAstPassword('');
+                    Alert.alert(language === 'ar' ? 'نجاح' : 'Success', language === 'ar' ? 'تم إضافة السكرتيرة وتفعيل حسابها بنجاح' : 'Assistant added');
+                  } catch (e: any) {
+                    Alert.alert('خطأ', e?.message || 'تعذر إضافة السكرتيرة');
+                  }
+                }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '800', color: Colors.white }}>
+                  {language === 'ar' ? 'حفظ وتفعيل' : 'Save'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 };

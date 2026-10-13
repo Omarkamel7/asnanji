@@ -223,8 +223,8 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
       Alert.alert(
         language === 'ar' ? 'تم إرسال الشكوى بنجاح' : 'Submitted Successfully',
         language === 'ar'
-          ? 'تم استلام شكواك وسيقوم د. كريم بالرد عليك ومتابعة حالتك مباشرة.'
-          : 'Your case has been received by Dr. Karim.',
+          ? 'تم استلام استشارتك وسيقوم طبيب الأسنان بفحص حالتك والرد عليك مباشرة في الشات.'
+          : 'Your consultation has been submitted. The treating dentist will reply in chat.',
         [
           {
             text: language === 'ar' ? 'فتح المحادثة المباشرة 💬' : 'Open Live Chat 💬',
