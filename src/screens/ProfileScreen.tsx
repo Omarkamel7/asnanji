@@ -45,6 +45,7 @@ export const ProfileScreen: React.FC = () => {
     updateUserProfile,
     clinicSettings,
     signOut,
+    isAuthenticated,
   } = useApp();
 
   const [loading, setLoading] = useState(false);
@@ -147,12 +148,12 @@ export const ProfileScreen: React.FC = () => {
     }
   };
 
-  const handleNavigateAuth = () => {
+  const handleNavigateAuth = (initialMode: 'signin' | 'signup' = 'signin', openDoctorModal = false) => {
     try {
       if (navigation && typeof navigation.navigate === 'function') {
-        navigation.navigate('Auth');
+        navigation.navigate('Auth', { initialMode, openDoctorModal });
       } else {
-        setRole(role === 'patient' ? 'doctor' : 'patient');
+        console.warn('Navigation to Auth unavailable');
       }
     } catch (err) {
       console.warn('Navigation to Auth error:', err);
@@ -161,6 +162,54 @@ export const ProfileScreen: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Guest Welcome & Auth Card (When Not Logged In) */}
+      {!isAuthenticated && (
+        <View style={styles.guestCard}>
+          <View style={styles.guestHeader}>
+            <View style={styles.guestIconCircle}>
+              <User size={24} color={Colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.guestTitle}>
+                {language === 'ar' ? 'مرحباً بك في أسنانجي 🦷✨' : 'Welcome to Asnanji 🦷✨'}
+              </Text>
+              <Text style={styles.guestSubtitle}>
+                {language === 'ar'
+                  ? 'سجل دخولك أو أنشئ حسابك للوصول إلى استشاراتك الطبية وسجلاتك وحجز المواعيد'
+                  : 'Sign in or create an account to view medical consultations and bookings'}
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.guestActionBtnPrimary}
+            onPress={() => handleNavigateAuth('signin')}
+          >
+            <Text style={styles.guestActionBtnPrimaryText}>
+              {language === 'ar' ? '🔑 تسجيل الدخول' : '🔑 Sign In'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.guestActionBtnSecondary}
+            onPress={() => handleNavigateAuth('signup')}
+          >
+            <Text style={styles.guestActionBtnSecondaryText}>
+              {language === 'ar' ? '✨ إنشاء حساب مريض جديد' : '✨ Create New Patient Account'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.guestDoctorBtn}
+            onPress={() => handleNavigateAuth('signin', true)}
+          >
+            <Text style={styles.guestDoctorBtnText}>
+              {language === 'ar' ? '👨‍⚕️ انضم إلى شبكة الأطباء المعتمدين' : '👨‍⚕️ Join as Verified Dentist'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Doctor Management Options (Only shown when logged in as Doctor) */}
       {role === 'doctor' && (
         <View style={styles.roleCard}>
@@ -176,7 +225,7 @@ export const ProfileScreen: React.FC = () => {
 
           <TouchableOpacity
             style={styles.doctorToolBtn}
-            onPress={() => navigation?.navigate('EditClinic')}
+            onPress={() => navigation?.navigate('DoctorSettings')}
           >
             <Text style={styles.doctorToolBtnText}>
               {language === 'ar' ? '✏️ تعديل بيانات العيادة والطبيب' : '✏️ Edit Clinic & Doctor Info'}
@@ -198,21 +247,6 @@ export const ProfileScreen: React.FC = () => {
           >
             <Text style={styles.doctorToolBtnText}>
               {language === 'ar' ? '🖼️ إدارة معرض الأعمال (قبل/بعد)' : '🖼️ Manage Portfolio (Before/After)'}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.doctorToolBtn, { backgroundColor: '#fee2e2', borderColor: '#fca5a5', marginTop: 6 }]}
-            onPress={async () => {
-              await signOut();
-              Alert.alert(
-                language === 'ar' ? 'تم تسجيل الخروج' : 'Signed Out',
-                language === 'ar' ? 'تمت العودة إلى واجهة المستخدم العادية.' : 'Returned to patient view.'
-              );
-            }}
-          >
-            <Text style={[styles.doctorToolBtnText, { color: Colors.emergency }]}>
-              {language === 'ar' ? '🚪 تسجيل الخروج من حساب الطبيب' : '🚪 Sign Out of Doctor Account'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -257,95 +291,132 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Personal Info */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <User size={18} color={Colors.primary} />
-          <Text style={styles.cardTitle}>
-            {language === 'ar' ? 'البيانات الشخصية' : 'Personal Information'}
-          </Text>
-        </View>
+      {/* Personal Info, Health History & Sign Out (Only when logged in) */}
+      {isAuthenticated && (
+        <>
+          {/* Personal Info */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <User size={18} color={Colors.primary} />
+              <Text style={styles.cardTitle}>
+                {language === 'ar' ? 'البيانات الشخصية' : 'Personal Information'}
+              </Text>
+            </View>
 
-        <Text style={styles.fieldLabel}>
-          {language === 'ar' ? 'الاسم الكامل:' : 'Full Name:'}
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={fullName}
-          onChangeText={setFullName}
-          placeholder={language === 'ar' ? 'أدخل اسمك' : 'Enter your name'}
-          textAlign={language === 'ar' ? 'right' : 'left'}
-        />
+            <Text style={styles.fieldLabel}>
+              {language === 'ar' ? 'الاسم الكامل:' : 'Full Name:'}
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder={language === 'ar' ? 'أدخل اسمك' : 'Enter your name'}
+              textAlign={language === 'ar' ? 'right' : 'left'}
+            />
 
-        <Text style={styles.fieldLabel}>
-          {language === 'ar' ? 'رقم الهاتف:' : 'Phone Number:'}
-        </Text>
-        <TextInput
-          style={[styles.input, { writingDirection: 'ltr' }]}
-          value={phone}
-          onChangeText={setPhone}
-          placeholder="+20 100 000 0000"
-          keyboardType="phone-pad"
-          textAlign={language === 'ar' ? 'right' : 'left'}
-        />
-      </View>
+            <Text style={styles.fieldLabel}>
+              {language === 'ar' ? 'رقم الهاتف:' : 'Phone Number:'}
+            </Text>
+            <TextInput
+              style={[styles.input, { writingDirection: 'ltr' }]}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="01xxxxxxxxx"
+              keyboardType="phone-pad"
+              textAlign={language === 'ar' ? 'right' : 'left'}
+            />
+          </View>
 
-      {/* Health History Switches */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Heart size={18} color={Colors.emergency} />
-          <Text style={styles.cardTitle}>
-            {language === 'ar'
-              ? 'التاريخ الطبي للأمراض المزمنة'
-              : 'Medical Health Background'}
-          </Text>
-        </View>
+          {/* Health History Switches */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Heart size={18} color={Colors.emergency} />
+              <Text style={styles.cardTitle}>
+                {language === 'ar'
+                  ? 'التاريخ الطبي للأمراض المزمنة'
+                  : 'Medical Health Background'}
+              </Text>
+            </View>
 
-        <View style={styles.switchRow}>
-          <Text style={styles.switchLabel}>{t?.diabetes ?? 'السكري'}</Text>
-          <Switch
-            value={hasDiabetes}
-            onValueChange={setHasDiabetes}
-            trackColor={{ false: Colors.border, true: Colors.primary }}
-          />
-        </View>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>{t?.diabetes ?? 'السكري'}</Text>
+              <Switch
+                value={hasDiabetes}
+                onValueChange={setHasDiabetes}
+                trackColor={{ false: Colors.border, true: Colors.primary }}
+              />
+            </View>
 
-        <View style={styles.switchRow}>
-          <Text style={styles.switchLabel}>{t?.hypertension ?? 'ضغط الدم'}</Text>
-          <Switch
-            value={hasHypertension}
-            onValueChange={setHasHypertension}
-            trackColor={{ false: Colors.border, true: Colors.primary }}
-          />
-        </View>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>{t?.hypertension ?? 'ضغط الدم'}</Text>
+              <Switch
+                value={hasHypertension}
+                onValueChange={setHasHypertension}
+                trackColor={{ false: Colors.border, true: Colors.primary }}
+              />
+            </View>
 
-        <View style={styles.switchRow}>
-          <Text style={styles.switchLabel}>
-            {t?.penicillinAllergy ?? 'حساسية البنسلين'}
-          </Text>
-          <Switch
-            value={hasPenicillinAllergy}
-            onValueChange={setHasPenicillinAllergy}
-            trackColor={{ false: Colors.border, true: Colors.emergency }}
-          />
-        </View>
-      </View>
+            <View style={styles.switchRow}>
+              <Text style={styles.switchLabel}>
+                {t?.penicillinAllergy ?? 'حساسية البنسلين'}
+              </Text>
+              <Switch
+                value={hasPenicillinAllergy}
+                onValueChange={setHasPenicillinAllergy}
+                trackColor={{ false: Colors.border, true: Colors.emergency }}
+              />
+            </View>
+          </View>
 
-      {/* Save Button */}
-      <TouchableOpacity
-        style={styles.saveBtn}
-        onPress={handleSave}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color={Colors.white} size="small" />
-        ) : (
-          <>
-            <Save size={18} color={Colors.white} />
-            <Text style={styles.saveBtnText}>{t?.save ?? 'حفظ التعديلات'}</Text>
-          </>
-        )}
-      </TouchableOpacity>
+          {/* Save Button */}
+          <TouchableOpacity
+            style={styles.saveBtn}
+            onPress={handleSave}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={Colors.white} size="small" />
+            ) : (
+              <>
+                <Save size={18} color={Colors.white} />
+                <Text style={styles.saveBtnText}>{t?.save ?? 'حفظ التعديلات'}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Global Sign Out Button */}
+          <TouchableOpacity
+            style={styles.globalSignOutBtn}
+            onPress={() => {
+              Alert.alert(
+                language === 'ar' ? 'تسجيل الخروج' : 'Sign Out',
+                language === 'ar'
+                  ? 'هل أنت متأكد من رغبتك في تسجيل الخروج من هذا الحساب؟'
+                  : 'Are you sure you want to sign out?',
+                [
+                  { text: language === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
+                  {
+                    text: language === 'ar' ? 'تسجيل الخروج' : 'Sign Out',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await signOut();
+                      Alert.alert(
+                        language === 'ar' ? 'تم تسجيل الخروج' : 'Signed Out',
+                        language === 'ar' ? 'تم تسجيل خروجك بنجاح.' : 'Signed out successfully.'
+                      );
+                    },
+                  },
+                ]
+              );
+            }}
+          >
+            <LogOut size={18} color="#DC2626" />
+            <Text style={styles.globalSignOutBtnText}>
+              {language === 'ar' ? '🚪 تسجيل الخروج من الحساب' : '🚪 Sign Out of Account'}
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
 
       {/* App Version & Update Manager Card */}
       <View style={styles.card}>
@@ -387,69 +458,15 @@ export const ProfileScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Clinic Info (Customized & Toggled by Doctor) */}
-      {clinicSettings.showClinicInfo !== false && (
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Info size={18} color={Colors.primary} />
-            <Text style={styles.cardTitle}>
-              {language === 'ar' ? 'عن العيادة والمواعيد' : 'Clinic Info'}
-            </Text>
-          </View>
-
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>
-              {language === 'ar' ? 'اسم العيادة:' : 'Clinic Name:'}
-            </Text>
-            <Text style={styles.infoValue}>
-              {clinicSettings.doctorName ? `عيادة ${clinicSettings.doctorName}` : (language === 'ar' ? CLINIC_INFO.nameAr : CLINIC_INFO.nameEn)}
-            </Text>
-          </View>
-
-          {!!clinicSettings.phoneNumber && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>
-                {language === 'ar' ? 'الهاتف:' : 'Phone:'}
-              </Text>
-              <Text style={[styles.infoValue, { writingDirection: 'ltr' }]}>
-                {clinicSettings.phoneNumber}
-              </Text>
-            </View>
-          )}
-
-          {!!clinicSettings.workingHours && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>
-                {language === 'ar' ? 'مواعيد العمل:' : 'Working Hours:'}
-              </Text>
-              <Text style={styles.infoValue}>
-                {clinicSettings.workingHours}
-              </Text>
-            </View>
-          )}
-
-          {!!clinicSettings.locationAddress && (
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>
-                {language === 'ar' ? 'العنوان:' : 'Address:'}
-              </Text>
-              <Text style={styles.infoValue}>
-                {clinicSettings.locationAddress}
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Discreet Doctor / Admin Portal Login */}
-      {role === 'patient' && (
+      {/* Doctor / Admin Portal Login Link (For Guests) */}
+      {!isAuthenticated && (
         <TouchableOpacity
           style={styles.doctorPortalBtn}
-          onPress={handleNavigateAuth}
+          onPress={() => handleNavigateAuth('signin', true)}
         >
           <Shield size={16} color={Colors.primary} />
           <Text style={styles.doctorPortalBtnText}>
-            {language === 'ar' ? '🔐 تسجيل دخول الطبيب والإدارة (Doctor Login)' : '🔐 Doctor & Admin Login'}
+            {language === 'ar' ? '🔐 بوابة تسجيل الأطباء المعتمدين' : '🔐 Doctor & Clinic Portal'}
           </Text>
         </TouchableOpacity>
       )}
@@ -699,5 +716,97 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     color: Colors.primaryDark,
+  },
+  guestCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#BAE6FD',
+    ...Shadows.md,
+  },
+  guestHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 14,
+  },
+  guestIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+  },
+  guestSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 17,
+  },
+  guestActionBtnPrimary: {
+    backgroundColor: Colors.primaryDark,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+    ...Shadows.sm,
+  },
+  guestActionBtnPrimaryText: {
+    color: Colors.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  guestActionBtnSecondary: {
+    backgroundColor: Colors.primaryLight,
+    borderRadius: 12,
+    paddingVertical: 11,
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#BAE6FD',
+  },
+  guestActionBtnSecondaryText: {
+    color: Colors.primaryDark,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  guestDoctorBtn: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  guestDoctorBtnText: {
+    color: '#0369A1',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  globalSignOutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1.5,
+    borderColor: '#FCA5A5',
+    borderRadius: 14,
+    paddingVertical: 14,
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  globalSignOutBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#DC2626',
   },
 });

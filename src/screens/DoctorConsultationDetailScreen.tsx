@@ -58,18 +58,16 @@ export const DoctorConsultationDetailScreen: React.FC<
     complaint?.diagnosis?.provisionalConditionAr || ''
   );
   const [firstAidInstructions, setFirstAidInstructions] = useState(
-    complaint?.diagnosis?.firstAidInstructionsAr ||
-      'تجنب الأطعمة شديدة البرودة أو السخونة، وتناول المسكن بعد الأكل لتخفيف الألم مؤقتاً لحين الكشف بالعيادة.'
+    complaint?.diagnosis?.firstAidInstructionsAr || ''
   );
   const [medications, setMedications] = useState(
-    complaint?.diagnosis?.recommendedMedicationsAr ||
-      'مسكن بروفين 400 ملجم بعد الوجبات عند اللزوم (يرجى التأكد من عدم وجود حساسية أو مشاكل معدة)'
+    complaint?.diagnosis?.recommendedMedicationsAr || ''
   );
   const [urgencyLevel, setUrgencyLevel] = useState<UrgencyLevel>(
-    complaint?.urgencyLevel || 'urgent'
+    complaint?.urgencyLevel || 'routine'
   );
   const [suggestedServiceId, setSuggestedServiceId] = useState<string>(
-    complaint?.diagnosis?.suggestedServiceId || 'root_canal'
+    complaint?.diagnosis?.suggestedServiceId || ''
   );
   const [requireVisit, setRequireVisit] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);

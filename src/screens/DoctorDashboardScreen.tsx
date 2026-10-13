@@ -164,7 +164,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
           </View>
           <View style={styles.bannerText}>
             <Text style={styles.bannerTitle}>
-              {language === 'ar' ? `مرحباً ${currentUser.fullName || 'د. كريم'}` : `Welcome ${currentUser.fullName}`}
+              {language === 'ar' ? `مرحباً ${currentUser.fullName || 'دكتور'}` : `Welcome ${currentUser.fullName || 'Doctor'}`}
             </Text>
             <Text style={styles.bannerSub}>
               {role === 'assistant'

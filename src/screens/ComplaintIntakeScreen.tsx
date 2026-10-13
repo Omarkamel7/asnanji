@@ -143,7 +143,7 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
     if (!patientName.trim() || !patientPhone.trim()) {
       alert(
         language === 'ar'
-          ? 'يرجى إدخال اسمك ورقم الهاتف حتى يتمكن د. كريم من التعرف على حالتك والرد عليك'
+          ? 'يرجى إدخال اسمك ورقم الهاتف حتى يتمكن الطبيب من التعرف على حالتك والرد عليك'
           : 'Please enter your name and phone number'
       );
       return;
@@ -251,8 +251,8 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
         <Text style={styles.headerTitle}>{t.complaintTitle}</Text>
         <Text style={styles.headerSub}>
           {language === 'ar'
-            ? 'املأ تفاصيل الشكوى ليتمكن د. كريم من تشخيص الحالة بدقة وإعطائك الإرشادات الفورية.'
-            : 'Provide your symptoms for Dr. Karim to evaluate and provide initial triage instructions.'}
+            ? 'املأ تفاصيل الشكوى ليتمكن الطبيب من تشخيص الحالة بدقة وإعطائك الإرشادات الفورية.'
+            : 'Provide your symptoms for the doctor to evaluate and provide initial triage instructions.'}
         </Text>
       </View>
 
@@ -531,8 +531,8 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
         </View>
         <Text style={styles.stepSubtitle}>
           {language === 'ar'
-            ? 'أدخل اسمك ورقم هاتفك حتى يتمكن د. كريم من مراجعة حالتك والرد عليك.'
-            : 'Enter your name and phone number for Dr. Karim to contact and advise you.'}
+            ? 'أدخل اسمك ورقم هاتفك حتى يتمكن الطبيب من مراجعة حالتك والرد عليك.'
+            : 'Enter your name and phone number for the doctor to contact and advise you.'}
         </Text>
 
         <TextInput
@@ -545,7 +545,7 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
 
         <TextInput
           style={[styles.textInput, { marginTop: 10, writingDirection: 'ltr' }]}
-          placeholder={language === 'ar' ? 'رقم الهاتف / الواتساب (+20 100 000 0000)' : '+20 100 000 0000'}
+          placeholder={language === 'ar' ? 'رقم الهاتف / الواتساب (+20 100 123 4567)' : '+20 100 123 4567'}
           value={patientPhone}
           onChangeText={setPatientPhone}
           keyboardType="phone-pad"

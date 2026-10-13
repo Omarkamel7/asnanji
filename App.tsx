@@ -12,8 +12,8 @@ import {
   FileText,
   User,
   Activity,
-  Sparkles,
   MessageCircle,
+  ShieldCheck,
 } from 'lucide-react-native';
 
 import { AppProvider, useApp } from './src/context/AppContext';
@@ -29,6 +29,12 @@ import { ChatScreen } from './src/screens/ChatScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { NewConsultationScreen } from './src/screens/NewConsultationScreen';
 import { DoctorProfileScreen } from './src/screens/DoctorProfileScreen';
+import { DoctorPendingScreen } from './src/screens/DoctorPendingScreen';
+
+import { AdminDashboardScreen } from './src/screens/admin/AdminDashboardScreen';
+import { AdminDoctorApplicationsScreen } from './src/screens/admin/AdminDoctorApplicationsScreen';
+import { AdminProfileScreen } from './src/screens/admin/AdminProfileScreen';
+import { AssistantScheduleScreen } from './src/screens/assistant/AssistantScheduleScreen';
 
 import { DoctorSettingsScreen } from './src/screens/doctor/DoctorSettingsScreen';
 import { ManageServicesScreen } from './src/screens/doctor/ManageServicesScreen';
@@ -198,17 +204,11 @@ const DoctorTabs = () => {
 
 const AssistantTabs = () => {
   const { t, language } = useApp();
+  const isRTL = language === 'ar';
   return (
     <Tab.Navigator
       screenOptions={{
-        headerStyle: {
-          backgroundColor: Colors.primaryDark,
-        },
-        headerTitleStyle: {
-          fontWeight: '800',
-          fontSize: 16,
-          color: Colors.white,
-        },
+        headerShown: false,
         tabBarStyle: {
           backgroundColor: Colors.surface,
           borderTopColor: Colors.border,
@@ -225,24 +225,12 @@ const AssistantTabs = () => {
       }}
     >
       <Tab.Screen
-        name="AssistantAppointments"
-        component={AppointmentsScreen}
+        name="AssistantSchedule"
+        component={AssistantScheduleScreen}
         options={{
-          title: language === 'ar' ? 'المواعيد' : 'Appointments',
-          headerTitle: language === 'ar' ? 'جدول مواعيد العيادة' : 'Clinic Schedule',
+          title: isRTL ? 'جدول المواعيد' : 'Schedule',
           tabBarIcon: ({ color, size }) => (
             <Calendar size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="AssistantInbox"
-        component={DoctorDashboardScreen}
-        options={{
-          title: language === 'ar' ? 'الحالات والمرضى' : 'Patients',
-          headerTitle: language === 'ar' ? 'سجل وحالات المرضى' : 'Patient Records',
-          tabBarIcon: ({ color, size }) => (
-            <Activity size={size} color={color} />
           ),
         }}
       />
@@ -251,7 +239,6 @@ const AssistantTabs = () => {
         component={ChatScreen}
         options={{
           title: t.navChat,
-          headerTitle: t.chatTitle,
           tabBarIcon: ({ color, size }) => (
             <MessageCircle size={size} color={color} />
           ),
@@ -262,7 +249,57 @@ const AssistantTabs = () => {
         component={ProfileScreen}
         options={{
           title: t.navProfile,
-          headerTitle: t.navProfile,
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+const AdminTabs = () => {
+  const { language } = useApp();
+  const isRTL = language === 'ar';
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: Colors.surface,
+          borderTopColor: Colors.border,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 6,
+        },
+        tabBarActiveTintColor: '#0f172a',
+        tabBarInactiveTintColor: Colors.textMuted,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '700',
+        },
+      }}
+    >
+      <Tab.Screen
+        name="AdminDashboard"
+        component={AdminDashboardScreen}
+        options={{
+          title: isRTL ? 'لوحة التحكم' : 'Dashboard',
+          tabBarIcon: ({ color, size }) => <ShieldCheck size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="AdminApplications"
+        component={AdminDoctorApplicationsScreen}
+        options={{
+          title: isRTL ? 'طلبات الأطباء' : 'Applications',
+          tabBarIcon: ({ color, size }) => <Stethoscope size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="AdminProfile"
+        component={AdminProfileScreen}
+        options={{
+          title: isRTL ? 'حساب الإدارة' : 'Admin Profile',
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
@@ -290,6 +327,18 @@ const MainNavigation = () => {
           <Stack.Screen
             name="PatientRoot"
             component={PatientTabs}
+            options={{ headerShown: false }}
+          />
+        ) : role === 'admin' ? (
+          <Stack.Screen
+            name="AdminRoot"
+            component={AdminTabs}
+            options={{ headerShown: false }}
+          />
+        ) : role === 'pending_doctor' ? (
+          <Stack.Screen
+            name="PendingDoctorRoot"
+            component={DoctorPendingScreen}
             options={{ headerShown: false }}
           />
         ) : role === 'assistant' ? (
@@ -341,9 +390,14 @@ const MainNavigation = () => {
           }}
         />
 
-        
+        <Stack.Screen
+          name="Appointments"
+          component={AppointmentsScreen}
+          options={{
+            title: language === 'ar' ? 'حجز موعد بالعيادة' : 'Clinic Appointment',
+          }}
+        />
 
-        
         <Stack.Screen
           name="DoctorSettings"
           component={DoctorSettingsScreen}
@@ -373,15 +427,10 @@ const MainNavigation = () => {
           component={DoctorProfileScreen}
           options={{ headerShown: false }}
         />
-
-
-
-        </Stack.Navigator>
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };
-
-
 
 export default function App() {
   return (
@@ -396,7 +445,3 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
-
-
-
-

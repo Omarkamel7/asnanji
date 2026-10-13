@@ -1,5 +1,5 @@
 export * from './doctor';
-export type UserRole = 'patient' | 'doctor' | 'admin' | 'assistant';
+export type UserRole = 'patient' | 'doctor' | 'admin' | 'assistant' | 'pending_doctor';
 
 export type Language = 'ar' | 'en';
 
@@ -175,6 +175,7 @@ export interface ClinicInfo {
 
 export interface DoctorApplication {
   id: string;
+  userId?: string;
   fullName: string;
   phone: string;
   email: string;
