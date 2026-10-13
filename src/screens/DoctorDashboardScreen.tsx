@@ -51,6 +51,8 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
     refreshClinicData,
     doctorViews,
     currentUser,
+    doctorApplications,
+    reviewDoctorApplication,
   } = useApp();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -205,7 +207,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
       </View>
 
       {/* Doctor Management Hub Actions */}
-      {role === 'doctor' && (
+      {(role === 'doctor' || role === 'admin') && (
       <View style={styles.managementSection}>
         <Text style={styles.sectionTitle}>
           {language === 'ar' ? '⚙️ التحكم في العيادة والخدمات والمحتوى:' : '⚙️ Clinic & Content Management:'}
@@ -260,6 +262,101 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
           </TouchableOpacity>
         </View>
       </View>
+      )}
+
+      
+      {/* Super Admin Doctor Applications Section */}
+      {role === 'admin' && (
+        <View style={styles.adminAppsCard}>
+          <View style={styles.adminAppsHeader}>
+            <ShieldAlert size={20} color="#0369a1" />
+            <Text style={styles.adminAppsTitle}>
+              {language === 'ar' ? 'طلبات انضمام الأطباء الجدد (Super Admin)' : 'Doctor Applications Hub'}
+            </Text>
+            <View style={styles.adminAppsBadge}>
+              <Text style={styles.adminAppsBadgeText}>
+                {doctorApplications.filter((a) => a.status === 'pending').length} قيد المراجعة
+              </Text>
+            </View>
+          </View>
+
+          {doctorApplications.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingVertical: 14 }}>
+              <Text style={{ fontSize: 13, color: Colors.textMuted }}>
+                {language === 'ar' ? 'لا توجد طلبات انضمام أطباء مقدمة حالياً' : 'No doctor applications submitted yet'}
+              </Text>
+            </View>
+          ) : (
+            doctorApplications.map((app) => (
+              <View key={app.id} style={styles.appItemCard}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 14, fontWeight: '800', color: Colors.textPrimary }}>
+                    {app.fullName}
+                  </Text>
+                  <View
+                    style={[
+                      styles.statusPill,
+                      app.status === 'approved'
+                        ? { backgroundColor: '#dcfce7' }
+                        : app.status === 'rejected'
+                        ? { backgroundColor: '#fee2e2' }
+                        : { backgroundColor: '#fef3c7' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusPillText,
+                        app.status === 'approved'
+                          ? { color: '#16a34a' }
+                          : app.status === 'rejected'
+                          ? { color: '#dc2626' }
+                          : { color: '#d97706' },
+                      ]}
+                    >
+                      {app.status === 'approved'
+                        ? 'معتمد ✔️'
+                        : app.status === 'rejected'
+                        ? 'مرفوض ❌'
+                        : 'قيد المراجعة ⏳'}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={{ fontSize: 12, color: Colors.textSecondary, marginTop: 4 }}>
+                  {app.specialty} &bull; {app.degree} &bull; {app.clinicAddress} ({app.governorate})
+                </Text>
+                <Text style={{ fontSize: 11, color: Colors.textMuted, marginTop: 2 }}>
+                  هاتف: {app.phone} &bull; كشف: {app.consultationFee} ج.م &bull; قيد النقابة: {app.syndicateId || 'غير مدخل'}
+                </Text>
+
+                {app.status === 'pending' && (
+                  <View style={styles.appActionRow}>
+                    <TouchableOpacity
+                      style={styles.approveBtn}
+                      onPress={async () => {
+                        await reviewDoctorApplication(app.id, 'approved');
+                        Alert.alert('تم الاعتماد', `تم اعتماد وتفعيل حساب ${app.fullName} بنجاح.`);
+                      }}
+                    >
+                      <CheckCircle size={14} color="#ffffff" />
+                      <Text style={styles.approveBtnText}>اعتماد وتفعيل</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.rejectBtn}
+                      onPress={async () => {
+                        await reviewDoctorApplication(app.id, 'rejected', 'بيانات غير مستوفاة');
+                        Alert.alert('تم الرفض', `تم رفض طلب ${app.fullName}.`);
+                      }}
+                    >
+                      <Text style={styles.rejectBtnText}>رفض الطلب</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))
+          )}
+        </View>
       )}
 
       {/* Triage Filter Tabs */}
@@ -643,5 +740,93 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     fontWeight: '600',
+  },
+  adminAppsCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#0284c7',
+    ...Shadows.sm,
+  },
+  adminAppsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  adminAppsTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    flex: 1,
+  },
+  adminAppsBadge: {
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  adminAppsBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0369a1',
+  },
+  appItemCard: {
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  statusPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  appActionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  approveBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#16a34a',
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  approveBtnText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  rejectBtn: {
+    flex: 0.8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  rejectBtnText: {
+    color: '#dc2626',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

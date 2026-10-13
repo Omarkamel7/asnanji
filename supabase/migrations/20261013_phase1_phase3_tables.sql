@@ -67,7 +67,7 @@ CREATE POLICY "Doctor manage own assistants" ON public.clinic_assistants FOR ALL
 -- 4. Prescriptions Table (Formal Medical Rx Archive)
 CREATE TABLE IF NOT EXISTS public.prescriptions (
   id TEXT PRIMARY KEY,
-  consultation_id TEXT REFERENCES public.consultations(id) ON DELETE SET NULL,
+  consultation_id UUID REFERENCES public.consultations(id) ON DELETE SET NULL,
   patient_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   doctor_id UUID NOT NULL REFERENCES public.doctor_profiles(id) ON DELETE CASCADE,
   diagnosis_title TEXT NOT NULL,
