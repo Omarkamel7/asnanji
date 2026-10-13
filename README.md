@@ -10,7 +10,7 @@
 
 | 📱 رابط التحميل وتثبيت الـ APK | 🌐 صفحة البناء الرسمية ورمز QR | 📦 الحزمة | 🏷️ الإصدار |
 | :--- | :--- | :--- | :--- |
-| [**⬇️ تحميل Asnanji APK (v1.0.0)**](https://expo.dev/accounts/omarsala7s-team/projects/asnanji/builds/6815be60-d277-4b9e-8b3a-982df20c63d3) | [**📲 صفحة Expo Build & QR**](https://expo.dev/accounts/omarsala7s-team/projects/asnanji/builds/6815be60-d277-4b9e-8b3a-982df20c63d3) | `com.omarsala7steam.asnanji` | `v1.0.0 (Build 1)` |
+| [**⬇️ تحميل Asnanji APK (v1.0.0)**](https://expo.dev/accounts/omarsala7s-team/projects/asnanji/builds/e5b6c210-3ec9-442f-9066-b18ffccdeccd) | [**📲 صفحة Expo Build & QR**](https://expo.dev/accounts/omarsala7s-team/projects/asnanji/builds/e5b6c210-3ec9-442f-9066-b18ffccdeccd) | `com.omarsala7steam.asnanji` | `v1.0.0 (Build 2)` |
 
 ---
 
