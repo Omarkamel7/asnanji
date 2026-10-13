@@ -212,6 +212,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     fetchServices();
     fetchPortfolio();
     fetchRemoteUserData();
+    fetchDoctorApplications();
 
     // Check existing auth session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -357,6 +358,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (e) {
       console.warn(e);
+    }
+  };
+
+  const fetchDoctorApplications = async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const { data, error } = await supabase
+        .from('doctor_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (data && !error) {
+        setDoctorApplications(
+          data.map((d: any) => ({
+            id: d.id,
+            fullName: d.full_name,
+            phone: d.phone,
+            email: d.email,
+            specialty: d.specialty,
+            degree: d.degree || 'specialist',
+            syndicateId: d.syndicate_id || '',
+            clinicAddress: d.clinic_address,
+            governorate: d.governorate || 'القاهرة',
+            consultationFee: Number(d.consultation_fee) || 350,
+            licenseDocumentUrl: d.license_document_url,
+            status: d.status,
+            createdAt: d.created_at,
+            rejectionReason: d.rejection_reason,
+          }))
+        );
+      }
+    } catch (e) {
+      console.warn('fetchDoctorApplications error:', e);
     }
   };
 
@@ -644,9 +678,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await Promise.all([
         fetchClinicSettings(),
+        fetchDoctors(),
         fetchServices(),
         fetchPortfolio(),
         fetchRemoteUserData(),
+        fetchDoctorApplications(),
       ]);
       console.log('[Supabase] Full clinic data refreshed from cloud.');
     } catch (err) {
