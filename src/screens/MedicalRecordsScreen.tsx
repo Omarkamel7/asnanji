@@ -7,6 +7,9 @@ import {
   StyleSheet,
   Image,
   RefreshControl,
+  Modal,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -24,10 +27,14 @@ import {
   Activity,
   Printer,
   Share2,
+  Download,
+  X,
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
 import { FDI_TEETH } from '../constants/dentalData';
+import { exportPrescriptionPdf, directPrintPrescription } from '../services/prescriptionPdf';
+import { BeforeAfterSlider } from '../components/BeforeAfterSlider';
 
 interface MedicalRecordsScreenProps {
   navigation: any;
@@ -46,10 +53,13 @@ export const MedicalRecordsScreen: React.FC<MedicalRecordsScreenProps> = ({
     prescriptions,
     patientDentalRecords,
     updateUserProfile,
+    portfolioCases,
   } = useApp();
 
   const [refreshing, setRefreshing] = useState(false);
   const [activeEdrTab, setActiveEdrTab] = useState<'profile' | 'prescriptions' | 'scans' | 'consultations'>('profile');
+  const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
+  const [selectedScanImage, setSelectedScanImage] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -277,6 +287,65 @@ export const MedicalRecordsScreen: React.FC<MedicalRecordsScreenProps> = ({
                     <Text style={{ fontSize: 12, color: Colors.textSecondary }}>({med.dose} - {med.frequency})</Text>
                   </View>
                 ))}
+
+                {/* PDF Actions Row */}
+                <View style={styles.rxActionsRow}>
+                  <TouchableOpacity
+                    style={styles.rxActionBtnDownload}
+                    disabled={generatingPdfId === rx.id}
+                    onPress={async () => {
+                      setGeneratingPdfId(rx.id);
+                      try {
+                        await exportPrescriptionPdf({
+                          prescription: rx,
+                          doctorSpecialty: 'استشاري طب وجراحة الفم والأسنان',
+                          clinicName: 'منصة اسنانجي الطبية',
+                        });
+                      } catch (e) {
+                        Alert.alert(
+                          language === 'ar' ? 'خطأ' : 'Error',
+                          language === 'ar' ? 'تعذر تصدير الروشتة PDF' : 'Failed to export prescription PDF'
+                        );
+                      } finally {
+                        setGeneratingPdfId(null);
+                      }
+                    }}
+                  >
+                    {generatingPdfId === rx.id ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Download size={14} color="#ffffff" />
+                        <Text style={styles.rxActionBtnDownloadText}>
+                          {language === 'ar' ? 'تصدير وتحميل PDF' : 'Export / Share PDF'}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.rxActionBtnPrint}
+                    onPress={async () => {
+                      try {
+                        await directPrintPrescription({
+                          prescription: rx,
+                          doctorSpecialty: 'استشاري طب وجراحة الفم والأسنان',
+                          clinicName: 'منصة اسنانجي الطبية',
+                        });
+                      } catch (e) {
+                        Alert.alert(
+                          language === 'ar' ? 'خطأ' : 'Error',
+                          language === 'ar' ? 'تعذرت الطباعة اللاسلكية' : 'Failed to print'
+                        );
+                      }
+                    }}
+                  >
+                    <Printer size={14} color={Colors.primary} />
+                    <Text style={styles.rxActionBtnPrintText}>
+                      {language === 'ar' ? 'طباعة مباشرة' : 'Direct Print'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
           )}
@@ -292,6 +361,12 @@ export const MedicalRecordsScreen: React.FC<MedicalRecordsScreenProps> = ({
               {language === 'ar' ? 'معرض الأشعات وفحوصات الأسنان 🩻' : 'X-Rays & Dental Scans Gallery'}
             </Text>
           </View>
+          <Text style={styles.edrCardSubtitle}>
+            {language === 'ar'
+              ? 'انقر على أي صورة لتكبيرها وفحصها بدقة عالية'
+              : 'Tap any image to view in high-resolution full screen'}
+          </Text>
+
           {patientDentalRecords.length === 0 ? (
             <View style={{ alignItems: 'center', paddingVertical: 20 }}>
               <FileText size={36} color={Colors.textMuted} />
@@ -302,12 +377,35 @@ export const MedicalRecordsScreen: React.FC<MedicalRecordsScreenProps> = ({
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
               {patientDentalRecords.map((rec) => (
-                <View key={rec.id} style={{ width: '48%', borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border }}>
+                <TouchableOpacity
+                  key={rec.id}
+                  style={{ width: '48%', borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: Colors.border }}
+                  onPress={() => setSelectedScanImage(rec.imageUrl)}
+                  activeOpacity={0.8}
+                >
                   <Image source={{ uri: rec.imageUrl }} style={{ width: '100%', height: 120 }} />
-                  <View style={{ padding: 6, backgroundColor: Colors.surface }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: Colors.textPrimary }} numberOfLines={1}>{rec.title}</Text>
+                  <View style={{ padding: 6, backgroundColor: Colors.surface, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: Colors.textPrimary, flex: 1 }} numberOfLines={1}>
+                      {rec.title}
+                    </Text>
+                    <Text style={{ fontSize: 10, color: Colors.primary }}>🔍</Text>
                   </View>
-                </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Smile Makeover Before & After Cases */}
+          {portfolioCases && portfolioCases.length > 0 && (
+            <View style={{ marginTop: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: Colors.border }}>
+              <View style={[styles.edrCardHeader, { marginBottom: 12 }]}>
+                <Sparkles size={20} color="#D97706" />
+                <Text style={styles.edrCardTitle}>
+                  {language === 'ar' ? 'حالات تجميل الابتسامة (قبل وبعد) ✨' : 'Smile Makeover Cases (Before & After)'}
+                </Text>
+              </View>
+              {portfolioCases.map((caseItem) => (
+                <BeforeAfterSlider key={caseItem.id} item={caseItem} />
               ))}
             </View>
           )}
@@ -516,6 +614,30 @@ export const MedicalRecordsScreen: React.FC<MedicalRecordsScreenProps> = ({
       )}
 
       <View style={{ height: 40 }} />
+
+      {/* Fullscreen Diagnostic Scan Viewer Modal */}
+      <Modal
+        visible={!!selectedScanImage}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedScanImage(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalCloseBtn}
+            onPress={() => setSelectedScanImage(null)}
+          >
+            <X size={26} color="#ffffff" />
+          </TouchableOpacity>
+          {selectedScanImage && (
+            <Image
+              source={{ uri: selectedScanImage }}
+              style={styles.modalImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -891,5 +1013,69 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: Colors.border,
+  },
+  rxActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  rxActionBtnDownload: {
+    flex: 1.6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    gap: 6,
+    ...Shadows.sm,
+  },
+  rxActionBtnDownloadText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  rxActionBtnPrint: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  rxActionBtnPrintText: {
+    color: Colors.primaryDark,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalCloseBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 24,
+    zIndex: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 20,
+    padding: 8,
+  },
+  modalImage: {
+    width: '100%',
+    height: '80%',
+    borderRadius: 12,
   },
 });
