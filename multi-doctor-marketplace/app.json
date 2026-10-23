@@ -24,7 +24,7 @@
         "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "package": "com.omarsala7steam.asnanji",
-      "versionCode": 4
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/favicon.png"

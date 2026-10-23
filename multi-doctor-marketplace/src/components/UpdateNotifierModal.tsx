@@ -10,6 +10,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Download, RefreshCw, X, Sparkles, CheckCircle2, ArrowDownCircle } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Shadows } from '../constants/theme';
 import {
   checkForAppUpdates,
@@ -40,11 +41,29 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
     try {
       const result = await checkForAppUpdates();
       if (result.hasUpdate) {
+        // Skip optional update if user previously dismissed it
+        if (!result.isMandatory) {
+          const dismissed = await AsyncStorage.getItem(`@asnanji_dismissed_update_${result.version}`);
+          if (dismissed === 'true') {
+            return;
+          }
+        }
         setUpdateInfo(result);
         setVisible(true);
       }
     } catch (e) {
       console.warn('Update notifier check error:', e);
+    }
+  };
+
+  const handleDismiss = async () => {
+    setVisible(false);
+    if (updateInfo?.version) {
+      try {
+        await AsyncStorage.setItem(`@asnanji_dismissed_update_${updateInfo.version}`, 'true');
+      } catch (e) {
+        // ignore
+      }
     }
   };
 
@@ -74,7 +93,7 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={() => !updateInfo?.isMandatory && setVisible(false)}
+      onRequestClose={() => !updateInfo?.isMandatory && handleDismiss()}
     >
       <View style={styles.backdrop}>
         <View style={styles.modalCard}>
@@ -82,7 +101,7 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
           {!updateInfo?.isMandatory && (
             <TouchableOpacity
               style={styles.closeBtn}
-              onPress={() => setVisible(false)}
+              onPress={handleDismiss}
             >
               <X size={20} color={Colors.textMuted} />
             </TouchableOpacity>
@@ -99,8 +118,8 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
               <Sparkles size={16} color={Colors.primary} />
               <Text style={styles.badgeText}>
                 {isAr
-                  ? `تحديث جديد متوفر v${updateInfo?.version || '1.1.0'}`
-                  : `New Update v${updateInfo?.version || '1.1.0'}`}
+                  ? `تحديث جديد متوفر v${updateInfo?.version || '1.2.0'}`
+                  : `New Update v${updateInfo?.version || '1.2.0'}`}
               </Text>
             </View>
           </View>
@@ -166,7 +185,7 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
             {!updateInfo?.isMandatory && (
               <TouchableOpacity
                 style={styles.btnDismiss}
-                onPress={() => setVisible(false)}
+                onPress={handleDismiss}
               >
                 <Text style={styles.btnDismissText}>
                   {isAr ? 'تذكيري لاحقاً' : 'Remind me later'}

@@ -1,5 +1,6 @@
 import { Linking } from 'react-native';
 import * as Updates from 'expo-updates';
+import Constants from 'expo-constants';
 
 export interface AppVersionInfo {
   version: string;
@@ -13,33 +14,36 @@ export interface AppVersionInfo {
   changelogEn: string[];
 }
 
+const RUNTIME_APP_VERSION = Constants.expoConfig?.version || '1.2.0';
+const RUNTIME_BUILD_NUMBER = Constants.expoConfig?.android?.versionCode || 5;
+
 export const APP_VERSION_DATA: AppVersionInfo = {
-  version: '1.1.0',
-  buildNumber: 3,
+  version: RUNTIME_APP_VERSION,
+  buildNumber: RUNTIME_BUILD_NUMBER,
   releaseDate: '2026-10-13',
   channel: 'production',
-  latestVersion: '1.1.0',
+  latestVersion: RUNTIME_APP_VERSION,
   isUpdateAvailable: false,
   mandatoryUpdate: false,
   changelogAr: [
-    'إصدار اسنانجي v1.1.0 - التحديث الأكبر للمنصة',
-    'نظام الروشتة الطبية الرقمية المعتمدة PDF مع إمكانية التحميل والطباعة ومشاركة واتساب فورياً',
-    'قنوات الإشعارات اللحظية للتنبيهات وتحديثات مواعيد واستشارات العيادة',
-    'نموذج فك الأسنان التفاعلي ثلاثي الأبعاد الواقعي (FDI 1-32)',
-    'تسجيل الدخول السريع عبر Google بنقرة واحدة وربط رقم الهاتف الفوري',
-    'لوحة مراجعة واعتماد طلبات الأطباء الجدد (Super Admin Hub)',
-    'إدارة مساعدي وسكرتارية العيادة بصلاحيات جدول المواعيد',
-    'تسريع رفع وفحص الصور والأشعات بتقنية WebP الموفرة للباقة بنسبة 80%',
+    'إصدار اسنانجي v1.2.0 - التحديث الشامل لمنظومة الأدوار ومجسم الفك',
+    'لوحة تحكم المدير العام (Super Admin) مع فحص شامل لاستمارات وتراخيص الأطباء',
+    'واجهة سكرتارية واستقبال مخصصة لإدارة جدول المواعيد اليومي للمرضى',
+    'شاشة متابعة وتدقيق حالة انضمام الأطباء الجدد وترخيص النقابة',
+    'مجسم الفك والأسنان التشريحي 3D المحدث بدون قص مع ميزة التكبير لشاشة كاملة',
+    'أفاتار طبي ديناميكي موحد وإلغاء كافة الصور والبيانات التجريبية',
+    'إصلاح مسارات تسجيل الدخول والخروج الشامل ومنع تجميد الشاشات',
+    'تحسينات كبرى في الأداء وتسريع المحادثات واستعلامات البيانات',
   ],
   changelogEn: [
-    'Asnanji Release v1.1.0 - Major Platform Upgrade',
-    'Official Digital Prescription PDF with 1-tap download, WhatsApp share, and wireless direct printing',
-    'Instant Push Notifications for appointment and consultation alerts',
-    'Realistic 3D Interactive Dental Arch Model (FDI 1-32)',
-    '1-Tap Google Sign-In with zero-cost phone number linking modal',
-    'Super Admin Doctor Onboarding Application & Verification Hub',
-    'Clinic Receptionist & Assistant Management with calendar-only access',
-    'Silent WebP image pipeline saving 80% bandwidth with 3x faster uploads',
+    'Asnanji Release v1.2.0 - Multi-Persona Platform Overhaul',
+    'Super Admin Central Dashboard with full doctor credential inspection',
+    'Clinic Receptionist Schedule interface for patient queue management',
+    'Doctor Verification Tracker Screen for new registrations',
+    'Updated 3D Dental Arch Model with full-screen interactive zoom',
+    'Unified dynamic DoctorAvatar component replacing static mockups',
+    'Auth stability fixes, global sign-out, and unfreezing navigation',
+    'Performance optimizations for chat and database queries',
   ],
 };
 
@@ -92,6 +96,8 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
     // OTA check can fail in local dev or without network
   }
 
+  const currentVersion = Constants.expoConfig?.version || APP_VERSION_DATA.version;
+
   // 2. Check GitHub Releases for New APK
   try {
     const response = await fetch(
@@ -105,7 +111,7 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
 
     if (response.ok) {
       const release = await response.json();
-      const latestTag = (release.tag_name || '').replace('v', '').trim();
+      const latestTag = (release.tag_name || '').replace(/^v/i, '').trim();
       
       let apkUrl = 'https://github.com/Omarkamel7/asnanji/releases/latest';
       if (release.assets && Array.isArray(release.assets)) {
@@ -114,12 +120,8 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
           apkUrl = apkAsset.browser_download_url;
         }
       }
-      const expoBuildMatch = release.body?.match(/https:\/\/expo\.dev\/accounts\/[^\s\)\<"]+/);
-      if (expoBuildMatch) {
-        apkUrl = expoBuildMatch[0];
-      }
 
-      if (latestTag && isNewerVersion(latestTag, APP_VERSION_DATA.version)) {
+      if (latestTag && isNewerVersion(latestTag, currentVersion)) {
         const cleanNotes = cleanMarkdownNotes(release.body) || 'تحديث جديد متاح لتحسين تجربتك.';
         return {
           hasUpdate: true,
@@ -139,10 +141,10 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
   return {
     hasUpdate: hasOta,
     hasOtaUpdate: hasOta,
-    version: APP_VERSION_DATA.version,
+    version: currentVersion,
     apkDownloadUrl: 'https://github.com/Omarkamel7/asnanji/releases/latest',
-    releaseNotesAr: 'تطبيق اسنانجي محدث لآخر إصدار v1.0.0',
-    releaseNotesEn: 'Asnanji app is up to date v1.0.0',
+    releaseNotesAr: `تطبيق اسنانجي محدث لآخر إصدار v${currentVersion}`,
+    releaseNotesEn: `Asnanji app is up to date v${currentVersion}`,
     isMandatory: false,
   };
 }
