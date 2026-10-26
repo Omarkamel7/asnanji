@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo , useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Linking } from 'react-native';
+import { Linking, Alert } from 'react-native';
 import {
   UserProfile,
   UserRole,
@@ -262,27 +262,85 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Deep-link listener for Google OAuth return (e.g. asnanji://auth/callback)
     const handleDeepLink = async (event: { url: string }) => {
       const url = event.url;
-      if (url && (url.includes('auth/callback') || url.includes('#access_token') || url.includes('?access_token'))) {
+      if (!url) return;
+
+      console.log('[Auth DeepLink] Incoming URL:', url);
+
+      if (
+        url.includes('auth/callback') ||
+        url.includes('#access_token') ||
+        url.includes('?access_token') ||
+        url.includes('code=') ||
+        url.includes('error=')
+      ) {
         try {
-          const hashOrQuery = url.includes('#') ? url.split('#')[1] : url.split('?')[1];
-          if (hashOrQuery) {
-            const params = new URLSearchParams(hashOrQuery);
-            const accessToken = params.get('access_token');
-            const refreshToken = params.get('refresh_token');
-            if (accessToken && refreshToken) {
-              const { data } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-              });
-              if (data?.session?.user) {
-                setIsAuthenticated(true);
-                fetchRemoteProfile(data.session.user.id);
-                fetchRemoteUserData();
-              }
-            }
+          let queryString = '';
+          let hashString = '';
+
+          if (url.includes('?')) {
+            const afterQ = url.split('?')[1];
+            queryString = afterQ.includes('#') ? afterQ.split('#')[0] : afterQ;
           }
-        } catch (e) {
-          console.warn('Deep link session error:', e);
+          if (url.includes('#')) {
+            hashString = url.split('#')[1];
+          }
+
+          const queryParams = new URLSearchParams(queryString);
+          const hashParams = new URLSearchParams(hashString);
+
+          const errorDesc =
+            queryParams.get('error_description') ||
+            hashParams.get('error_description') ||
+            queryParams.get('error');
+
+          if (errorDesc) {
+            console.warn('[Auth DeepLink] OAuth Error returned:', errorDesc);
+            Alert.alert(language === 'ar' ? 'تعذر إتمام الدخول بجوجل' : 'Google Auth Error', errorDesc);
+            return;
+          }
+
+          const code = queryParams.get('code') || hashParams.get('code');
+          const accessToken = hashParams.get('access_token') || queryParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token');
+
+          // 1. PKCE Code Exchange (Default for Supabase v2)
+          if (code) {
+            console.log('[Auth DeepLink] Exchanging PKCE code for session...');
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+              console.warn('[Auth DeepLink] exchangeCodeForSession failed:', error.message);
+              Alert.alert(
+                language === 'ar' ? 'تعذر إتمام الدخول بجوجل' : 'Google Sign-In Failed',
+                error.message
+              );
+            } else if (data?.session?.user) {
+              console.log('[Auth DeepLink] Successfully authenticated via PKCE:', data.session.user.id);
+              setIsAuthenticated(true);
+              await fetchRemoteProfile(data.session.user.id);
+              await fetchRemoteUserData();
+            }
+            return;
+          }
+
+          // 2. Implicit Flow (access_token & refresh_token)
+          if (accessToken && refreshToken) {
+            console.log('[Auth DeepLink] Setting session from access/refresh tokens...');
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (error) {
+              console.warn('[Auth DeepLink] setSession failed:', error.message);
+            } else if (data?.session?.user) {
+              console.log('[Auth DeepLink] Successfully authenticated via tokens:', data.session.user.id);
+              setIsAuthenticated(true);
+              await fetchRemoteProfile(data.session.user.id);
+              await fetchRemoteUserData();
+            }
+            return;
+          }
+        } catch (e: any) {
+          console.warn('[Auth DeepLink] Exception during deep link processing:', e);
         }
       }
     };

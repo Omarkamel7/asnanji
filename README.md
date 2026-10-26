@@ -18,7 +18,7 @@
 
 | رابط التحميل المباشر (GitHub Release) | صفحة الإصدار الرسمي | الإصدار |
 | :--- | :--- | :--- |
-| [تحميل Asnanji APK مباشرة](https://github.com/Omarkamel7/asnanji/releases/download/v1.3.0/asnanji-v1.3.0.apk) | [صفحة GitHub Release v1.3.0](https://github.com/Omarkamel7/asnanji/releases/tag/v1.3.0) | `v1.3.0 (Build 7)` |
+| [تحميل Asnanji APK مباشرة](https://github.com/Omarkamel7/asnanji/releases/download/v1.3.1/asnanji-v1.3.1.apk) | [صفحة GitHub Release v1.3.1](https://github.com/Omarkamel7/asnanji/releases/tag/v1.3.1) | `v1.3.1 (Build 8)` |
 
 ---
 

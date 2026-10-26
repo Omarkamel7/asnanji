@@ -120,8 +120,8 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
               <Sparkles size={16} color={Colors.primary} />
               <Text style={styles.badgeText}>
                 {isAr
-                  ? `تحديث جديد متوفر v${updateInfo?.version || '1.3.0'}`
-                  : `New Update v${updateInfo?.version || '1.3.0'}`}
+                  ? `تحديث جديد متوفر v${updateInfo?.version || '1.3.1'}`
+                  : `New Update v${updateInfo?.version || '1.3.1'}`}
               </Text>
             </View>
           </View>

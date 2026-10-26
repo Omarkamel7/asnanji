@@ -59,6 +59,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
     }
   }, [route?.params?.initialMode, route?.params?.openDoctorModal]);
 
+  // Automatically navigate after successful login (including Google OAuth deep link return)
+  React.useEffect(() => {
+    if (currentUser && currentUser.id) {
+      console.log('[AuthScreen] User authenticated, auto-navigating:', currentUser.role);
+      navigateAfterAuth(currentUser.role || 'patient');
+    }
+  }, [currentUser]);
+
   // Form Fields
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -288,7 +296,11 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ navigation, route }) => 
         }
 
         if (data?.url) {
-          await Linking.openURL(data.url);
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            window.location.href = data.url;
+          } else {
+            await Linking.openURL(data.url);
+          }
         }
       } else {
         // Local simulation fallback

@@ -19,7 +19,7 @@ export const getCurrentAppVersion = (): string => {
     Constants.expoConfig?.version ||
     Constants.nativeAppVersion ||
     (Constants.manifest as any)?.version ||
-    '1.3.0'
+    '1.3.1'
   );
 };
 
@@ -28,7 +28,7 @@ export const getCurrentBuildNumber = (): number => {
   if (!isNaN(nativeBuild) && nativeBuild > 0) return nativeBuild;
   return (
     Constants.expoConfig?.android?.versionCode ||
-    7
+    8
   );
 };
 
@@ -44,16 +44,16 @@ export const APP_VERSION_DATA: AppVersionInfo = {
   isUpdateAvailable: false,
   mandatoryUpdate: false,
   changelogAr: [
+    'إصلاح وتفعيل تسجيل الدخول بحساب جوجل (Google Sign-In) عبر نظام المصادقة PKCE',
     'تفعيل نظام الإشعارات الفورية اللحظية (Push Notifications) للرسائل والمواعيد',
     'إصلاح وتأمين اعتماد طلبات انضمام الأطباء وتحديث بياناتهم لحظياً',
     'تطهير وإزالة كافة الحسابات والبيانات التجريبية لتجهيز المنصة للإنتاج',
-    'تحسين وتوسيط مجسم الفك والأسنان التشريحي ثلاثي الأبعاد',
   ],
   changelogEn: [
+    'Fixed and activated Google Sign-In with PKCE session exchange',
     'Enabled Real-time Push Notifications for chat and clinic appointments',
     'Doctor verification workflow and RLS security policies update',
     'Purged all legacy mock data and test profiles for production',
-    'Dental chart 3D anatomical model alignment and UI enhancements',
   ],
 };
 
