@@ -77,7 +77,7 @@ export const WebPhoneFrame: React.FC<WebPhoneFrameProps> = ({ children }) => {
             onPress={switchToDoctor}
           >
             <Text style={[styles.roleTabBtnText, role === 'doctor' && styles.roleTabBtnTextActive]}>
-              👨‍⚕️ حساب الطبيب (د. كريم)
+              👨‍⚕️ حساب الطبيب
             </Text>
           </TouchableOpacity>
 

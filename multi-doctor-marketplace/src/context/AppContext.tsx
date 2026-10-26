@@ -465,8 +465,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .from('doctor_profiles')
         .select('*, profiles!doctor_profiles_id_fkey (full_name, phone, role)');
       if (data && !error) {
-        // Only include approved verified doctors (exclude admin profiles)
-        const realApprovedDoctors = (data || []).filter((d: any) => d.profiles?.role === 'doctor');
+        // Only include approved verified doctors (exclude admin profiles and test profiles)
+        const realApprovedDoctors = (data || []).filter((d: any) => 
+          d.profiles?.role === 'doctor' &&
+          d.id !== 'ef3bf898-fbae-48ea-94d1-df36277d1b22' &&
+          d.slug !== 'dr-karim-abo-bakr' &&
+          !d.profiles?.full_name?.includes('كريم')
+        );
 
         setDoctors(realApprovedDoctors.map((d: any) => ({
           id: d.id,

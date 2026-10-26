@@ -136,7 +136,7 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
               : 'This update includes performance improvements and stability enhancements for a better experience.'}
           </Text>
 
-          {/* Action Buttons */}
+          {/* Actions */}
           <View style={styles.actions}>
             {/* Direct APK Download Button */}
             <TouchableOpacity style={styles.btnPrimary} onPress={handleDownloadApk}>

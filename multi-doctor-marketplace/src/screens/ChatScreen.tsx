@@ -175,7 +175,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
     }
   }, [route?.params?.patientId, route?.params?.consultationId, complaints]);
 
-  // If role is patient, they automatically see their chat thread with Dr. Karim
+  // If role is patient, they automatically see their active consultation thread
   useEffect(() => {
     if (role === 'patient') {
       if (patientThreads.length > 0) {
@@ -833,7 +833,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
         <View style={styles.activePartnerInfo}>
           {role === 'patient' ? (
             <DoctorAvatar
-              name={linkedComplaint?.diagnosis?.doctorName || (language === 'ar' ? 'د. كريم أبو بكر' : 'Doctor')}
+              name={linkedComplaint?.diagnosis?.doctorName || (language === 'ar' ? 'طبيب الاستشارة' : 'Doctor')}
               size={38}
               style={styles.chatHeaderAvatar}
             />
@@ -850,7 +850,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
               <Text style={styles.activePartnerName} numberOfLines={1}>
                 {role === 'doctor'
                   ? linkedComplaint?.patientName || (language === 'ar' ? 'المريض' : 'Patient')
-                  : linkedComplaint?.diagnosis?.doctorName || (language === 'ar' ? 'د. كريم أبو بكر' : 'Dr. Karim Abu Bakr')}
+                  : linkedComplaint?.diagnosis?.doctorName || (language === 'ar' ? 'طبيب الاستشارة' : 'Consulting Doctor')}
               </Text>
             </View>
             <Text style={styles.activePartnerSub}>
@@ -898,7 +898,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({ route, navigation }) => 
                   </View>
                 </View>
                 <Text style={styles.pinnedDiagnosisDoctor}>
-                  {linkedComplaint.diagnosis.doctorName || (language === 'ar' ? 'د. كريم أبو بكر' : 'Clinic Doctor')}
+                  {linkedComplaint.diagnosis.doctorName || (language === 'ar' ? 'طبيب العيادة' : 'Clinic Doctor')}
                 </Text>
               </View>
             </View>

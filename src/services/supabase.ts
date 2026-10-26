@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types/database';
 
-// Real Project Credentials for Dr. Karim Dental Clinic
+// Real Project Credentials for Asnanji Multi-Doctor Platform
 const SUPABASE_PROJECT_URL =
   process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://nvpkcjhrwpglmyehksyd.supabase.co';
 
