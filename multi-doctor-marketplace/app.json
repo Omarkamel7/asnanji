@@ -2,7 +2,7 @@
   "expo": {
     "name": "اسنانجي",
     "slug": "asnanji",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -31,7 +31,7 @@
         "android.permission.CAMERA"
       ],
       "package": "com.omarsala7steam.asnanji",
-      "versionCode": 6
+      "versionCode": 7
     },
     "web": {
       "favicon": "./assets/favicon.png"

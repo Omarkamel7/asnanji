@@ -12,6 +12,16 @@
 
 ---
 
+## 📲 تحميل وتثبيت التطبيق (Download App APK)
+
+يمكنك تحميل ملف الـ APK المباشر والدائم لتثبيت وتجربة التطبيق على أي هاتف أندرويد:
+
+| رابط التحميل المباشر (GitHub Release) | صفحة الإصدار الرسمي | الإصدار |
+| :--- | :--- | :--- |
+| [تحميل Asnanji APK مباشرة](https://github.com/Omarkamel7/asnanji/releases/download/v1.3.0/asnanji-v1.3.0.apk) | [صفحة GitHub Release v1.3.0](https://github.com/Omarkamel7/asnanji/releases/tag/v1.3.0) | `v1.3.0 (Build 7)` |
+
+---
+
 ## 🏛️ بنية المشروع وهندسة النظام (Architecture & Design)
 
 تم تصميم وبناء التطبيق وفق مبادئ **الهندسة البرمجية النظيفة (Clean Code & Enterprise Architecture)** لضمان القابلية للتوسع (Scalability)، الأمان الطبي (HIPAA/GDPR compliance readiness)، والأداء العالي في الزمن الحقيقي:

@@ -19,7 +19,7 @@ export const getCurrentAppVersion = (): string => {
     Constants.expoConfig?.version ||
     Constants.nativeAppVersion ||
     (Constants.manifest as any)?.version ||
-    '1.2.0'
+    '1.3.0'
   );
 };
 
@@ -28,7 +28,7 @@ export const getCurrentBuildNumber = (): number => {
   if (!isNaN(nativeBuild) && nativeBuild > 0) return nativeBuild;
   return (
     Constants.expoConfig?.android?.versionCode ||
-    5
+    7
   );
 };
 
@@ -38,18 +38,22 @@ const RUNTIME_BUILD_NUMBER = getCurrentBuildNumber();
 export const APP_VERSION_DATA: AppVersionInfo = {
   version: RUNTIME_APP_VERSION,
   buildNumber: RUNTIME_BUILD_NUMBER,
-  releaseDate: '2026-10-13',
+  releaseDate: '2026-10-26',
   channel: 'production',
   latestVersion: RUNTIME_APP_VERSION,
   isUpdateAvailable: false,
   mandatoryUpdate: false,
   changelogAr: [
-    'تحسينات في أداء التطبيق وسرعة الاستجابة',
-    'استقرار عام وتحديث واجهات الاستشارة وتجربة المستخدم',
+    'تفعيل نظام الإشعارات الفورية اللحظية (Push Notifications) للرسائل والمواعيد',
+    'إصلاح وتأمين اعتماد طلبات انضمام الأطباء وتحديث بياناتهم لحظياً',
+    'تطهير وإزالة كافة الحسابات والبيانات التجريبية لتجهيز المنصة للإنتاج',
+    'تحسين وتوسيط مجسم الفك والأسنان التشريحي ثلاثي الأبعاد',
   ],
   changelogEn: [
-    'Performance optimizations and faster response times',
-    'General stability and consultation UI enhancements',
+    'Enabled Real-time Push Notifications for chat and clinic appointments',
+    'Doctor verification workflow and RLS security policies update',
+    'Purged all legacy mock data and test profiles for production',
+    'Dental chart 3D anatomical model alignment and UI enhancements',
   ],
 };
 
