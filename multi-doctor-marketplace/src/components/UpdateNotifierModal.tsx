@@ -7,9 +7,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Image,
-  ScrollView,
+  Platform,
 } from 'react-native';
-import { Download, RefreshCw, X, Sparkles, CheckCircle2, ArrowDownCircle } from 'lucide-react-native';
+import { RefreshCw, X, Sparkles, ArrowDownCircle } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Shadows } from '../constants/theme';
 import {
@@ -17,7 +17,6 @@ import {
   applyOtaUpdate,
   openApkDownload,
   UpdateCheckResult,
-  APP_VERSION_DATA,
 } from '../services/versionControl';
 import { useApp } from '../context/AppContext';
 
@@ -32,7 +31,8 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
   const [updateInfo, setUpdateInfo] = useState<UpdateCheckResult | null>(null);
 
   useEffect(() => {
-    if (autoCheck) {
+    // Only check updates on native platforms (never on web)
+    if (autoCheck && Platform.OS !== 'web') {
       checkUpdates();
     }
   }, [autoCheck]);
@@ -84,7 +84,7 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
     openApkDownload(updateInfo?.apkDownloadUrl);
   };
 
-  if (!visible) return null;
+  if (Platform.OS === 'web' || !visible) return null;
 
   const isAr = language === 'ar';
 
@@ -102,6 +102,8 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
             <TouchableOpacity
               style={styles.closeBtn}
               onPress={handleDismiss}
+              accessibilityRole="button"
+              accessibilityLabel={isAr ? 'إغلاق' : 'Close'}
             >
               <X size={20} color={Colors.textMuted} />
             </TouchableOpacity>
@@ -124,44 +126,27 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
             </View>
           </View>
 
-          {/* Title & Subtitle */}
+          {/* Clean Title & Subtitle without exposing internal bullet points */}
           <Text style={styles.title}>
-            {isAr ? 'يتوفر إصدار أحدث لتطبيق العيادة!' : 'A newer version is ready!'}
+            {isAr ? 'يتوفر تحديث جديد للتطبيق' : 'New Update Available'}
           </Text>
           <Text style={styles.subtitle}>
             {isAr
-              ? 'قمنا بإضافة تحسينات كبرى، اللوجو فائق الدقة، إدارة العيادة، وتحديث واجهات الاستشارة.'
-              : 'Major updates, HD logo, dynamic clinic management, and consultation enhancements.'}
+              ? 'يتضمن هذا التحديث تحسينات عامة في الأداء واستقرار التطبيق لتجربة أفضل.'
+              : 'This update includes performance improvements and stability enhancements for a better experience.'}
           </Text>
 
-          {/* Changelog Items */}
-          <View style={styles.changelogBox}>
-            <Text style={styles.changelogHeader}>
-              {isAr ? '✨ أبرز ما تم إضافته في هذا التحديث:' : '✨ What is new in this update:'}
-            </Text>
-            <ScrollView style={styles.changelogScroll} showsVerticalScrollIndicator={false}>
-              {(isAr ? APP_VERSION_DATA.changelogAr : APP_VERSION_DATA.changelogEn).map(
-                (item, idx) => (
-                  <View key={idx} style={styles.changelogItem}>
-                    <CheckCircle2 size={16} color={Colors.routine} style={{ marginTop: 2 }} />
-                    <Text style={styles.changelogText}>{item}</Text>
-                  </View>
-                )
-              )}
-            </ScrollView>
-          </View>
-
-          {/* Actions */}
+          {/* Action Buttons */}
           <View style={styles.actions}>
-            {/* Direct GitHub APK Download Button */}
+            {/* Direct APK Download Button */}
             <TouchableOpacity style={styles.btnPrimary} onPress={handleDownloadApk}>
               <ArrowDownCircle size={20} color={Colors.white} />
               <Text style={styles.btnPrimaryText}>
-                {isAr ? 'تنزيل وتثبيت التحديث (APK مباشر)' : 'Download & Install APK'}
+                {isAr ? 'تحديث الآن (تحميل APK)' : 'Update Now (Download APK)'}
               </Text>
             </TouchableOpacity>
 
-            {/* In-App OTA Update Button */}
+            {/* In-App OTA Update Button (If available) */}
             {updateInfo?.hasOtaUpdate && (
               <TouchableOpacity
                 style={styles.btnSecondary}
@@ -181,7 +166,7 @@ export const UpdateNotifierModal: React.FC<Props> = ({ autoCheck = true }) => {
               </TouchableOpacity>
             )}
 
-            {/* Skip Button */}
+            {/* Dismiss Button */}
             {!updateInfo?.isMandatory && (
               <TouchableOpacity
                 style={styles.btnDismiss}
@@ -212,7 +197,7 @@ const styles = StyleSheet.create({
     maxWidth: 380,
     backgroundColor: Colors.surface,
     borderRadius: 24,
-    padding: 22,
+    padding: 24,
     alignItems: 'center',
     ...Shadows.lg,
   },
@@ -227,13 +212,13 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   logo: {
     width: 80,
     height: 80,
     borderRadius: 20,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   badgeRow: {
     flexDirection: 'row',
@@ -241,7 +226,7 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: '#e0f2fe',
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#bae6fd',
@@ -252,53 +237,23 @@ const styles = StyleSheet.create({
     color: Colors.primaryDark,
   },
   title: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '900',
     color: Colors.textPrimary,
     textAlign: 'center',
     marginVertical: 4,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 14,
-  },
-  changelogBox: {
-    width: '100%',
-    backgroundColor: '#f8fafc',
-    borderRadius: 16,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 16,
-  },
-  changelogHeader: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: Colors.primaryDark,
-    marginBottom: 8,
-  },
-  changelogScroll: {
-    maxHeight: 120,
-  },
-  changelogItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginBottom: 6,
-  },
-  changelogText: {
-    flex: 1,
-    fontSize: 11,
-    color: Colors.textPrimary,
-    lineHeight: 16,
-    fontWeight: '600',
+    lineHeight: 20,
+    marginBottom: 20,
+    paddingHorizontal: 8,
   },
   actions: {
     width: '100%',
-    gap: 8,
+    gap: 10,
   },
   btnPrimary: {
     flexDirection: 'row',
@@ -333,10 +288,10 @@ const styles = StyleSheet.create({
   },
   btnDismiss: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
   btnDismissText: {
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.textMuted,
     fontWeight: '700',
   },

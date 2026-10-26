@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, ScrollView } from 'react-native';
 import { Colors } from '../constants/theme';
 
 interface Props {
@@ -8,23 +8,24 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  error?: Error;
 }
 
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
   };
 
-  public static getDerivedStateFromError(_: Error): State {
-    return { hasError: true };
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
+    console.error('Uncaught error in ErrorBoundary:', error, errorInfo);
   }
 
   private handleTryAgain = () => {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, error: undefined });
   };
 
   public render() {
@@ -41,6 +42,20 @@ class ErrorBoundary extends Component<Props, State> {
             <Text style={styles.message}>
               Something went wrong. / حدث خطأ ما.
             </Text>
+
+            {this.state.error && (
+              <ScrollView style={styles.errorBox}>
+                <Text style={styles.errorText}>
+                  {this.state.error.toString()}
+                </Text>
+                {this.state.error.stack && (
+                  <Text style={styles.stackText}>
+                    {this.state.error.stack.slice(0, 300)}
+                  </Text>
+                )}
+              </ScrollView>
+            )}
+
             <TouchableOpacity style={styles.button} onPress={this.handleTryAgain}>
               <Text style={styles.buttonText}>Try Again / حاول مرة أخرى</Text>
             </TouchableOpacity>
@@ -57,41 +72,64 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  content: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+  },
+  content: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 400,
   },
   logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 30,
+    width: 100,
+    height: 100,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '800',
     color: Colors.textPrimary,
-    marginBottom: 10,
-    textAlign: 'center',
+    marginBottom: 8,
   },
   message: {
-    fontSize: 16,
+    fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 30,
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  errorBox: {
+    backgroundColor: '#fee2e2',
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+    borderRadius: 8,
+    padding: 10,
+    maxHeight: 140,
+    width: '100%',
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#b91c1c',
+  },
+  stackText: {
+    fontSize: 10,
+    color: '#7f1d1d',
+    marginTop: 4,
+    fontFamily: 'monospace',
   },
   button: {
     backgroundColor: Colors.primary,
-    paddingHorizontal: 30,
-    paddingVertical: 15,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
     borderRadius: 8,
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    color: Colors.white,
+    fontWeight: 'bold',
+    fontSize: 14,
   },
 });
 

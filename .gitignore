@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+.pnp
+.pnp.js
 
 # Expo & Metro
 .expo/
@@ -7,22 +9,31 @@ node_modules/
 web-build/
 dist/
 
-# Environment Variables
+# Environment Variables & Secrets
 .env
 .env.local
 .env.*.local
+credentials/
+docs/credentials/
+client_secret*.json
 
-# Native builds
+# Native Builds & Binaries
 android/
 ios/
+builds/
+*.apk
+*.aab
+*.keystore
+*.jks
 
-# Logs & Temp
+# Logs & Diagnostics
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# System & Editor
 .DS_Store
 Thumbs.db
-*.apk
-
-client_secret*.json
+.idea/
+.vscode/

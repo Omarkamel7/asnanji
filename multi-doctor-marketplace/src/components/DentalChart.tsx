@@ -27,7 +27,8 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
   const [activeJaw, setActiveJaw] = useState<'upper' | 'lower'>('upper');
 
   const renderToothButton = (toothNum: number) => {
-    const isSelected = selectedTeeth.includes(toothNum);
+    const safeTeeth = Array.isArray(selectedTeeth) ? selectedTeeth : [];
+    const isSelected = safeTeeth.includes(toothNum);
     const toothInfo = FDI_MAP.get(toothNum);
     const isMolar = toothInfo?.type === 'molar' || toothInfo?.type === 'wisdom';
     const isPremolar = toothInfo?.type === 'premolar';
@@ -98,7 +99,7 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
         />
         <View style={styles.modelOverlayBadge}>
           <Text style={styles.modelBadgeText}>
-            {language === 'ar' ? 'مجسم الأسنان التشريحي الكامل (1 - 32)' : '3D Dental Anatomy Model (1 - 32)'}
+            {language === 'ar' ? 'مجسم ترقيم الأسنان الكامل (1 - 32)' : 'Permanent Teeth Numbering Guide (1 - 32)'}
           </Text>
         </View>
         <View style={styles.zoomHintBadge}>
@@ -150,138 +151,8 @@ export const DentalChartComponent: React.FC<DentalChartProps> = ({
         </View>
       </Modal>
 
-      {/* Jaw Switcher Tabs */}
-      <View style={styles.jawTabs}>
-        <TouchableOpacity
-          onPress={() => setActiveJaw('upper')}
-          style={[styles.jawTabBtn, activeJaw === 'upper' && styles.jawTabBtnActive]}
-        >
-          <Text
-            style={[
-              styles.jawTabBtnText,
-              activeJaw === 'upper' && styles.jawTabBtnTextActive,
-            ]}
-          >
-            ⬆️ {language === 'ar' ? 'الفك العلوي (Upper Arch)' : 'Upper Arch'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveJaw('lower')}
-          style={[styles.jawTabBtn, activeJaw === 'lower' && styles.jawTabBtnActive]}
-        >
-          <Text
-            style={[
-              styles.jawTabBtnText,
-              activeJaw === 'lower' && styles.jawTabBtnTextActive,
-            ]}
-          >
-            ⬇️ {language === 'ar' ? 'الفك السفلي (Lower Arch)' : 'Lower Arch'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Anatomical Selection Arch Box */}
-      <View style={styles.archBox}>
-        <View style={styles.directionHeader}>
-          <Text style={styles.directionText}>👉 {language === 'ar' ? 'يمين المريض' : 'Right'}</Text>
-          <Text style={styles.archTitle}>
-            {activeJaw === 'upper'
-              ? language === 'ar' ? 'قوس الفك العلوي الطبي' : 'Maxillary Upper Arch'
-              : language === 'ar' ? 'قوس الفك السفلي الطبي' : 'Mandibular Lower Arch'}
-          </Text>
-          <Text style={styles.directionText}>{language === 'ar' ? 'يسار المريض' : 'Left'} 👈</Text>
-        </View>
-
-        {/* 1. Front Incisors Row */}
-        <View style={styles.clusterTitleBox}>
-          <Text style={styles.clusterTitleText}>
-            {language === 'ar' ? 'القواطع والأسنان الأمامية' : 'Incisors & Anterior Teeth'}
-          </Text>
-        </View>
-        <View style={styles.teethClusterRow}>
-          {activeJaw === 'upper' ? (
-            <>
-              {renderToothButton(12)}
-              {renderToothButton(11)}
-              <View style={styles.midline} />
-              {renderToothButton(21)}
-              {renderToothButton(22)}
-            </>
-          ) : (
-            <>
-              {renderToothButton(42)}
-              {renderToothButton(41)}
-              <View style={styles.midline} />
-              {renderToothButton(31)}
-              {renderToothButton(32)}
-            </>
-          )}
-        </View>
-
-        {/* 2. Canines & Premolars Row */}
-        <View style={styles.clusterTitleBox}>
-          <Text style={styles.clusterTitleText}>
-            {language === 'ar' ? 'الأنياب والضواحك الجانبية' : 'Canines & Premolars'}
-          </Text>
-        </View>
-        <View style={styles.teethClusterRow}>
-          {activeJaw === 'upper' ? (
-            <>
-              {renderToothButton(15)}
-              {renderToothButton(14)}
-              {renderToothButton(13)}
-              <View style={{ width: 10 }} />
-              {renderToothButton(23)}
-              {renderToothButton(24)}
-              {renderToothButton(25)}
-            </>
-          ) : (
-            <>
-              {renderToothButton(45)}
-              {renderToothButton(44)}
-              {renderToothButton(43)}
-              <View style={{ width: 10 }} />
-              {renderToothButton(33)}
-              {renderToothButton(34)}
-              {renderToothButton(35)}
-            </>
-          )}
-        </View>
-
-        {/* 3. Molars & Wisdom Row */}
-        <View style={styles.clusterTitleBox}>
-          <Text style={styles.clusterTitleText}>
-            {language === 'ar' ? 'الضروس الخلفية وضرس العقل' : 'Molars & Wisdom Teeth'}
-          </Text>
-        </View>
-        <View style={styles.teethClusterRow}>
-          {activeJaw === 'upper' ? (
-            <>
-              {renderToothButton(18)}
-              {renderToothButton(17)}
-              {renderToothButton(16)}
-              <View style={{ width: 10 }} />
-              {renderToothButton(26)}
-              {renderToothButton(27)}
-              {renderToothButton(28)}
-            </>
-          ) : (
-            <>
-              {renderToothButton(48)}
-              {renderToothButton(47)}
-              {renderToothButton(46)}
-              <View style={{ width: 10 }} />
-              {renderToothButton(36)}
-              {renderToothButton(37)}
-              {renderToothButton(38)}
-            </>
-          )}
-        </View>
-      </View>
-
       {/* Selected Teeth Badges */}
-      {selectedTeeth.length > 0 && (
+      {(Array.isArray(selectedTeeth) && selectedTeeth.length > 0) && (
         <View style={styles.selectedContainer}>
           <Text style={styles.selectedTitle}>
             {language === 'ar' ? 'الأسنان المحددة في المجسم:' : 'Selected Teeth:'}
@@ -312,11 +183,11 @@ const styles = StyleSheet.create({
   modelBannerCard: {
     borderRadius: 18,
     overflow: 'hidden',
-    height: 230,
-    backgroundColor: '#0f172a',
+    height: 320,
+    backgroundColor: '#ffffff',
     marginBottom: 12,
     borderWidth: 1.5,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
     ...Shadows.md,

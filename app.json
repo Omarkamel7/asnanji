@@ -12,7 +12,13 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.omarsala7steam.asnanji",
+      "infoPlist": {
+        "NSCameraUsageDescription": "The app needs access to your camera to take photos of teeth and pain areas for dental consultation.",
+        "NSMicrophoneUsageDescription": "The app needs access to your microphone to record voice notes describing dental symptoms.",
+        "NSPhotoLibraryUsageDescription": "The app needs access to your photo library to select dental photos and X-rays."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +27,11 @@
       },
       "permissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.CAMERA"
       ],
       "package": "com.omarsala7steam.asnanji",
-      "versionCode": 5
+      "versionCode": 6
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,7 +40,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app needs access to your photos to upload teeth and X-ray images for dental consultation."
+          "photosPermission": "The app needs access to your photos to upload teeth and X-ray images for dental consultation.",
+          "cameraPermission": "The app needs access to your camera to capture photos of affected teeth for dental consultation."
         }
       ],
       [

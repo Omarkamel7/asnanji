@@ -39,7 +39,12 @@ export async function uploadDentalMedia(
       uploadUri = await optimizeImage(uri);
     }
 
-    const ext = folder === 'audio' ? (uri.split('.').pop() || 'm4a') : 'webp';
+    const ext = folder === 'audio' 
+      ? (uploadUri.startsWith('blob:') ? 'webm' : (uploadUri.split('.').pop()?.split('?')[0] || 'm4a'))
+      : 'webp';
+    const contentType = folder === 'audio'
+      ? (ext === 'webm' ? 'audio/webm' : 'audio/m4a')
+      : 'image/webp';
     
     let pathPrefix = `consultations/${userId}`;
     if (userRole === 'doctor') {
@@ -55,7 +60,7 @@ export async function uploadDentalMedia(
     const { data, error } = await supabase.storage
       .from('dental-media')
       .upload(fileName, arrayBuffer, {
-        contentType: folder === 'audio' ? 'audio/m4a' : 'image/webp',
+        contentType,
         upsert: false,
       });
 

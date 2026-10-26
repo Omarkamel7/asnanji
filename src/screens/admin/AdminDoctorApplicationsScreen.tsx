@@ -10,6 +10,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Platform,
   Linking,
   SafeAreaView,
 } from 'react-native';
@@ -57,36 +58,51 @@ export const AdminDoctorApplicationsScreen: React.FC = () => {
   });
 
   const handleApprove = (app: DoctorApplication) => {
-    Alert.alert(
-      isRTL ? 'تأكيد اعتماد الطبيب' : 'Confirm Doctor Approval',
-      isRTL
-        ? `هل أنت متأكد من رغبتك في اعتماد د. ${app.fullName}؟ سيتم تفعيل حسابه كطبيب فورا وإضافته لدليل الأطباء.`
-        : `Are you sure you want to approve Dr. ${app.fullName}? Their account will be activated immediately.`,
-      [
-        { text: isRTL ? 'إلغاء' : 'Cancel', style: 'cancel' },
-        {
-          text: isRTL ? 'اعتماد ونشر' : 'Approve & Activate',
-          style: 'default',
-          onPress: async () => {
-            setIsProcessing(true);
-            try {
-              await reviewDoctorApplication(app.id, 'approved');
-              setSelectedApp(null);
-              Alert.alert(
-                isRTL ? 'تم الاعتماد بنجاح' : 'Approved Successfully',
-                isRTL
-                  ? `تم تفعيل حساب د. ${app.fullName}. يمكنه الآن تسجيل الدخول مباشرة والبدء في استقبال المرضى.`
-                  : `Dr. ${app.fullName} has been approved and can now sign in.`
-              );
-            } catch (err: any) {
-              Alert.alert(isRTL ? 'خطأ' : 'Error', err?.message || 'Failed to approve');
-            } finally {
-              setIsProcessing(false);
-            }
-          },
-        },
-      ]
-    );
+    const confirmMsg = isRTL
+      ? `هل أنت متأكد من رغبتك في اعتماد د. ${app.fullName}؟ سيتم تفعيل حسابه كطبيب فورا وإضافته لدليل الأطباء.`
+      : `Are you sure you want to approve Dr. ${app.fullName}? Their account will be activated immediately.`;
+
+    const doApprove = async () => {
+      setIsProcessing(true);
+      try {
+        await reviewDoctorApplication(app.id, 'approved');
+        setSelectedApp(null);
+        if (Platform.OS === 'web') {
+          window.alert(
+            isRTL
+              ? `تم تفعيل حساب د. ${app.fullName} بنجاح! أصبح بإمكانه الآن الدخول كطبيب معتمد والبدء في استقبال المرضى.`
+              : `Dr. ${app.fullName} has been approved and activated.`
+          );
+        } else {
+          Alert.alert(
+            isRTL ? 'تم الاعتماد بنجاح' : 'Approved Successfully',
+            isRTL
+              ? `تم تفعيل حساب د. ${app.fullName}. يمكنه الآن تسجيل الدخول مباشرة والبدء في استقبال المرضى.`
+              : `Dr. ${app.fullName} has been approved and can now sign in.`
+          );
+        }
+      } catch (err: any) {
+        Alert.alert(isRTL ? 'خطأ' : 'Error', err?.message || 'Failed to approve');
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm(confirmMsg) : true;
+      if (confirmed) {
+        doApprove();
+      }
+    } else {
+      Alert.alert(
+        isRTL ? 'تأكيد اعتماد الطبيب' : 'Confirm Doctor Approval',
+        confirmMsg,
+        [
+          { text: isRTL ? 'إلغاء' : 'Cancel', style: 'cancel' },
+          { text: isRTL ? 'اعتماد ونشر' : 'Approve & Activate', style: 'default', onPress: doApprove },
+        ]
+      );
+    }
   };
 
   const handleOpenRejectModal = () => {
@@ -101,10 +117,14 @@ export const AdminDoctorApplicationsScreen: React.FC = () => {
       await reviewDoctorApplication(selectedApp.id, 'rejected', rejectReasonText.trim());
       setRejectReasonModal(false);
       setSelectedApp(null);
-      Alert.alert(
-        isRTL ? 'تم رفض الطلب' : 'Application Rejected',
-        isRTL ? 'تم تحديث حالة الطلب إلى مرفوض.' : 'Application marked as rejected.'
-      );
+      if (Platform.OS === 'web') {
+        window.alert(isRTL ? 'تم تحديث حالة الطلب إلى مرفوض.' : 'Application marked as rejected.');
+      } else {
+        Alert.alert(
+          isRTL ? 'تم رفض الطلب' : 'Application Rejected',
+          isRTL ? 'تم تحديث حالة الطلب إلى مرفوض.' : 'Application marked as rejected.'
+        );
+      }
     } catch (err: any) {
       Alert.alert(isRTL ? 'خطأ' : 'Error', err?.message || 'Failed to reject');
     } finally {

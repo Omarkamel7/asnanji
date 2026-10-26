@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { Audio } from 'expo-av';
 import { Mic, Square, Play, Pause, Trash2 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
@@ -23,10 +23,20 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const [recordSeconds, setRecordSeconds] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Web MediaRecorder references
+  const webMediaRecorderRef = useRef<any>(null);
+  const webAudioChunksRef = useRef<Blob[]>([]);
+  const webAudioObjRef = useRef<any>(null);
+
   useEffect(() => {
     return () => {
       if (sound) {
         sound.unloadAsync().catch(() => {});
+      }
+      if (webAudioObjRef.current) {
+        try {
+          webAudioObjRef.current.pause();
+        } catch (_) {}
       }
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -37,6 +47,42 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const startRecording = async () => {
     try {
       mediumTap();
+
+      // Web Browser Recording
+      if (Platform.OS === 'web') {
+        if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mediaRecorder = new (window as any).MediaRecorder(stream);
+          webMediaRecorderRef.current = mediaRecorder;
+          webAudioChunksRef.current = [];
+
+          mediaRecorder.ondataavailable = (e: any) => {
+            if (e.data && e.data.size > 0) {
+              webAudioChunksRef.current.push(e.data);
+            }
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(webAudioChunksRef.current, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            onAudioRecorded(audioUrl);
+            stream.getTracks().forEach((track) => track.stop());
+          };
+
+          mediaRecorder.start();
+          setIsRecording(true);
+          setRecordSeconds(0);
+          timerRef.current = setInterval(() => {
+            setRecordSeconds((prev) => prev + 1);
+          }, 1000);
+          return;
+        } else {
+          alert(language === 'ar' ? 'المتصفح لا يدعم تسجيل الصوت' : 'Browser audio recording not supported');
+          return;
+        }
+      }
+
+      // Native Mobile Recording (iOS / Android)
       const permission = await Audio.requestPermissionsAsync();
       if (!permission.granted) {
         alert(language === 'ar' ? 'يرجى السماح بصلاحية الميكروفون' : 'Microphone permission required');
@@ -48,10 +94,10 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         playsInSilentModeIOS: true,
       });
 
-      const { recording } = await Audio.Recording.createAsync(
+      const { recording: newRecording } = await Audio.Recording.createAsync(
         Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
-      setRecording(recording);
+      setRecording(newRecording);
       setIsRecording(true);
       setRecordSeconds(0);
       timerRef.current = setInterval(() => {
@@ -63,13 +109,22 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
     try {
       mediumTap();
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
+
+      if (Platform.OS === 'web') {
+        if (webMediaRecorderRef.current && webMediaRecorderRef.current.state !== 'inactive') {
+          webMediaRecorderRef.current.stop();
+          setIsRecording(false);
+        }
+        return;
+      }
+
+      if (!recording) return;
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       setRecording(null);
@@ -86,6 +141,16 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     if (!audioUri) return;
     lightTap();
     try {
+      if (Platform.OS === 'web') {
+        if (!webAudioObjRef.current || webAudioObjRef.current.src !== audioUri) {
+          webAudioObjRef.current = new (window as any).Audio(audioUri);
+          webAudioObjRef.current.onended = () => setIsPlaying(false);
+        }
+        await webAudioObjRef.current.play();
+        setIsPlaying(true);
+        return;
+      }
+
       if (sound) {
         await sound.playAsync();
         setIsPlaying(true);
@@ -109,6 +174,11 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const pauseSound = async () => {
     lightTap();
+    if (Platform.OS === 'web' && webAudioObjRef.current) {
+      webAudioObjRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
     if (sound) {
       await sound.pauseAsync();
       setIsPlaying(false);
@@ -117,6 +187,12 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const deleteRecording = async () => {
     errorTap();
+    if (Platform.OS === 'web' && webAudioObjRef.current) {
+      try {
+        webAudioObjRef.current.pause();
+      } catch (_) {}
+      webAudioObjRef.current = null;
+    }
     if (sound) {
       await sound.unloadAsync();
       setSound(null);
@@ -134,32 +210,47 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   return (
     <View style={styles.container}>
       {!audioUri ? (
-        <TouchableOpacity
-          onPress={isRecording ? stopRecording : startRecording}
-          style={[
-            styles.recordButton,
-            isRecording && styles.recordButtonActive,
-          ]}
-        >
-          {isRecording ? (
-            <>
-              <Square size={20} color={Colors.white} />
-              <Text style={styles.recordTextWhite}>
-                {t.recordingActive} ({formatSeconds(recordSeconds)})
-              </Text>
-            </>
-          ) : (
-            <>
-              <Mic size={20} color={Colors.primary} />
-              <Text style={styles.recordTextPrimary}>{t.recordVoice}</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.playbackContainer}>
+        <View style={styles.recordSection}>
           <TouchableOpacity
+            style={[
+              styles.recordBtn,
+              isRecording ? styles.recordBtnActive : null,
+            ]}
+            onPress={isRecording ? stopRecording : startRecording}
+            activeOpacity={0.8}
+          >
+            {isRecording ? (
+              <Square size={20} color={Colors.white} />
+            ) : (
+              <Mic size={20} color={Colors.white} />
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>
+              {isRecording
+                ? language === 'ar'
+                  ? 'جاري التسجيل...'
+                  : 'Recording...'
+                : language === 'ar'
+                ? 'تسجيل وصف صوتي (اختياري)'
+                : 'Record Voice Note (Optional)'}
+            </Text>
+            <Text style={styles.sub}>
+              {isRecording
+                ? formatSeconds(recordSeconds)
+                : language === 'ar'
+                ? 'اضغط لبدء التحدث وشرح حالتك بصوتك'
+                : 'Tap mic to explain your pain with your voice'}
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.playSection}>
+          <TouchableOpacity
+            style={styles.playBtn}
             onPress={isPlaying ? pauseSound : playSound}
-            style={styles.playButton}
+            activeOpacity={0.8}
           >
             {isPlaying ? (
               <Pause size={18} color={Colors.white} />
@@ -167,19 +258,28 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
               <Play size={18} color={Colors.white} />
             )}
           </TouchableOpacity>
-          <View style={styles.waveformContainer}>
-            <View style={[styles.waveBar, { height: 12 }]} />
-            <View style={[styles.waveBar, { height: 20 }]} />
-            <View style={[styles.waveBar, { height: 16 }]} />
-            <View style={[styles.waveBar, { height: 24 }]} />
-            <View style={[styles.waveBar, { height: 18 }]} />
-            <View style={[styles.waveBar, { height: 10 }]} />
-            <Text style={styles.audioLabel}>
-              {language === 'ar' ? 'ملاحظة صوتية مسجلة' : 'Recorded Voice Note'}
+
+          <View style={styles.textContainer}>
+            <Text style={styles.title}>
+              {language === 'ar' ? 'تم تسجيل الملاحظة الصوتية' : 'Voice note recorded'}
+            </Text>
+            <Text style={styles.sub}>
+              {isPlaying
+                ? language === 'ar'
+                  ? 'جاري الاستماع...'
+                  : 'Playing...'
+                : language === 'ar'
+                ? 'جاهز للإرسال مع الاستشارة'
+                : 'Ready to submit'}
             </Text>
           </View>
-          <TouchableOpacity onPress={deleteRecording} style={styles.deleteButton}>
-            <Trash2 size={18} color={Colors.emergency} />
+
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={deleteRecording}
+            activeOpacity={0.8}
+          >
+            <Trash2 size={16} color={Colors.emergency} />
           </TouchableOpacity>
         </View>
       )}
@@ -189,75 +289,62 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 6,
-  },
-  recordButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primaryLight,
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    gap: 8,
-    borderStyle: 'dashed',
-  },
-  recordButtonActive: {
-    backgroundColor: Colors.emergency,
-    borderColor: Colors.emergency,
-    borderStyle: 'solid',
-  },
-  recordTextPrimary: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-  },
-  recordTextWhite: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.white,
-  },
-  playbackContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 10,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.border,
+    padding: 12,
+    marginVertical: 6,
+  },
+  recordSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
+  },
+  playSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  recordBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
     ...Shadows.sm,
   },
-  playButton: {
+  recordBtnActive: {
+    backgroundColor: Colors.emergency,
+  },
+  playBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  waveformContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  waveBar: {
-    width: 4,
-    backgroundColor: Colors.primary,
-    borderRadius: 2,
-  },
-  audioLabel: {
-    marginLeft: 8,
-    fontSize: 12,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-  },
-  deleteButton: {
-    padding: 8,
-    borderRadius: 8,
     backgroundColor: Colors.emergencyBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textContainer: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  sub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
 });

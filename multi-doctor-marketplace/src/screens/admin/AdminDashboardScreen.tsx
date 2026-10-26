@@ -129,7 +129,11 @@ export const AdminDashboardScreen: React.FC<{ navigation: any }> = ({ navigation
 
         <View style={styles.kpiGrid}>
           {/* Doctors */}
-          <View style={styles.kpiCard}>
+          <TouchableOpacity
+            style={styles.kpiCard}
+            onPress={() => navigation.navigate('AdminDoctorsList')}
+            activeOpacity={0.7}
+          >
             <View style={[styles.kpiIconBox, { backgroundColor: '#e0f2fe' }]}>
               <Stethoscope size={20} color="#0284c7" />
             </View>
@@ -138,9 +142,9 @@ export const AdminDashboardScreen: React.FC<{ navigation: any }> = ({ navigation
               {isRTL ? 'أطباء معتمدون' : 'Active Doctors'}
             </Text>
             <Text style={styles.kpiSub}>
-              {isRTL ? `${activeDoctors.length} متاحين الآن` : `${activeDoctors.length} available`}
+              {isRTL ? `${activeDoctors.length} متاحين الآن ➔` : `${activeDoctors.length} available ➔`}
             </Text>
-          </View>
+          </TouchableOpacity>
 
           {/* Pending Applications */}
           <TouchableOpacity

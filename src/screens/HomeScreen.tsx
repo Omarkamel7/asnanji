@@ -20,6 +20,8 @@ import {
   Calendar,
   ArrowRight,
   ArrowLeft,
+  ChevronLeft,
+  Clock,
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
@@ -37,6 +39,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setLanguage,
     t,
     doctors,
+    appointments,
+    currentUser,
     refreshClinicData,
     isRTL,
   } = useApp();
@@ -69,6 +73,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     });
     return Array.from(specs);
   }, [doctors]);
+
+  const upcomingAppointment = useMemo(() => {
+    return appointments.find(
+      (a) => a.patientId === currentUser.id && a.status !== 'cancelled'
+    );
+  }, [appointments, currentUser.id]);
 
   const filteredDoctors = useMemo(() => {
     return doctors.filter(doc => {
@@ -149,33 +159,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           />
         }
       >
-        {/* Animated Welcome Hero Banner */}
-        <View style={styles.heroBanner}>
-          <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <Sparkles size={16} color="#0284c7" />
-              <Text style={styles.heroBadge}>
-                {language === 'ar' ? 'استشارة فورية بضغطة زر' : 'Instant Dental Consultation'}
-              </Text>
-            </View>
-            <Text style={styles.heroTitle}>
-              {language === 'ar' ? 'هل تشعر بألم في أسنانك؟ 🦷' : 'Experiencing tooth pain? 🦷'}
-            </Text>
-            <Text style={styles.heroSubtitle}>
-              {language === 'ar'
-                ? 'حدد السن على المجسم 3D وأرسل الأعراض لتشخيص مبدئي من أفضل الأطباء'
-                : 'Select tooth on 3D arch & get instant dental triage'}
-            </Text>
-            <TouchableOpacity
-              style={styles.heroActionBtn}
-              onPress={() => navigation.navigate('NewConsultation')}
-            >
-              <Text style={styles.heroActionBtnText}>
-                {language === 'ar' ? 'ابدأ الاستشارة الآن 🩺' : 'Start Consultation 🩺'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
         {filteredDoctors.map(doctor => (
           <TouchableOpacity 
             key={doctor.id} 
@@ -206,6 +189,33 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 <Text style={styles.priceText}>{language === 'ar' ? `يبدأ من ${doctor.consultationFee || 350} ج.م` : `From ${doctor.consultationFee || 350} EGP`}</Text>
               </View>
             </View>
+            {/* Direct Quick Action Buttons */}
+            <View style={styles.cardActionsRow}>
+              <TouchableOpacity
+                style={styles.cardConsultBtn}
+                onPress={() => navigation.navigate('NewConsultation', {
+                  doctorId: doctor.id,
+                  doctorName: doctor.profileData?.fullName,
+                  doctorSpecialty: doctor.specialty,
+                })}
+              >
+                <Stethoscope size={15} color={Colors.white} />
+                <Text style={styles.cardConsultBtnText}>
+                  {language === 'ar' ? 'طلب استشارة' : 'Consult Online'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.cardBookBtn}
+                onPress={() => navigation.navigate('DoctorPublicProfile', { doctorId: doctor.id })}
+              >
+                <Calendar size={15} color={Colors.primary} />
+                <Text style={styles.cardBookBtnText}>
+                  {language === 'ar' ? 'حجز موعد' : 'Book Visit'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {!doctor.isAcceptingPatients && (
               <View style={styles.offlineBadge}>
                 <Text style={styles.offlineText}>{language === 'ar' ? "غير متاح حالياً" : "Temporarily Closed"}</Text>
@@ -425,6 +435,43 @@ const styles = StyleSheet.create({
     padding: 40,
     alignItems: 'center',
   },
+  cardActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  cardConsultBtn: {
+    flex: 1.2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  cardConsultBtnText: {
+    color: Colors.white,
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  cardBookBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  cardBookBtnText: {
+    color: Colors.primary,
+    fontWeight: '800',
+    fontSize: 13,
+  },
   emptyStateText: {
     color: Colors.textMuted,
     fontSize: 15,
@@ -464,6 +511,99 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignSelf: 'flex-start',
     ...Shadows.sm,
+  },
+  upcomingAppointmentCard: {
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1.5,
+    borderColor: '#86efac',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...Shadows.sm,
+  },
+  upcomingAptIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  upcomingHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  upcomingBadgeLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#15803d',
+  },
+  upcomingStatusBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#166534',
+  },
+  upcomingDoctorText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+  },
+  upcomingTimeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  emptyDoctorsCard: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    marginTop: 20,
+    marginHorizontal: 4,
+    ...Shadows.sm,
+  },
+  emptyDoctorsIconBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#e0f2fe',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  emptyDoctorsTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptyDoctorsSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  joinAsDoctorBtn: {
+    backgroundColor: Colors.primaryDark,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    ...Shadows.sm,
+  },
+  joinAsDoctorBtnText: {
+    color: Colors.white,
+    fontSize: 13,
+    fontWeight: '800',
   },
   heroActionBtnText: {
     color: Colors.white,

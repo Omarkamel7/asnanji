@@ -1,6 +1,7 @@
 import ErrorBoundary from './src/components/ErrorBoundary';
-import React from 'react';
-import { StatusBar } from 'react-native';
+import React, { useEffect } from 'react';
+import { StatusBar, Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -34,6 +35,7 @@ import { DoctorPendingScreen } from './src/screens/DoctorPendingScreen';
 import { AdminDashboardScreen } from './src/screens/admin/AdminDashboardScreen';
 import { AdminDoctorApplicationsScreen } from './src/screens/admin/AdminDoctorApplicationsScreen';
 import { AdminProfileScreen } from './src/screens/admin/AdminProfileScreen';
+import { AdminDoctorsListScreen } from './src/screens/admin/AdminDoctorsListScreen';
 import { AssistantScheduleScreen } from './src/screens/assistant/AssistantScheduleScreen';
 
 import { DoctorSettingsScreen } from './src/screens/doctor/DoctorSettingsScreen';
@@ -42,6 +44,7 @@ import { ManagePortfolioScreen } from './src/screens/doctor/ManagePortfolioScree
 import { ManageAssistantsScreen } from './src/screens/doctor/ManageAssistantsScreen';
 import { AppointmentsScreen } from './src/screens/AppointmentsScreen';
 import { UpdateNotifierModal } from './src/components/UpdateNotifierModal';
+import { WebPhoneFrame } from './src/components/WebPhoneFrame';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -89,6 +92,7 @@ const PatientTabs = () => {
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
+      {/* Consultation tab removed from bottom bar per user request - accessible only upon selecting a doctor
       <Tab.Screen
         name="NewConsultationTab"
         component={ComplaintIntakeScreen}
@@ -100,6 +104,8 @@ const PatientTabs = () => {
           ),
         }}
       />
+      */}
+      {/* Medical records hidden temporarily per user request
       <Tab.Screen
         name="MedicalRecords"
         component={MedicalRecordsScreen}
@@ -111,6 +117,7 @@ const PatientTabs = () => {
           ),
         }}
       />
+      */}
       <Tab.Screen
         name="PatientChat"
         component={ChatScreen}
@@ -310,6 +317,15 @@ const AdminTabs = () => {
 const MainNavigation = () => {
   const { role, language } = useApp();
 
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      console.log('[Notification Response Received]', data);
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <NavigationContainer>
       <Stack.Navigator
@@ -356,6 +372,11 @@ const MainNavigation = () => {
         )}
 
         <Stack.Screen
+          name="AdminDoctorsList"
+          component={AdminDoctorsListScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="DoctorConsultationDetail"
           component={DoctorConsultationDetailScreen}
           options={{
@@ -376,7 +397,7 @@ const MainNavigation = () => {
 
         <Stack.Screen
           name="NewConsultation"
-          component={NewConsultationScreen}
+          component={ComplaintIntakeScreen}
           options={{
             title: language === 'ar' ? 'طلب استشارة وفحص طبي' : 'Medical Consultation',
           }}
@@ -438,8 +459,10 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <ErrorBoundary>
         <AppProvider>
-          <MainNavigation />
-          <UpdateNotifierModal />
+          <WebPhoneFrame>
+            <MainNavigation />
+            <UpdateNotifierModal />
+          </WebPhoneFrame>
         </AppProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

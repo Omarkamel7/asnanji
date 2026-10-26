@@ -1,4 +1,4 @@
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import * as Updates from 'expo-updates';
 import Constants from 'expo-constants';
 
@@ -14,8 +14,26 @@ export interface AppVersionInfo {
   changelogEn: string[];
 }
 
-const RUNTIME_APP_VERSION = Constants.expoConfig?.version || '1.2.0';
-const RUNTIME_BUILD_NUMBER = Constants.expoConfig?.android?.versionCode || 5;
+export const getCurrentAppVersion = (): string => {
+  return (
+    Constants.expoConfig?.version ||
+    Constants.nativeAppVersion ||
+    (Constants.manifest as any)?.version ||
+    '1.2.0'
+  );
+};
+
+export const getCurrentBuildNumber = (): number => {
+  const nativeBuild = Constants.nativeBuildVersion ? parseInt(Constants.nativeBuildVersion, 10) : NaN;
+  if (!isNaN(nativeBuild) && nativeBuild > 0) return nativeBuild;
+  return (
+    Constants.expoConfig?.android?.versionCode ||
+    5
+  );
+};
+
+const RUNTIME_APP_VERSION = getCurrentAppVersion();
+const RUNTIME_BUILD_NUMBER = getCurrentBuildNumber();
 
 export const APP_VERSION_DATA: AppVersionInfo = {
   version: RUNTIME_APP_VERSION,
@@ -26,24 +44,12 @@ export const APP_VERSION_DATA: AppVersionInfo = {
   isUpdateAvailable: false,
   mandatoryUpdate: false,
   changelogAr: [
-    'إصدار اسنانجي v1.2.0 - التحديث الشامل لمنظومة الأدوار ومجسم الفك',
-    'لوحة تحكم المدير العام (Super Admin) مع فحص شامل لاستمارات وتراخيص الأطباء',
-    'واجهة سكرتارية واستقبال مخصصة لإدارة جدول المواعيد اليومي للمرضى',
-    'شاشة متابعة وتدقيق حالة انضمام الأطباء الجدد وترخيص النقابة',
-    'مجسم الفك والأسنان التشريحي 3D المحدث بدون قص مع ميزة التكبير لشاشة كاملة',
-    'أفاتار طبي ديناميكي موحد وإلغاء كافة الصور والبيانات التجريبية',
-    'إصلاح مسارات تسجيل الدخول والخروج الشامل ومنع تجميد الشاشات',
-    'تحسينات كبرى في الأداء وتسريع المحادثات واستعلامات البيانات',
+    'تحسينات في أداء التطبيق وسرعة الاستجابة',
+    'استقرار عام وتحديث واجهات الاستشارة وتجربة المستخدم',
   ],
   changelogEn: [
-    'Asnanji Release v1.2.0 - Multi-Persona Platform Overhaul',
-    'Super Admin Central Dashboard with full doctor credential inspection',
-    'Clinic Receptionist Schedule interface for patient queue management',
-    'Doctor Verification Tracker Screen for new registrations',
-    'Updated 3D Dental Arch Model with full-screen interactive zoom',
-    'Unified dynamic DoctorAvatar component replacing static mockups',
-    'Auth stability fixes, global sign-out, and unfreezing navigation',
-    'Performance optimizations for chat and database queries',
+    'Performance optimizations and faster response times',
+    'General stability and consultation UI enhancements',
   ],
 };
 
@@ -57,9 +63,16 @@ export interface UpdateCheckResult {
   isMandatory: boolean;
 }
 
-function isNewerVersion(remote: string, local: string): boolean {
-  const rParts = remote.split('.').map((n) => parseInt(n, 10) || 0);
-  const lParts = local.split('.').map((n) => parseInt(n, 10) || 0);
+export function isNewerVersion(remote: string, local: string): boolean {
+  if (!remote || !local) return false;
+  const cleanRemote = remote.replace(/^v/i, '').trim();
+  const cleanLocal = local.replace(/^v/i, '').trim();
+
+  // If identical, remote is definitely not newer
+  if (cleanRemote === cleanLocal) return false;
+
+  const rParts = cleanRemote.split('.').map((n) => parseInt(n, 10) || 0);
+  const lParts = cleanLocal.split('.').map((n) => parseInt(n, 10) || 0);
   for (let i = 0; i < Math.max(rParts.length, lParts.length); i++) {
     const r = rParts[i] ?? 0;
     const l = lParts[i] ?? 0;
@@ -69,22 +82,28 @@ function isNewerVersion(remote: string, local: string): boolean {
   return false;
 }
 
-function cleanMarkdownNotes(text: string): string {
-  if (!text) return '';
-  return text
-    .replace(/###+/g, '')
-    .replace(/\*\*/g, '')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .trim();
-}
-
 /**
  * Checks for new app updates via GitHub releases and Expo OTA updates.
  */
 export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
+  const currentVersion = getCurrentAppVersion();
+
+  // On Web, the app is automatically up to date via browser deployment
+  if (Platform.OS === 'web') {
+    return {
+      hasUpdate: false,
+      hasOtaUpdate: false,
+      version: currentVersion,
+      apkDownloadUrl: '',
+      releaseNotesAr: `تطبيق اسنانجي محدث لأحدث نسخة.`,
+      releaseNotesEn: `Asnanji web is running the latest version.`,
+      isMandatory: false,
+    };
+  }
+
   let hasOta = false;
 
-  // 1. Check Expo OTA Updates
+  // 1. Check Expo OTA Updates (native only)
   try {
     if (!__DEV__) {
       const update = await Updates.checkForUpdateAsync();
@@ -95,8 +114,6 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
   } catch (err) {
     // OTA check can fail in local dev or without network
   }
-
-  const currentVersion = Constants.expoConfig?.version || APP_VERSION_DATA.version;
 
   // 2. Check GitHub Releases for New APK
   try {
@@ -122,14 +139,13 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
       }
 
       if (latestTag && isNewerVersion(latestTag, currentVersion)) {
-        const cleanNotes = cleanMarkdownNotes(release.body) || 'تحديث جديد متاح لتحسين تجربتك.';
         return {
           hasUpdate: true,
           hasOtaUpdate: hasOta,
           version: latestTag,
           apkDownloadUrl: apkUrl,
-          releaseNotesAr: cleanNotes,
-          releaseNotesEn: cleanNotes,
+          releaseNotesAr: 'يتضمن هذا التحديث تحسينات عامة في الأداء واستقرار التطبيق.',
+          releaseNotesEn: 'This update includes performance improvements and stability enhancements.',
           isMandatory: false,
         };
       }
@@ -139,8 +155,8 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
   }
 
   return {
-    hasUpdate: hasOta,
-    hasOtaUpdate: hasOta,
+    hasUpdate: false,
+    hasOtaUpdate: false,
     version: currentVersion,
     apkDownloadUrl: 'https://github.com/Omarkamel7/asnanji/releases/latest',
     releaseNotesAr: `تطبيق اسنانجي محدث لآخر إصدار v${currentVersion}`,

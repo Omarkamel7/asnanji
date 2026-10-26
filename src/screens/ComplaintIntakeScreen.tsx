@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,18 +14,23 @@ import {
   Camera,
   Image as ImageIcon,
   Check,
+  UserCheck,
   AlertCircle,
   ShieldAlert,
   Zap,
   Sparkles,
+  Layers,
   Info,
   Trash2,
 } from 'lucide-react-native';
+import { useRoute } from '@react-navigation/native';
+import { DoctorAvatar } from '../components/DoctorAvatar';
 import { Colors, Shadows } from '../constants/theme';
 import { lightTap, successTap } from '../utils/haptics';
 import { useApp } from '../context/AppContext';
 import { SYMPTOMS_LIST } from '../constants/dentalData';
 import DentalChart from '../components/DentalChart';
+import { QuickAuthModal } from '../components/QuickAuthModal';
 import { AudioRecorder } from '../components/AudioRecorder';
 import { UrgencyLevel } from '../types';
 import { uploadDentalPhoto, uploadDentalAudio } from '../services/supabaseStorage';
@@ -35,7 +40,16 @@ interface ComplaintIntakeScreenProps {
 }
 
 export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ navigation }) => {
-  const { t, language, isRTL, currentUser, savePatientQuickProfile, addComplaint, createConsultationWithChat } = useApp();
+  const route = useRoute<any>();
+  const { t, language, isRTL, currentUser, isAuthenticated, savePatientQuickProfile, addComplaint, createConsultationWithChat, doctors } = useApp();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string>(route?.params?.doctorId || (doctors[0]?.id || ''));
+
+  useEffect(() => {
+    if (route?.params?.doctorId) {
+      setSelectedDoctorId(route.params.doctorId);
+    }
+  }, [route?.params?.doctorId]);
 
   const [selectedTeeth, setSelectedTeeth] = useState<number[]>([]);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
@@ -140,7 +154,10 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
       return;
     }
 
-    if (!patientName.trim() || !patientPhone.trim()) {
+    const finalName = (patientName.trim() || currentUser?.fullName?.trim() || '');
+    const finalPhone = (patientPhone.trim() || currentUser?.phone?.trim() || '');
+
+    if (!finalName.trim() || !finalPhone.trim()) {
       alert(
         language === 'ar'
           ? 'يرجى إدخال اسمك ورقم الهاتف حتى يتمكن الطبيب من التعرف على حالتك والرد عليك'
@@ -149,12 +166,20 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
       return;
     }
 
+    // Require authentic registered account before submitting
+    if (!isAuthenticated || !currentUser?.id || currentUser.id.startsWith('pat_')) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    await proceedWithSubmission(currentUser);
+  };
+
+  const proceedWithSubmission = async (activeUser: any) => {
     setIsSubmitting(true);
     try {
-      // 1. Save quick patient profile
       await savePatientQuickProfile(patientName, patientPhone);
 
-      // 2. Upload media to Supabase Storage if present
       const totalFiles = photoUris.length + xrayUris.length + (audioUri ? 1 : 0);
       let progresses = new Array(totalFiles).fill(0);
       const updateOverallProgress = () => {
@@ -170,9 +195,7 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
       let audioPromise = Promise.resolve(undefined as string | undefined);
       if (audioUri) {
         const idx = fileIndex++;
-        // audio doesn't necessarily have onProgress, but let's just mark it done when finished or try to pass onProgress if it exists
-        // Wait, the instructions said uploadDentalPhoto supports onProgress.
-        audioPromise = uploadDentalAudio(audioUri, currentUser.id).then(url => {
+        audioPromise = uploadDentalAudio(audioUri, activeUser.id).then(url => {
           progresses[idx] = 100;
           updateOverallProgress();
           return url;
@@ -180,7 +203,7 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
       }
 
       const photoPromises = photoUris.map(async (pUri) => {
-        const url = await uploadDentalPhoto(pUri, currentUser.id);
+        const url = await uploadDentalPhoto(pUri, activeUser.id);
         const idx = fileIndex++;
         progresses[idx] = 100;
         updateOverallProgress();
@@ -188,7 +211,7 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
       });
 
       const xrayPromises = xrayUris.map(async (xUri) => {
-        const url = await uploadDentalPhoto(xUri, currentUser.id);
+        const url = await uploadDentalPhoto(xUri, activeUser.id);
         const idx = fileIndex++;
         progresses[idx] = 100;
         updateOverallProgress();
@@ -202,9 +225,10 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
       ]);
 
       const { consultationId } = await createConsultationWithChat({
-        patientId: currentUser.id || `pat_${Date.now()}`,
-        patientName: patientName.trim(),
-        patientPhone: patientPhone.trim(),
+        doctorId: selectedDoctorId || route?.params?.doctorId || (doctors[0]?.id || ''),
+        patientId: activeUser.id,
+        patientName: (activeUser?.fullName || patientName).trim(),
+        patientPhone: (activeUser?.phone || patientPhone).trim(),
         selectedTeeth,
         symptoms: selectedSymptoms,
         painLevel,
@@ -220,27 +244,21 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
       successTap();
       setUploadProgress(0);
 
-      Alert.alert(
-        language === 'ar' ? 'تم إرسال الشكوى بنجاح' : 'Submitted Successfully',
-        language === 'ar'
-          ? 'تم استلام استشارتك وسيقوم طبيب الأسنان بفحص حالتك والرد عليك مباشرة في الشات.'
-          : 'Your consultation has been submitted. The treating dentist will reply in chat.',
-        [
-          {
-            text: language === 'ar' ? 'فتح المحادثة المباشرة 💬' : 'Open Live Chat 💬',
-            onPress: () => navigation.navigate('Chat', { consultationId }),
-          },
-          {
-            text: language === 'ar' ? 'متابعة الحالة بالسجل' : 'Track Case',
-            onPress: () => navigation.navigate('MedicalRecords'),
-            style: 'cancel',
-          },
-        ]
-      );
-    } catch (err) {
+      if (typeof navigation.replace === 'function') {
+        navigation.replace('Chat', {
+          consultationId,
+          doctorId: selectedDoctorId || route?.params?.doctorId,
+        });
+      } else {
+        navigation.navigate('Chat', {
+          consultationId,
+          doctorId: selectedDoctorId || route?.params?.doctorId,
+        });
+      }
+    } catch (err: any) {
       setIsSubmitting(false);
       setUploadProgress(0);
-      console.warn('Error submitting complaint', err);
+      alert(language === 'ar' ? 'حدث خطأ أثناء الإرسال: ' + (err.message || '') : 'Submission error');
     }
   };
 
@@ -256,17 +274,78 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
         </Text>
       </View>
 
-      {/* Step 1: Interactive Dental Chart */}
+      {/* Assigned Doctor Selection Card */}
       <View style={styles.stepCard}>
         <View style={styles.stepHeader}>
-          <Text style={styles.stepTitle}>{t.step1Tooth}</Text>
-          {selectedTeeth.length > 0 && (
-            <TouchableOpacity onPress={() => { lightTap(); setSelectedTeeth([]); }}>
-              <Text style={styles.clearText}>{t.clearSelection}</Text>
-            </TouchableOpacity>
-          )}
+          <Text style={styles.stepTitle}>
+            {language === 'ar' ? '🩺 الطبيب المعالج للاستشارة' : '🩺 Assigned Doctor'}
+          </Text>
         </View>
-        <Text style={styles.stepSubtitle}>{t.step1Sub}</Text>
+        <Text style={styles.stepSubtitle}>
+          {language === 'ar'
+            ? 'سيتم إرسال استشارتك ومحادثتك المباشرة للطبيب المختار:'
+            : 'Your consultation and chat will be routed to the selected doctor:'}
+        </Text>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+          {doctors.map((doc) => {
+            const isSelected = doc.id === (selectedDoctorId || doctors[0]?.id);
+            return (
+              <TouchableOpacity
+                key={doc.id}
+                style={[
+                  styles.doctorSelectCard,
+                  isSelected && styles.doctorSelectCardActive,
+                ]}
+                onPress={() => setSelectedDoctorId(doc.id)}
+              >
+                <DoctorAvatar avatarUrl={doc.avatarUrl} name={doc.profileData?.fullName} size={42} />
+                <View style={{ flex: 1, marginHorizontal: 8 }}>
+                  <Text style={[styles.doctorSelectName, isSelected && { color: Colors.primaryDark }]}>
+                    {doc.profileData?.fullName || 'طبيب أسنان'}
+                  </Text>
+                  <Text style={styles.doctorSelectSpecialty} numberOfLines={1}>
+                    {doc.specialty || 'استشاري أسنان'}
+                  </Text>
+                  <Text style={styles.doctorSelectFee}>
+                    {language === 'ar' ? `كشف: ${doc.consultationFee || 350} ج.م` : `Fee: ${doc.consultationFee || 350} EGP`}
+                  </Text>
+                </View>
+                {isSelected && (
+                  <View style={styles.doctorCheckBadge}>
+                    <Check size={14} color={Colors.white} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+              <QuickAuthModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={(profile) => {
+          setShowAuthModal(false);
+          proceedWithSubmission(profile);
+        }}
+        actionTitle={language === 'ar' ? 'إرسال الاستشارة' : 'Submit Consultation'}
+        doctorName={doctors.find(d => d.id === (selectedDoctorId || route?.params?.doctorId))?.profileData?.fullName}
+        initialName={patientName || currentUser?.fullName || ""}
+        initialPhone={patientPhone || currentUser?.phone || ""}
+      />
+    </ScrollView>
+      </View>
+
+      {/* Step 1: 3D Dental Model */}
+      <View style={styles.stepCard}>
+        <View style={styles.stepHeader}>
+          <Text style={styles.stepTitle}>
+            {language === 'ar' ? '🦷 مجسم الأسنان والفك التشريحي' : '🦷 3D Dental Anatomy Model'}
+          </Text>
+        </View>
+        <Text style={styles.stepSubtitle}>
+          {language === 'ar'
+            ? 'مجسم تشريحي توضيحي للأسنان والفكين (اضغط للتكبير والمطابقة)'
+            : '3D anatomical reference of teeth & jaw (tap to zoom)'}
+        </Text>
 
         <DentalChart
           selectedTeeth={selectedTeeth}
@@ -426,15 +505,23 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
             onPress={takePhoto}
           >
             <Camera size={18} color={Colors.primary} />
-            <Text style={styles.mediaBtnText}>{t.takeToothPhoto}</Text>
+            <Text style={styles.mediaBtnText}>{language === 'ar' ? 'تصوير بكاميرا' : 'Camera'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.mediaBtn}
+            onPress={() => pickImage('photo')}
+          >
+            <ImageIcon size={18} color={Colors.primary} />
+            <Text style={styles.mediaBtnText}>{language === 'ar' ? 'صورة من المعرض' : 'Gallery'}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.mediaBtn}
             onPress={() => pickImage('xray')}
           >
-            <ImageIcon size={18} color={Colors.secondary} />
-            <Text style={styles.mediaBtnText}>{t.uploadXray}</Text>
+            <Layers size={18} color={Colors.secondary} />
+            <Text style={styles.mediaBtnText}>{language === 'ar' ? 'أشعة X-Ray' : 'X-Ray'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -522,35 +609,57 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
         </View>
       </View>
 
-      {/* Step 7: Quick Patient Contact Info */}
+      {/* Step 7: Patient Contact Info */}
       <View style={styles.stepCard}>
         <View style={styles.stepHeader}>
           <Text style={styles.stepTitle}>
-            {language === 'ar' ? '7. بيانات التواصل للرد عليك' : '7. Your Contact Information'}
+            {language === 'ar' ? '7. بيانات المريض المسجلة للتواصل' : '7. Patient Contact Information'}
           </Text>
         </View>
-        <Text style={styles.stepSubtitle}>
-          {language === 'ar'
-            ? 'أدخل اسمك ورقم هاتفك حتى يتمكن الطبيب من مراجعة حالتك والرد عليك.'
-            : 'Enter your name and phone number for the doctor to contact and advise you.'}
-        </Text>
 
-        <TextInput
-          style={styles.textInput}
-          placeholder={language === 'ar' ? 'الاسم بالكامل (مثال: محمد أحمد)' : 'Your full name'}
-          value={patientName}
-          onChangeText={setPatientName}
-          textAlign={isRTL ? 'right' : 'left'}
-        />
+        {isAuthenticated && currentUser?.fullName && currentUser?.phone ? (
+          <View style={styles.verifiedCard}>
+            <View style={styles.verifiedIconBox}>
+              <UserCheck size={22} color={Colors.primary} />
+            </View>
+            <View style={{ flex: 1, marginHorizontal: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <Text style={styles.verifiedName}>{currentUser.fullName}</Text>
+                <View style={styles.verifiedPill}>
+                  <Text style={styles.verifiedPillText}>
+                    {language === 'ar' ? 'حساب موثق ✅' : 'Verified ✅'}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.verifiedPhone}>📱 {currentUser.phone}</Text>
+            </View>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.stepSubtitle}>
+              {language === 'ar'
+                ? 'أدخل اسمك ورقم هاتفك حتى يتمكن الطبيب من مراجعة حالتك والرد عليك.'
+                : 'Enter your name and phone number for the doctor to contact and advise you.'}
+            </Text>
 
-        <TextInput
-          style={[styles.textInput, { marginTop: 10, writingDirection: 'ltr' }]}
-          placeholder={language === 'ar' ? 'رقم الهاتف / الواتساب (+20 100 123 4567)' : '+20 100 123 4567'}
-          value={patientPhone}
-          onChangeText={setPatientPhone}
-          keyboardType="phone-pad"
-          textAlign={isRTL ? 'right' : 'left'}
-        />
+            <TextInput
+              style={styles.textInput}
+              placeholder={language === 'ar' ? 'الاسم بالكامل (مثال: محمد أحمد)' : 'Your full name'}
+              value={patientName}
+              onChangeText={setPatientName}
+              textAlign={isRTL ? 'right' : 'left'}
+            />
+
+            <TextInput
+              style={[styles.textInput, { marginTop: 10, writingDirection: 'ltr' }]}
+              placeholder={language === 'ar' ? 'رقم الهاتف / الواتساب (+20 100 123 4567)' : '+20 100 123 4567'}
+              value={patientPhone}
+              onChangeText={setPatientPhone}
+              keyboardType="phone-pad"
+              textAlign={isRTL ? 'right' : 'left'}
+            />
+          </>
+        )}
       </View>
 
       {/* Submit Button */}
@@ -576,6 +685,45 @@ export const ComplaintIntakeScreen: React.FC<ComplaintIntakeScreenProps> = ({ na
 };
 
 const styles = StyleSheet.create({
+  doctorSelectCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: 14,
+    padding: 10,
+    marginRight: 10,
+    width: 250,
+  },
+  doctorSelectCardActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
+  },
+  doctorSelectName: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+  },
+  doctorSelectSpecialty: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  doctorSelectFee: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.primary,
+    marginTop: 3,
+  },
+  doctorCheckBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -822,6 +970,45 @@ const styles = StyleSheet.create({
   alertLabelActive: {
     color: Colors.emergency,
     fontWeight: '700',
+  },
+  verifiedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1.5,
+    borderColor: '#86efac',
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 6,
+  },
+  verifiedIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#dcfce7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  verifiedName: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+  },
+  verifiedPill: {
+    backgroundColor: '#bbf7d0',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  verifiedPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#166534',
+  },
+  verifiedPhone: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textSecondary,
   },
   submitButton: {
     flexDirection: 'row',

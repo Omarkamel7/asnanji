@@ -21,6 +21,7 @@ import {
   AlertCircle,
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
+import { QuickAuthModal } from '../components/QuickAuthModal';
 import { useApp } from '../context/AppContext';
 import { DEFAULT_SERVICES, CLINIC_INFO } from '../constants/dentalData';
 import { DentalService } from '../types';
@@ -39,6 +40,7 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
     language,
     role,
     currentUser,
+    isAuthenticated,
     appointments,
     bookAppointment,
     cancelAppointment,
@@ -95,15 +97,24 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
 
   const [selectedSlot, setSelectedSlot] = useState<string>(TIME_SLOTS[4]);
   const [loading, setLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleBook = async () => {
+    if (!isAuthenticated || !currentUser?.id || currentUser.id.startsWith('pat_')) {
+      setShowAuthModal(true);
+      return;
+    }
+    await executeBooking(currentUser);
+  };
+
+  const executeBooking = async (activeUser: any) => {
     try {
       setLoading(true);
       const dateStr = selectedDate.toISOString().split('T')[0];
       await bookAppointment({
-        patientId: currentUser.id,
-        patientName: currentUser.fullName,
-        patientPhone: currentUser.phone,
+        patientId: activeUser.id,
+        patientName: activeUser.fullName || currentUser.fullName,
+        patientPhone: activeUser.phone || currentUser.phone,
         serviceId: selectedService.id,
         serviceNameAr: selectedService.nameAr,
         serviceNameEn: selectedService.nameEn,
@@ -196,7 +207,19 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+          <QuickAuthModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={(profile) => {
+          setShowAuthModal(false);
+          executeBooking(profile);
+        }}
+        actionTitle={language === 'ar' ? 'تأكيد حجز الموعد' : 'Confirm Appointment'}
+        doctorName={route?.params?.doctorName}
+        initialName={currentUser?.fullName}
+        initialPhone={currentUser?.phone}
+      />
+    </ScrollView>
       </View>
 
       {/* 2. Select Date */}
@@ -317,6 +340,14 @@ export const AppointmentsScreen: React.FC<AppointmentsScreenProps> = ({
 
       {/* Booking Summary & Confirm Button */}
       <View style={styles.summaryCard}>
+        {isAuthenticated && currentUser?.fullName && (
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>{language === 'ar' ? 'المريض المسجل:' : 'Patient:'}</Text>
+            <Text style={styles.summaryValue}>
+              {currentUser.fullName} ({currentUser.phone || ''}) ✅
+            </Text>
+          </View>
+        )}
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>{t.appointmentService}:</Text>
           <Text style={styles.summaryValue}>

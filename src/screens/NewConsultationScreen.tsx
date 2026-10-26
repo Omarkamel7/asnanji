@@ -441,7 +441,7 @@ export const NewConsultationScreen: React.FC = () => {
           <ActivityIndicator size="small" color={Colors.white} />
         ) : (
           <>
-            <Send size={20} color={Colors.white} style={{ transform: [{ rotate: isRTL ? '180deg' : '0deg' }] }} />
+            <Send size={20} color={Colors.white} />
             <Text style={styles.submitBtnText}>
               {isAr ? 'إرسال الشكوى وبدء المحادثة مع الطبيب' : 'Submit & Start Chat With Doctor'}
             </Text>

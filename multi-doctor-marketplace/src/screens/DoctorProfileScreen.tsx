@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { ArrowLeft, MapPin, Star, Phone, MessageCircle, Calendar, Award, ShieldCheck, Clock } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Star, Phone, MessageCircle, Calendar, ShieldCheck, Clock } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
 import { DoctorProfile } from '../types/doctor';
@@ -31,7 +31,7 @@ export const DoctorProfileScreen = () => {
         if (!doctor) {
           const { data, error } = await supabase
             .from('doctor_profiles')
-            .select('*, profiles:id(full_name, phone)')
+            .select('*, profiles!doctor_profiles_id_fkey(full_name, phone)')
             .eq('id', doctorId)
             .single();
           if (data) {
@@ -104,8 +104,13 @@ export const DoctorProfileScreen = () => {
     <View style={styles.container}>
       {/* Top Header Navigation */}
       <View style={styles.topHeader}>
-        <TouchableOpacity style={styles.headerIconBtn} onPress={() => navigation.goBack()}>
-          <ArrowLeft size={22} color={Colors.textPrimary} style={{ transform: [{ rotate: isRTL ? '180deg' : '0deg' }] }} />
+        <TouchableOpacity 
+          style={styles.headerIconBtn} 
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+          accessibilityLabel={language === 'ar' ? 'رجوع' : 'Back'}
+        >
+          <ArrowLeft size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{language === 'ar' ? 'الملف الطبي' : 'Doctor Profile'}</Text>
         <View style={{ width: 40 }} />

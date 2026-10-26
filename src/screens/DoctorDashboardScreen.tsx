@@ -13,20 +13,11 @@ import { SkeletonConsultationCard } from '../components/SkeletonCard';
 import { useFocusEffect } from '@react-navigation/native';
 import { 
   Stethoscope,
-  Clock,
-  AlertCircle,
   CheckCircle,
-  Calendar,
-  ChevronRight,
   ShieldAlert,
-  Users,
-  Activity,
-  MessageCircle,
   Layers,
   Image as ImageIcon,
   Settings,
-  Sparkles,
-  Eye
 } from 'lucide-react-native';
 import { Colors, Shadows } from '../constants/theme';
 import { useApp } from '../context/AppContext';
@@ -198,7 +189,7 @@ export const DoctorDashboardScreen: React.FC<DoctorDashboardScreenProps> = ({
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Text style={[styles.statNum, { color: '#0284c7' }]}>{doctorViews[currentUser?.assignedDoctorId || currentUser?.id] || 0}</Text>
+            <Text style={[styles.statNum, { color: '#38bdf8' }]}>{doctorViews[currentUser?.assignedDoctorId || currentUser?.id] || 0}</Text>
             <Text style={styles.statLabel}>
               {language === 'ar' ? 'زيارات البروفايل' : 'Profile Views'}
             </Text>

@@ -55,7 +55,7 @@ export const AdminProfileScreen: React.FC = () => {
             <ShieldAlert size={36} color="white" />
           </View>
           <Text style={styles.adminName}>
-            {currentUser?.fullName || (isRTL ? 'المدير العام للمنصة' : 'Super Administrator')}
+            {(currentUser?.fullName && currentUser.fullName !== 'د. كريم أبو بكر') ? currentUser.fullName : (isRTL ? 'إدارة المنصة المركزية' : 'Platform Administration')}
           </Text>
           <Text style={styles.adminRole}>
             {isRTL ? 'مسؤول النظام الأعلى • أسنانجي' : 'Super Admin • Asnanji Platform'}

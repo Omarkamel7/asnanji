@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Linking,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import {
   Clock,
@@ -25,35 +26,83 @@ import { useApp } from '../context/AppContext';
 import { supabase } from '../services/supabase';
 
 export const DoctorPendingScreen: React.FC = () => {
-  const { currentUser, setRole, signOut, language } = useApp();
+  const { currentUser, setRole, updateUserProfile, signOut, language } = useApp();
   const isRTL = language === 'ar';
   const [checking, setChecking] = useState(false);
 
-  const handleCheckStatus = async () => {
+  const checkAndPromoteDoctor = async (silent = false) => {
     if (!currentUser?.id) return;
     setChecking(true);
     try {
-      const { data, error } = await supabase
+      // 1. Check profiles role
+      const { data: prof } = await supabase
         .from('profiles')
-        .select('role')
+        .select('*')
         .eq('id', currentUser.id)
-        .single();
+        .maybeSingle();
 
-      if (data && data.role === 'doctor') {
+      // 2. Check doctor_applications status
+      const { data: app } = await supabase
+        .from('doctor_applications')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
+
+      const isApproved = prof?.role === 'doctor' || app?.status === 'approved';
+
+      if (isApproved) {
+        // Upgrade profile in database
+        await supabase.from('profiles').update({ role: 'doctor' }).eq('id', currentUser.id);
+
+        // Ensure doctor_profiles exists (doctor's own auth has full RLS permission!)
+        if (app) {
+          await supabase.from('doctor_profiles').upsert({
+            id: currentUser.id,
+            slug: `dr-${currentUser.id.slice(0, 8)}`,
+            specialty: app.specialty || 'استشاري طب وجراحة الأسنان',
+            bio: `د. ${app.full_name || currentUser.fullName} - ${app.specialty || 'طبيب أسنان'}`,
+            clinic_address: app.clinic_address || 'القاهرة، مصر',
+            consultation_fee: app.consultation_fee || 350,
+            is_accepting_patients: true,
+            rating: 5.0,
+            updated_at: new Date().toISOString(),
+          });
+        }
+
+        await updateUserProfile({ role: 'doctor' });
         setRole('doctor');
-        Alert.alert(
-          isRTL ? 'تهانينا! تم الاعتماد' : 'Congratulations!',
-          isRTL
-            ? 'تم اعتماد حسابك كطبيب بنجاح! يتم الآن توجيهك إلى لوحة التحكم الخاصة بك.'
-            : 'Your doctor account has been approved! Redirecting...'
-        );
-      } else {
-        Alert.alert(
-          isRTL ? 'ما زال قيد المراجعة' : 'Still Under Review',
-          isRTL
-            ? 'طلبك ما زال قيد الفحص والتدقيق من قبل إدارة المنصة. سنقوم بإشعارك فور الاعتماد.'
-            : 'Your credentials are still being verified. We will notify you once approved.'
-        );
+
+        if (!silent) {
+          if (Platform.OS === 'web') {
+            window.alert(
+              isRTL
+                ? 'تهانينا! تم اعتماد وتفعيل حسابك كطبيب بنجاح! يتم الآن توجيهك إلى لوحة التحكم الخاصة بك.'
+                : 'Congratulations! Your doctor account has been approved and activated!'
+            );
+          } else {
+            Alert.alert(
+              isRTL ? 'تهانينا! تم الاعتماد' : 'Congratulations!',
+              isRTL
+                ? 'تم اعتماد حسابك كطبيب بنجاح! يتم الآن توجيهك إلى لوحة التحكم الخاصة بك.'
+                : 'Your doctor account has been approved! Redirecting...'
+            );
+          }
+        }
+      } else if (!silent) {
+        if (Platform.OS === 'web') {
+          window.alert(
+            isRTL
+              ? 'طلبك ما زال قيد الفحص والتدقيق من قبل إدارة المنصة. سنقوم بإشعارك فور الاعتماد.'
+              : 'Your credentials are still being verified. We will notify you once approved.'
+          );
+        } else {
+          Alert.alert(
+            isRTL ? 'ما زال قيد المراجعة' : 'Still Under Review',
+            isRTL
+              ? 'طلبك ما زال قيد الفحص والتدقيق من قبل إدارة المنصة. سنقوم بإشعارك فور الاعتماد.'
+              : 'Your credentials are still being verified. We will notify you once approved.'
+          );
+        }
       }
     } catch (err: any) {
       console.warn('Check status error:', err);
@@ -61,6 +110,38 @@ export const DoctorPendingScreen: React.FC = () => {
       setChecking(false);
     }
   };
+
+  // Check on mount automatically
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    checkAndPromoteDoctor(true);
+
+    // Realtime listener for instant promotion when Admin approves
+    const channel = supabase
+      .channel(`doctor_app_watch:${currentUser.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'doctor_applications',
+          filter: `user_id=eq.${currentUser.id}`,
+        },
+        (payload) => {
+          const row = payload.new as Record<string, any> | undefined;
+          if (row && row.status === 'approved') {
+            checkAndPromoteDoctor(false);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.id]);
+
+  const handleCheckStatus = () => checkAndPromoteDoctor(false);
 
   const handleContactSupport = () => {
     Linking.openURL('https://wa.me/201000000000?text=استفسار%20عن%20طلب%20انضمام%20طبيب');

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Platform,
   Linking,
   ActivityIndicator,
 } from 'react-native';
@@ -41,7 +42,7 @@ interface DoctorConsultationDetailScreenProps {
 export const DoctorConsultationDetailScreen: React.FC<
   DoctorConsultationDetailScreenProps
 > = ({ route, navigation }) => {
-  const { complaintId } = route.params;
+  const complaintId = route?.params?.complaintId;
   const {
     t,
     language,
@@ -50,6 +51,7 @@ export const DoctorConsultationDetailScreen: React.FC<
     role,
     currentUser,
     addPrescription,
+    sendMessage,
   } = useApp();
 
   const complaint = complaints.find((c) => c.id === complaintId);
@@ -76,10 +78,25 @@ export const DoctorConsultationDetailScreen: React.FC<
   if (!complaint) {
     return (
       <View style={styles.notFound}>
-        <Text>الحالة غير موجودة</Text>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: Colors.textSecondary, marginBottom: 12 }}>
+          {language === 'ar' ? 'لم يتم العثور على الاستشارة المطلوبة' : 'Consultation not found'}
+        </Text>
+        <TouchableOpacity
+          style={{ paddingHorizontal: 16, paddingVertical: 10, backgroundColor: Colors.primary, borderRadius: 8 }}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={{ color: Colors.white, fontWeight: '700' }}>
+            {language === 'ar' ? 'العودة للوحة العيادة' : 'Back to Dashboard'}
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
+
+  const safeMedicalAlerts = Array.isArray(complaint.medicalAlerts) ? complaint.medicalAlerts : [];
+  const safeSymptoms = Array.isArray(complaint.symptoms) ? complaint.symptoms : [];
+  const safeSelectedTeeth = Array.isArray(complaint.selectedTeeth) ? complaint.selectedTeeth : [];
+  const safePhotoUris = Array.isArray(complaint.photoUris) ? complaint.photoUris : [];
 
   const handleExportPdf = async () => {
     if (!provisionalCondition.trim()) {
@@ -177,20 +194,59 @@ export const DoctorConsultationDetailScreen: React.FC<
         });
       }
 
+            // Send automated structured chat message to patient
+      const diagnosisMessage = language === 'ar'
+        ? `🩺 تقرير التشخيص الطبي المبدئي:
+━━━━━━━━━━━━━━━━━━━━
+👨‍⚕️ الطبيب: ${activeDoctorName}
+📋 الحالة: ${provisionalCondition.trim()}
+${medications.trim() ? `💊 الأدوية الموصى بها:\n${medications.trim()}\n` : ''}💡 الإرشادات الطبية:
+${firstAidInstructions.trim() || 'يرجى الالتزام بالتعليمات والمتابعة عند الحاجة.'}
+${requireVisit ? '\n⚠️ يوصى بحجز موعد للفحص السريري بالعيادة.' : ''}`
+        : `🩺 Preliminary Medical Diagnosis:
+━━━━━━━━━━━━━━━━━━━━
+👨‍⚕️ Doctor: ${activeDoctorName}
+📋 Diagnosis: ${provisionalCondition.trim()}
+${medications.trim() ? `💊 Recommended Medications:\n${medications.trim()}\n` : ''}💡 Medical Instructions:
+${firstAidInstructions.trim() || 'Please follow instructions and follow up as needed.'}
+${requireVisit ? '\n⚠️ Clinic visit recommended for physical examination.' : ''}`;
+
+      try {
+        await sendMessage(complaint.id, diagnosisMessage);
+      } catch (msgErr) {
+        console.warn('Auto send diagnosis message failed:', msgErr);
+      }
+
       successTap();
 
-      Alert.alert(
-        language === 'ar' ? 'تم إصدار التشخيص' : 'Diagnosis Submitted',
-        language === 'ar'
-          ? 'تم إرسال تقرير التشخيص المبدئي والإرشادات للمريض بنجاح.'
-          : 'Preliminary diagnosis report sent to patient.',
-        [
-          {
-            text: language === 'ar' ? 'حسناً' : 'OK',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+      if (Platform.OS === 'web') {
+        navigation.replace('Chat', {
+          consultationId: complaint.id,
+          patientId: complaint.patientId,
+          doctorId: complaint.doctorId,
+        });
+      } else {
+        Alert.alert(
+          language === 'ar' ? 'تم إصدار التشخيص' : 'Diagnosis Submitted',
+          language === 'ar'
+            ? 'تم إرسال تقرير التشخيص المبدئي والإرشادات للمريض بنجاح.'
+            : 'Preliminary diagnosis report sent to patient.',
+          [
+            {
+              text: language === 'ar' ? 'الانتقال للمحادثة 💬' : 'Go to Chat 💬',
+              onPress: () =>
+                navigation.replace('Chat', {
+                  consultationId: complaint.id,
+                  doctorId: complaint.doctorId,
+                }),
+            },
+            {
+              text: language === 'ar' ? 'لوحة التحكم' : 'Dashboard',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      }
     } catch (e) {
       console.warn('submit error', e);
     } finally {
@@ -209,36 +265,28 @@ export const DoctorConsultationDetailScreen: React.FC<
           </View>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              style={styles.actionBtnIcon}
-              onPress={() => Linking.openURL(`tel:${complaint.patientPhone}`)}
-            >
-              <Text style={styles.iconText}>📞</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionBtnIcon}
-              onPress={() => Linking.openURL(`whatsapp://send?phone=${complaint.patientPhone}`)}
-            >
-              <Text style={styles.iconText}>💬</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
               style={styles.chatActionBtn}
               onPress={() =>
                 navigation.navigate('Chat', {
                   consultationId: complaint.id,
+                  patientId: complaint.patientId,
                 })
               }
             >
-              <MessageCircle size={16} color={Colors.white} />
+              <MessageCircle size={15} color={Colors.white} />
+              <Text style={styles.chatActionBtnText}>
+                {language === 'ar' ? 'المحادثة الطبية' : 'Medical Chat'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Medical History Alerts */}
-        {complaint.medicalAlerts.length > 0 && (
+        {safeMedicalAlerts.length > 0 && (
           <View style={styles.alertsBar}>
             <ShieldAlert size={16} color={Colors.emergency} />
             <Text style={styles.alertsText}>
-              تنبيهات صحية: {complaint.medicalAlerts.join(', ')}
+              تنبيهات صحية: {safeMedicalAlerts.join(', ')}
             </Text>
           </View>
         )}
@@ -248,7 +296,7 @@ export const DoctorConsultationDetailScreen: React.FC<
       <View style={styles.sectionCard}>
         <Text style={styles.cardTitle}>الأسنان المحددة بواسطة المريض:</Text>
         <DentalChart
-          selectedTeeth={complaint.selectedTeeth}
+          selectedTeeth={safeSelectedTeeth}
           onToggleTooth={() => {}}
           readOnly={true}
         />
@@ -289,7 +337,7 @@ export const DoctorConsultationDetailScreen: React.FC<
 
         {/* Symptoms Tags */}
         <View style={styles.symptomsList}>
-          {complaint.symptoms.map((sId) => {
+          {safeSymptoms.map((sId) => {
             const sym = SYMPTOMS_LIST.find((s) => s.id === sId);
             return (
               <View key={sId} style={styles.symptomTag}>
@@ -319,17 +367,18 @@ export const DoctorConsultationDetailScreen: React.FC<
         )}
 
         {/* Photos & X-Rays */}
-        {complaint.photoUris.length > 0 && (
+        {safePhotoUris.length > 0 && (
           <View style={{ marginTop: 10 }}>
-            <Text style={styles.descTitle}>صور السن المرفقة:</Text>
-            <ScrollView horizontal style={styles.imagesScroll}>
-              {complaint.photoUris.map((uri) => (
+            <Text style={styles.descTitle}>
+              {language === 'ar' ? '📸 صور وفحوصات الحالة المرفقة:' : 'Attached Case Photos & X-Rays:'}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imagesScroll}>
+              {safePhotoUris.map((uri, idx) => (
                 <Image
-                  key={uri}
+                  key={uri || idx}
                   source={{ uri }}
                   style={styles.casePhoto}
-                  cachePolicy="memory-disk"
-                  placeholder={{ blurhash: 'LGF5]+Yk^6#M@-5c' }}
+                  contentFit="cover"
                 />
               ))}
             </ScrollView>
@@ -514,29 +563,22 @@ const styles = StyleSheet.create({
   chatActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    width: 36,
-    height: 36,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     backgroundColor: Colors.primary,
-    borderRadius: 18,
+    borderRadius: 16,
     ...Shadows.sm,
+  },
+  chatActionBtnText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '700',
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  actionBtnIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f1f5f9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadows.sm,
-  },
-  iconText: {
-    fontSize: 16,
   },
   alertsBar: {
     flexDirection: 'row',
